@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8"> <!-- Codificación de caracteres -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Escalabilidad de la página -->
+    <meta name="author" content="L1-G4">
+    <title>Studio</title> <!-- Título que aparece en la pestaña del navegador -->
+    <!-- Estilos -->
+    <link rel="stylesheet" href="/static/css/base/style.css"> <!-- Hoja de estilos principal -->
+    <link rel="stylesheet" href="/static/css/base/darkmode.css"> <!-- Hoja de estilo de modo oscuro -->
+    <link rel="stylesheet" href="/static/css/base/header.css"> <!-- Hoja de estilo del header -->
+    <link rel="stylesheet" href="/static/css/base/footer.css"> <!-- Hoja de estilo del footer -->
+    <link rel="stylesheet" href="/static/css/user/studio.css"> <!-- Hoja de estilos de la página studio -->
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/icons/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/icons/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/icons/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/favicons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="UnderSounds" />
+    <link rel="manifest" href="/static/icons/favicons/site.webmanifest" />
+</head>
+
+<body>
+
+    <!-- Barra de navegación -->
+    <div id="header-placeholder"></div>
+    <canvas id="backgroundCanvas"></canvas>
+
+    <!-- Contenido principal -->
+    <main>
+        <div class="div-bg">
+            <br>
+
+            <div class="div-pannel" style="width: 30%; align-items: center; margin: 0; padding-bottom: 0;">
+                <p class="songs-title">Studio</p>
+                <div class="div-pannel-sub grid-option">
+                    <input type="checkbox" id="enable-page" name="enable-page" {% if user.esVisible %}checked{% endif %}>
+                    <label for="enable-page">Hacer mi página de artista visible</label>
+                </div>
+                <br>
+                <div class="div-pannel-sub grid-option">
+                    <input type="checkbox" id="show-email" name="show-email" {% if user.emailVisible %}checked{% endif %}>
+                    <label for="show-email">Mostrar correo electrónico en mi página de artista</label>
+                </div>
+                <br>
+                <button type="button" onclick="saveSettings()">Guardar cambios</button>
+                <button class="button-alt" style="margin-top: 8px;" type="button" onclick="window.location.href='/artista?id={{ user.id }}'">Ver tu página personal</button>
+                <br>
+            </div>
+
+            <br>
+            <br>
+
+            <div class="div-pannel" style="width: 80%; align-items: center;">
+                <p class="songs-title">Tus Álbumes</p>
+                <div class="parent">
+
+                    {% for album in albums %}
+                    <div class="div-pannel-sub songs-cell">
+                        <img src="{{ album.portada }}" class="songs-image" alt="Album Image">
+                        <b style="font-size: 1.3rem;">{{ album.titulo }}</b>
+                        <p><b>{{ album.autor }}</b> · <i>{{ album.canciones|length }} canciones</i></p>
+
+                        <div class="song-info">
+                            <div style="text-align: center;">
+                                <img src="/static/icons/site/favourite-icon-light.svg" class="song-love" alt="Fav">
+                                <div>{{ album.likes }}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <img src="/static/icons/site/views-icon-light.svg" class="song-view" alt="Views">
+                                <div>{{ album.visitas }}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <img src="/static/icons/site/visibility-icon-light.svg" class="song-visible" alt="Visible">
+                                <div>{{ "Visible" if album.visible else "Oculto" }}</div>
+                            </div>
+                        </div>
+
+                        <div class="button-array">
+                            <button type="button" style="background-color: white;" onclick="window.location.href='/album?id={{ album.id }}'">🔗</button>
+                            <button type="button" style="background-color: #ff4646;" onclick="removeAlbum('{{ album.id }}')">🗑️</button>
+                            <button type="button" style="background-color: #0077ff;" onclick="window.location.href='/album-edit?id={{ album.id }}'">✏️</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div class="div-pannel-sub songs-cell">
+                        <button class="add-btn" onclick="window.location.href='/upload-album'">➕ Añadir álbum</button>
+                    </div>
+                </div>
+                <br>
+            </div>
+
+            <br>
+            <br>
+
+            <div class="div-pannel" style="width: 80%; align-items: center;">
+                <p class="songs-title">Tus Canciones</p>
+                <div class="parent">
+                    {% for song in songs %}
+                    <div class="div-pannel-sub songs-cell">
+                        <img src="{{ song.portada }}" class="songs-image" alt="Song Image">
+                        <b style="font-size: 1.3rem;">{{ song.titulo }}</b>
+                        {% if song.album %}
+                        <p><b>{{ song.artista }}</b> · <i>Parte de {{ song.album }}</i></p>
+                        {% else %}
+                        <p><b>{{ song.artista }}</b> · <i>Single</i></p>
+                        {% endif %}
+
+                        <div class="song-info">
+                            <div style="text-align: center;">
+                                <img src="/static/icons/site/favourite-icon-light.svg" class="song-love" alt="Fav">
+                                <div>{{ song.likes }}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <img src="/static/icons/site/comment-icon-light.svg" class="song-comment" alt="Comments">
+                                <div>{{ song.lista_resenas | length }}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <img src="/static/icons/site/views-icon-light.svg" class="song-view" alt="Views">
+                                <div>{{ song.visitas }}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <img src="/static/icons/site/visibility-icon-light.svg" class="song-visible" alt="Visible">
+                                <div>{{ "Visible" if song.visible else "Oculto" }}</div>
+                            </div>
+                        </div>
+
+                        <div class="button-array">
+                            <button type="button" style="background-color: white;" onclick="window.location.href='/song?id={{ song.id }}'">🔗</button>
+                            <button type="button" style="background-color: #ff4646;" onclick="removeSong('{{ song.id }}', '{{ song.id }}')">🗑️</button>
+                            <button type="button" style="background-color: #0077ff;" onclick="window.location.href='/edit-song?id={{ song.id }}'">✏️</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div class="div-pannel-sub songs-cell">
+                        <button class="add-btn" onclick="window.location.href='/upload-song'">➕ Añadir canción</button>
+                    </div>
+                </div>
+                <br>
+            </div>
+
+            <br>
+    </main>
+
+    <script>
+        function removeAlbum(id) {
+            if (confirm("¿Estás seguro de que deseas eliminar este álbum?\nTodas las canciones asociadas a este álbum pasarán a ser Singles.\n\nEsta acción no se puede deshacer.")) {
+            fetch('/delete-album', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: id})
+            })
+            .then(async response => {
+                const result = await response.json();
+
+                if (response.ok) {
+                displayMessage('success', 'Álbum eliminado correctamente.');
+                window.location.href = '/studio';
+                } else {
+                displayMessage('error', 'Error al eliminar el álbum: ' + result.error);
+                }
+            })
+            .catch(error => {
+                displayMessage("error", "Error al procesar la solicitud: " + error.message);
+            });
+            }
+        }
+
+        function removeSong(id) {
+            if (confirm("¿Estás seguro de que deseas eliminar esta canción?\nAl eliminar la canción se borrará del album asociado.\n\nEsta acción no se puede deshacer.")) {
+            fetch('/delete-song', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: id })
+            })
+            .then(async response => {
+            const result = await response.json();
+
+            if (response.ok) {
+                displayMessage('success', 'Canción eliminada correctamente.');
+                window.location.href = '/studio';
+            } else {
+                displayMessage('error', 'Error al eliminar la canción: ' + result.error);
+            }
+            })
+            .catch(error => {
+            displayMessage("error", "Error al procesar la solicitud: " + error.message);
+            });
+            }
+        }
+        
+        function saveSettings() {
+            const enablePage = document.getElementById("enable-page").checked;
+            const showEmail = document.getElementById("show-email").checked;
+
+            fetch('/studio-settings', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+            esVisible: enablePage,
+            emailVisible: showEmail
+            })
+            })
+            .then(async response => {
+            const result = await response.json();
+
+            if (response.ok) {
+                displayMessage('success', 'Configuración guardada correctamente.');
+                window.location.href = '/studio';
+            } else {
+                displayMessage('error', 'Error al guardar la configuración: ' + result.error);
+            }
+            })
+            .catch(error => {
+            displayMessage("error", "Error al procesar la solicitud: " + error.message);
+            });
+        }
+
+    </script>
+
+    <!-- Pie de página -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Scripts -->
+    <script src="/static/js/header.js"></script>
+    <script src="/static/js/footer.js"></script>
+    <script src="/static/js/dark-mode.js"></script>
+    <script src="/static/js/displayMessage.js"></script>
+    <script src="/static/js/animations.js"></script>
+</body>
+
+</html>

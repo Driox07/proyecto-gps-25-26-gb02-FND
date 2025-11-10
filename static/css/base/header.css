@@ -1,0 +1,145 @@
+/* ==========================================================
+    ------------------------ HEADER ------------------------
+   ========================================================== */
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: var(--bg-color, #fff); /* Asegúrate de que tenga fondo */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Sombra opcional */
+}
+
+.nav-top,
+.nav-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    margin: auto;
+    background-color: white;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.nav-top .container {
+    width: 15%;
+    height: auto;
+    padding-left: 20px;
+}
+
+.profile-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.nav-top .logo {
+    height: 65px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.profile-picture {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.nav-top .shop {
+    width: 42px;
+    transform: scale(1.1);
+    transition: transform 0.3s ease-in-out;
+    padding-right: 8px;
+}
+
+.search-bar {
+    border: 1px solid #ccc;
+    background-color: white;
+    box-shadow: none;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    overflow: hidden;
+    max-width: 35%;
+    width: 100%;
+}
+
+.search-bar input {
+    padding: 8px;
+}
+
+.search-bar button {
+    padding: 8px;
+}
+
+.nav-bottom {
+    justify-content: flex-start;
+    border-top: 2px solid #ccc;
+}
+
+.nav-bottom ul {
+    list-style: none;
+    display: flex;
+    gap: 25px;
+}
+
+.nav-bottom li a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.nav-bottom li a .theme-icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+}
+
+.suggestions-container {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    width: 100%;
+    z-index: 999;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+}
+
+.suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.suggestion-item:hover {
+    background-color: #f0f0f0;
+}
+
+/* =======================
+    HEADER EN MODO OSCURO
+   ======================= */
+.dark-mode header,
+.dark-mode .nav-top {
+    background-color: #000000;
+    border-bottom: 0.125rem solid #333;
+}
+
+.dark-mode .nav-bottom {
+    border-top: 0.125rem solid #333;
+    background-color: #111111;
+}
+
+.dark-mode .italic-text {
+    background: white;
+    color: black;
+}

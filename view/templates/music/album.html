@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="L1-G4" name="author" />
+    <title>{{album.titulo}} · {{album.autor}}</title>
+    <link href="/static/css/base/style.css" rel="stylesheet" />
+    <link href="/static/css/base/darkmode.css" rel="stylesheet" />
+    <link href="/static/css/base/header.css" rel="stylesheet" />
+    <link href="/static/css/base/footer.css" rel="stylesheet" />
+    <link href="/static/css/music/album.css" rel="stylesheet" />
+    <link href="/static/icons/favicons/favicon-96x96.png" rel="icon" sizes="96x96" type="image/png" />
+    <link href="/static/icons/favicons/favicon.svg" rel="icon" type="image/svg+xml" />
+    <link href="/static/icons/favicons/favicon.ico" rel="shortcut icon" />
+    <link href="/static/icons/favicons/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180" />
+    <meta content="UnderSounds" name="apple-mobile-web-app-title" />
+    <link href="/static/icons/favicons/site.webmanifest" rel="manifest" />
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+    <canvas id="backgroundCanvas"></canvas>
+    <main>
+        {% if not album.visible %}
+        <div class="div-warn">
+            <p>Esta página de álbum está oculta y no es accesible al público. Solo tú puedes verla. Puedes cambiar esto
+                editando la visibilidad del álbum en tu página de Studio.</p>
+        </div>
+        {% endif %}
+        <div class="div-bg">
+            <div class="album-page">
+                <section class="album-top">
+                    <div class="div-pannel album-info">
+                        <h2 class="album-title">{{album.titulo}}</h2>
+                        <p><strong>Autor:</strong> {{album.autor}}</p>
+                        <p><strong>Colaboradores:</strong>{{album.colaboradores}}</p>
+                        <pre
+                            style="max-width: 30rem; word-wrap: break-word; white-space: pre-wrap;"><strong>Descripción:</strong> {{album.descripcion}}</pre>
+                        <p><strong>Fecha:</strong> {{album.fecha}}</p>
+                        <p><strong>Géneros:</strong> {{album.generosStr}}</p>
+                        <!-- Este genero es especial -> Es un campo populado por los nombres de los generos, NO los IDs -->
+                        <p><strong>Número de canciones en total:</strong> {{album.canciones|length}}</p>
+                        <p><strong>Duración total:</strong> {{duracion_total}}</p>
+                        <p><strong>Likes:</strong> {{album.likes}}</p>
+                        <p><strong>Visualizaciones:</strong> {{album.visitas}}</p>
+                        <p><strong>Precio:</strong> {{album.precio}}€</p>
+                        <div class="album-buttons">
+                            {% if tipoUsuario >= 2 %}
+                            <button class="btn" onclick="descargarAlbum('{{album.id}}', '{{album.titulo}}')">Descargar
+                                álbum</button>
+                            <button class="{% if isLiked %}button{% else %}button-alt{% endif %} fav-btn"
+                                title="Añadir a favoritos" onclick="toggleLike()">
+                                <img alt="Favorito" class="fav-icon"
+                                    src="/static/icons/site/favourite-icon-light.svg" />
+                            </button>
+                            {% elif tipoUsuario == 1 %}
+
+                            {% if inCarrito %}
+                            <button type="submit" class="button-comprar-item">Ya en el carrito</button>
+                            {% else %}
+                            <form action="/cart" method="post">
+                                <input type="hidden" name="action" value="add">
+                                <input type="hidden" name="item_id" value="{{album.id}}">
+                                <input type="hidden" name="item_name" value="{{album.titulo}}">
+                                <input type="hidden" name="item_image" value="{{album.portada}}">
+                                <input type="hidden" name="artist_name" value="{{album.autor}}">
+                                <input type="hidden" name="item_desc" value="{{album.descripcion}}">
+                                <input type="hidden" name="item_precio" value="{{album.precio}}">
+                                <button type="submit" class="button-comprar-item">Añadir al carrito</button>
+                            </form>
+                            {% endif %}
+
+                            <button class="{% if isLiked %}button{% else %}button-alt{% endif %} fav-btn"
+                                title="Añadir a favoritos" onclick="toggleLike()">
+                                <img alt="Favorito" class="fav-icon"
+                                    src="/static/icons/site/favourite-icon-light.svg" />
+                            </button>
+                            {% else %}
+                            <button class="btn" onclick="window.location.href='/login';">Inicia sesión para comprar o
+                                descargar este álbum</button>
+                            {% endif %}
+
+                            {% if tipoUsuario == 3 %}
+                            <button class="btn" onclick="window.location.href='/album-edit?id={{album.id}}';">Editar
+                                álbum</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="div-pannel album-image">
+                        <img alt="Portada del álbum Kamikaze" src="{{album.portada}}" />
+                        <div style="display: block; margin: 5px auto 0; text-align: center;">
+                            <h2 class="song-title"> {{album.titulo}}</h2>
+                            <p><strong>{{album.autor}}</strong></p>
+                            {% if album.canciones and album.canciones|length > 0 %}
+                            {% for cancion in album.canciones %}
+                            <p>{{ album.canciones.index(cancion) + 1 }} - {{ cancion.titulo }}</p>
+                            {% endfor %}
+                            {% else %}
+                            <p>No hay canciones disponibles en este álbum.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+                <section class="div-pannel song-list-section">
+                    <h2>Canciones del álbum</h2>
+                    <div class="song-grid-cards">
+
+                        {% for cancion in album.canciones %}
+                        <div class="song-card">
+                            <details>
+                                <summary>
+                                    <img class="chevron" src="/static/icons/site/dropdown-icon.svg" width="16"
+                                        height="16" />
+                                    <strong>{{ cancion.titulo }}</strong> — {{ cancion.artista }}
+                                </summary>
+                                <div class="song-content">
+                                    <img src="{{ cancion.portada }}" alt="Portada" class="song-cover" />
+                                    <div class="song-info">
+                                        <p><strong>Géneros:</strong> {{ cancion.generosStr }}</p>
+                                        <p><strong>Precio:</strong> {{ cancion.precio }}€</p>
+                                        <div class="song-stats">
+                                            <span><img src="/static/icons/site/favourite-icon-light.svg" alt="likes" />
+                                                {{ cancion.likes }}</span>
+                                            <span><img src="/static/icons/site/comment-icon-light.svg"
+                                                    alt="comentarios" /> {{ cancion.lista_resenas|length }}</span>
+                                            <span><img src="/static/icons/site/views-icon-light.svg"
+                                                    alt="reproducciones" /> {{ cancion.visitas }}</span>
+                                        </div>
+                                        <div class="song-actions">
+                                            <button onclick="window.location.href='/song?id={{cancion.id}}';"> Ver
+                                                canción</button>
+                                            {% if tipoUsuario == 3 %}
+                                            <button class="btn"
+                                                onclick="window.location.href='/edit-song?id={{cancion.id}}';"><img
+                                                    src="/static/icons/site/edit-icon.svg" alt="Editar" /> Editar
+                                                canción</button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                        {% endfor %}
+
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <div id="footer-placeholder"></div>
+    <script src="/static/js/header.js"></script>
+    <script src="/static/js/footer.js"></script>
+    <script src="/static/js/dark-mode.js"></script>
+    <script src="/static/js/displayMessage.js"></script>
+    <script src="/static/js/animations.js"></script>
+
+    <script>
+        async function toggleLike() {
+            const songId = "{{album.id}}"; // Get the album ID from the template
+            try {
+                const response = await fetch('/like-album', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: songId }),
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    displayMessage('success', result.message || 'Acción completada con éxito.');
+                    window.location.reload();
+                } else {
+                    displayMessage('error', 'Error al procesar la solicitud.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayMessage('error', 'Ocurrió un error al intentar realizar la acción.');
+            }
+        }
+
+        async function descargarAlbum(album_id, album_title) {
+            try {
+                // Mostrar mensaje de descarga
+                displayMessage('warn', 'Preparando la descarga del álbum. Esto puede tardar unos minutos... ¡Paciencia!');
+
+                const response = await fetch(`/download-album?album_id=${encodeURIComponent(album_id)}&album_title=${encodeURIComponent(album_title)}`);
+                if (!response.ok) {
+                    const error = await response.json();
+                    displayMessage('error', error.message || 'Error al descargar el álbum. Por favor, inténtalo de nuevo más tarde.');
+                    return;
+                }
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${album_title.replace(/[\\/:*?"<>|]/g, '')}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                displayMessage('success', '¡Album descargado con éxito!');
+            } catch (error) {
+                console.error("Error al descargar álbum:", error);
+                displayMessage('error', 'Error al descargar el álbum. Por favor, inténtalo de nuevo más tarde.');
+            }
+        }
+    </script>
+</body>
+
+</html>

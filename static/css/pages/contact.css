@@ -1,0 +1,36 @@
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 1fr;
+    grid-column-gap: 1rem;
+    grid-row-gap: 1rem;
+}
+
+.grid-content-narrow {
+    display: flex;       /* Utiliza flexbox */
+    justify-content: flex-start; /* Alinea los elementos al principio (a la izquierda) */
+    gap: 10px; /* Espaciado entre el checkbox y el label */
+}
+
+.grid-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto auto auto auto auto; /* Permite que cada fila tenga un tamaño independiente */
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+}
+
+
+.textarea {
+    background-color: white;  /* Establece un fondo claro */
+    color: black;             /* Establece el color del texto */
+    border: 1px solid #ccc;   /* Borde estándar */
+    padding: 10px;            /* Espaciado interno */
+}
+
+.dark-mode .textarea {
+    background-color: #1a1a1a;  /* Establece un fondo claro */
+    color: white;             /* Establece el color del texto */
+    border: 1px solid #444444;   /* Borde estándar */
+    padding: 10px;            /* Espaciado interno */
+}

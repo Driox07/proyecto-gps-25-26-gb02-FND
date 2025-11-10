@@ -1,0 +1,166 @@
+/* --- BLOQUE DE ENTRADAS (Tomorrowland) --- */
+.grid-entradas {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 1fr;
+    grid-column-gap: 1rem;
+    grid-row-gap: 1rem;
+    border: 2px solid black;
+    border-radius: 10px;
+    padding: 2%;
+    width: auto;
+}
+
+.dark-mode .grid-entradas {
+    border: 2px solid white;
+}
+
+.grid-info {
+    display: grid;
+    grid-auto-rows: minmax(10px, auto);
+    grid-row-gap: 2rem;
+}
+
+/* --- TITULOS PRINCIPALES --- */
+h1 {
+    text-align: left;
+    font-size: 4.5vh;
+    margin-left: 5px;
+}
+
+h2 {
+    text-align: left;
+    font-size: 2.6vh;
+    margin-left: 5px;
+    margin-top: 25px;
+}
+
+/* --- BOTONES --- */
+.button-comprar-entradas {
+    justify-self: center;
+    width: 60%;
+    height: 5vh;
+}
+
+.button-comprar-item,
+.button-ver-más {
+    padding: 10px;
+    cursor: pointer;
+    width: 100px;
+    border-radius: 25px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.compra-button {
+    border-radius: 20px;
+    width: 50vh;
+    height: 7vh;
+}
+
+/* --- MODO OSCURO PARA CONTENEDORES --- */
+.dark-mode .contenedor,
+.dark-mode .banner {
+    border: 2px solid white;
+}
+
+/* --- IMÁGENES DE ARTISTAS Y GÉNEROS --- */
+.foto-artista,
+.foto-genero {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.4s;
+}
+
+.foto-artista {
+    border-radius: 25px;
+}
+
+.foto-genero {
+    border-radius: 50%;
+    border: 3px solid black;
+}
+
+.foto-artista:hover,
+.foto-genero:hover {
+    transform: scale(1.05);
+}
+
+/* --- TEXTOS DE CANCIONES Y ARTISTAS --- */
+.texto-producto {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin: 5px 0 0 0;
+    text-align: center;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    height: 3.6em;       /* Fija la altura para 3 líneas */
+    max-height: 3.6em;                    /* ← Fuerza la misma altura para todos */
+}
+
+.texto-artista {
+    font-size: 1rem;
+    font-weight: normal;
+    margin: 2px 0 0 0;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+/* --- CARRUSEL DE NUEVOS LANZAMIENTOS --- */
+#carrusel-nuevos-lanzamientos {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px 0;
+}
+
+#carrusel-nuevos-lanzamientos > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* --- CARRUSEL DE CANCIONES FILTRADAS --- */
+#canciones-filtradas-placeholder {
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 20px 0 0 0;
+    margin-top: 20px;
+    max-width: 1440px
+}
+
+#canciones-filtradas-placeholder .carrusel-container {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 20px;
+    padding-bottom: 20px;
+    justify-content: flex-start;
+}
+
+#canciones-filtradas-placeholder .song-item {
+    flex-shrink: 0;
+    width: 200px;
+    height: 340px; /* ← Aumentamos la altura total */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between; /* ← Distribuye mejor el espacio */
+    text-align: center;
+    padding: 10px 0;
+    box-sizing: border-box;
+}

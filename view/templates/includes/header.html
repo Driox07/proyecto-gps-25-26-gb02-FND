@@ -1,0 +1,90 @@
+<header>
+    <nav class="navbar">
+        <div class="nav-top">
+            <div class="container">
+                <a href="/">
+                    <img class="logo" src="/static/img/utils/logo-light.png" alt="Logo de UnderSounds">
+                </a>
+            </div>
+
+            <form id="search-form" class="search-bar" role="search" aria-label="Buscar contenido" action="/search" method="get">
+                <input id="search-input" type="text" name="busqueda" placeholder="Buscar..." aria-label="Campo de búsqueda">
+                <button type="submit" class="search-button" aria-label="Buscar">🔍</button>
+                <div id="search-suggestions" class="suggestions-container"></div>
+            </form>
+
+            <div class="auth-buttons">
+                {% if user %}
+                <div class="profile-container">
+                    <a href="/profile"><img class="profile-picture" src="{{ user.imagen }}" alt="Foto de perfil"></a>
+                    <a href="/profile">
+                        <p>{{ user.nombre }}</p>
+                    </a>
+                </div>
+                <a href="/cart">
+                    <img id="cart-icon" class="shop theme-icon" data-icon="cart-icon" src="/static/icons/site/cart-icon-light.svg" alt="Carrito">
+                </a>
+                <button class="logout-btn" onclick="window.location.href='/logout'">Cerrar Sesión</button>
+                {% else %}
+                <button class="login-btn" onclick="window.location.href='/login'">Iniciar Sesión</button>
+                <button class="signup-btn" onclick="window.location.href='/register'">Registrarse</button>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <div class="nav-bottom">
+            <ul>
+                <li>
+                    <a href="/">
+                        <img class="theme-icon" data-icon="home-icon" src="/static/icons/site/home-icon-light.svg"
+                            alt="FAQs">
+                        <span>Inicio</span>
+                    </a>
+                </li>
+                <li> <a href="/about">
+                        <img class="theme-icon" data-icon="about-icon" src="/static/icons/site/about-icon-light.svg"
+                            alt="FAQs">
+                        <span>About</span>
+                    </a></li>
+                <li> <a href="/contact">
+                        <img class="theme-icon" data-icon="contact-icon" src="/static/icons/site/contact-icon-light.svg"
+                            alt="FAQs">
+                        <span>Contacto</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/faqs">
+                        <img class="theme-icon" data-icon="faqs-icon" src="/static/icons/site/faqs-icon-light.svg"
+                            alt="FAQs">
+                        <span>FAQs</span>
+                    </a>
+                </li>
+                {% if user %}
+                <li> <a href="/profile">
+                        <img class="theme-icon" data-icon="library-icon" src="/static/icons/site/library-icon-light.svg"
+                            alt="Biblioteca">
+                        <span>Biblioteca</span>
+                    </a></li>
+                {% if user.esArtista %}
+                <li> <a href="/studio">
+                        <img class="theme-icon" data-icon="studio-icon" src="/static/icons/site/studio-icon-light.svg"
+                            alt="Studio">
+                        <span>Studio</span>
+                    </a></li>
+                <li><a href="/upload-song">
+                        <img class="theme-icon" data-icon="upload-icon" src="/static/icons/site/upload-icon-light.svg"
+                            alt="Subir canción">
+                        <span>Subir canción</span>
+                    </a></li>
+                <li><a href="/upload-album">
+                        <img class="theme-icon" data-icon="upload-icon" src="/static/icons/site/upload-icon-light.svg"
+                            alt="Subir album">
+                        <span>Subir album</span>
+                    </a></li>
+                {% endif %}
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+</header>

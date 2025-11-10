@@ -1,0 +1,447 @@
+/* ==================== ALBUM EDIT PAGE ==================== */
+
+.upload-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    padding: 40px 20px;
+    max-width: 60%;
+    margin: auto;
+    text-align: center;
+}
+
+.upload-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.dark-mode .upload-title {
+    color: white;
+}
+
+.upload-form {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    gap: 2rem;
+}
+
+.upload-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    text-align: left;
+}
+
+.upload-group label,
+.upload-checkbox-container label,
+.upload-song label {
+    font-weight: bold;
+    color: #222;
+}
+
+.dark-mode .upload-group label,
+.dark-mode .upload-checkbox-container label,
+.dark-mode .upload-song label {
+    color: white;
+}
+
+.upload-group input[type="text"],
+.upload-group select,
+.upload-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: white;
+    color: black;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.upload-group textarea {
+    resize: vertical;
+}
+
+.dark-mode .upload-group input[type="text"],
+.dark-mode .upload-group select,
+.dark-mode .upload-group textarea {
+    background-color: #222;
+    color: white;
+    border: 1px solid #444;
+}
+
+.upload-group textarea::placeholder,
+.upload-group input[type="text"]::placeholder {
+    color: #888;
+}
+
+.dark-mode .upload-group textarea::placeholder,
+.dark-mode .upload-group input[type="text"]::placeholder {
+    color: #bbb;
+}
+
+.upload-group select option {
+    background: white;
+    color: black;
+}
+
+.dark-mode .upload-group select option {
+    background: #222;
+    color: white;
+}
+
+/* Géneros y Subgéneros */
+.upload-checkbox-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 1rem;
+    text-align: left;
+}
+
+.upload-checkbox-container h2 {
+    font-size: 1.25rem;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.dark-mode .upload-checkbox-container h2 {
+    color: white;
+}
+
+.upload-checkbox-container h3 {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.dark-mode .upload-checkbox-container h3 {
+    color: #ddd;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin: 0;
+    width: auto;
+}
+
+.checkbox-item label {
+    font-size: 1rem;
+    font-weight: normal;
+    color: #222;
+}
+
+.dark-mode .checkbox-item label {
+    color: #fff;
+}
+
+/* Cover */
+.upload-cover {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.upload-cover img {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ccc;
+}
+
+.upload-cover-button {
+    max-width: 150px;
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background 0.3s ease;
+}
+
+.upload-cover-button:hover {
+    background: #0056b3;
+}
+
+.dark-mode .upload-cover-button {
+    background: white;
+    color: black;
+}
+
+.dark-mode .upload-cover-button:hover {
+    background: #ccc;
+}
+
+/* Canción */
+.upload-song {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.upload-song input[type="file"] {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    background: #007bff;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.dark-mode .upload-song input[type="file"] {
+    background: #222;
+    color: white;
+    border: 1px solid #444;
+}
+
+.upload-song input[type="file"]::file-selector-button {
+    background: white;
+    color: black;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s ease;
+}
+
+.grid-biblioteca {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 20px;
+    align-items: center;
+    justify-items: center;
+    width: 100%;
+}
+
+.songs-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 14rem;
+    gap: 10px;
+}
+
+.songs-image {
+    min-width: 100%;
+    aspect-ratio: 1 / 1; /* Force the image to be square */
+    object-fit: cover; /* Ensure the image fits within the square */
+    border-radius: 15px;
+    border: 2px solid #111;
+}
+
+.dark-mode .songs-image {
+    border: 2px solid #fff;
+}
+
+.song-info {
+    display: grid;
+    grid-template-rows: 2fr 1fr;
+    grid-auto-flow: column;
+    column-gap: 5px;
+    align-items: center;
+    justify-items: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    min-width: auto;
+    overflow-wrap: break-word;
+}
+
+.songs-title {
+    font-size: xx-large;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.button-array {
+    width: 100%;
+    gap: 0.5rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr;
+}
+
+.historial h2 {
+    margin-bottom: 0.9375rem;
+}
+
+.historial-actions button svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    vertical-align: middle;
+    pointer-events: none;
+}
+
+.historial-actions .button-alt {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1;
+}
+
+.historial-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.historial summary::-webkit-details-marker {
+    display: none;
+}
+
+.historial[open] {
+    background-color: #e9e9e9;
+}
+
+.historial-actions {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-start;
+}
+
+.dark-mode .dark-mode .historial[open] {
+    background-color: #444;
+}
+
+.dark-mode .historial p {
+    color: #ccc;
+}
+
+.historial summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.historial .chevron {
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.historial[open] .chevron {
+    transform: rotate(90deg);
+}
+
+.historial-grid .historial {
+    max-width: 750px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.historial {
+    max-width: 850px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+
+.historial {
+    background-color: #f4f4f4;
+    color: #222;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+.historial[open] {
+    background-color: #e9e9e9;
+}
+
+.historial summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+    list-style: none;
+}
+
+.historial summary::-webkit-details-marker {
+    display: none;
+}
+
+.historial p {
+    margin: 0.5rem 0;
+    text-align: justify;
+    font-size: 0.95rem;
+}
+
+.historial-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.historial .chevron {
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.historial[open] .chevron {
+    transform: rotate(90deg);
+}
+
+.historial-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.text-content {
+    flex: 2;
+}
+
+.image-content {
+    flex: 1;
+    text-align: right;
+}
+
+.image-content img {
+    max-width: 150px;
+    height: auto;
+    border-radius: 50%;
+}
+
+/* MODO OSCURO */
+.dark-mode .historial {
+    background-color: #333;
+    color: #eee;
+    border-color: #555;
+}
+
+.dark-mode .historial[open] {
+    background-color: #444;
+}
+
+.dark-mode .historial p {
+    color: #ccc;
+}
