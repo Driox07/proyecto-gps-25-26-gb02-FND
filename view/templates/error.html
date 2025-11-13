@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/error.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="error-main">
+        <div class="error-container">
+            <div class="error-icon">
+                <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                    <line x1="12" y1="8" x2="12" y2="12" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            
+            <h1 class="error-title">¡Oops! Algo salió mal</h1>
+            
+            <div class="error-message">
+                {% if data.error_message %}
+                    <p>{{ data.error_message }}</p>
+                {% else %}
+                    <p>Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo más tarde.</p>
+                {% endif %}
+            </div>
+            
+            <div class="error-actions">
+                <button class="btn btn-primary" onclick="window.history.back()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="19" y1="12" x2="5" y2="12" stroke-width="2" stroke-linecap="round"/>
+                        <polyline points="12 19 5 12 12 5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Volver atrás
+                </button>
+                <a href="/" class="btn btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="9 22 9 12 15 12 15 22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Ir al inicio
+                </a>
+            </div>
+            
+            <div class="error-suggestions">
+                <h3>Mientras tanto, puedes:</h3>
+                <ul>
+                    <li><a href="/">Explorar la página principal</a></li>
+                    <li><a href="/search">Buscar música</a></li>
+                    <li><a href="/shop">Ver la tienda</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="error-decoration">
+            <div class="floating-note note-1">♪</div>
+            <div class="floating-note note-2">♫</div>
+            <div class="floating-note note-3">♪</div>
+            <div class="floating-note note-4">♫</div>
+        </div>
+    </main>
+    
+    <script src="{{ url_for('static', path='js/error.js') }}"></script>
+</body>
+</html>

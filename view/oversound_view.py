@@ -24,6 +24,11 @@ class View():
     def get_register_view(self, request: Request, userdata: dict, syu_server: str):
         data = {"userdata": userdata, "syu_server": syu_server}
         return templates.TemplateResponse("register.html", {"request": request, "data": data})
+    
+    # Renderizar la template de error
+    def get_error_view(self, request: Request, userdata: dict, error_message: str):
+        data = {"userdata": userdata, "error_message": error_message}
+        return templates.TemplateResponse("error.html", {"request": request, "data": data})
 
 
 
@@ -46,7 +51,7 @@ class View():
         return templates.TemplateResponse("main/index.html", {"request" :request, "songs" : songs})
     
     def get_song_view(self, request: Request, song_info : dict, tipoUsuario: int, user, isLiked: bool, inCarrito: bool):
-        return templates.TemplateResponse("music/song.html", {"request": request, "song": song_info, "tipoUsuario": tipoUsuario, "usuario": user, "isLiked": isLiked, "inCarrito": inCarrito})
+        return templates.TemplateResponse("song.html", {"request": request, "data": {"userdata": user, "song": song_info}, "tipoUsuario": tipoUsuario, "isLiked": isLiked, "inCarrito": inCarrito})
 
     def get_edit_song_view(self, request: Request, song_info):
         return templates.TemplateResponse("music/song-edit.html", {"request": request, "song": song_info})    

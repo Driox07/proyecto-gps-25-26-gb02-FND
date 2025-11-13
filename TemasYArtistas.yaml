@@ -1,0 +1,1160 @@
+openapi: 3.0.4
+info:
+  title: Temas y Autores (TYA)
+  description: |-
+    Esta es la documentación para la API del Microservicio de Temas y Autores (TYA) del proyecto OverSounds.
+  version: 2.0.0
+externalDocs:
+  description: Github access
+  url: https://github.com/orgs/UniExtremadura/teams/gb02
+servers:
+  - url: http://localhost
+tags:
+  - name: song
+    description: Access to artists songs
+  - name: album
+    description: Access to artists albums
+  - name: merchandising
+    description: Access to artist merchandising
+  - name: artist
+    description: Access to artists information
+  - name: genres
+    description: Access to music genres information
+    
+paths:
+  /song/{songId}:
+    get:
+      tags:
+        - song
+      summary: Gets a song info by Id
+      operationId: getSong
+      parameters:
+        - name: songId
+          in: path
+          description: ID of the Song
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Song'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Song not found
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      tags:
+        - song
+      summary: Updates a song in the database with form data.
+      description: Updates song properties. Note that albumId (original album) is immutable and cannot be changed after creation.
+      operationId: updateSong
+      parameters:
+        - name: songId
+          in: path
+          description: ID of the Song
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterSong'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception (e.g., price not positive)
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+          - write
+    delete:
+      tags:
+        - song
+      summary: Deletes a song.
+      operationId: deleteSong
+      parameters:
+        - name: songId
+          in: path
+          description: ID of the Song
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+          - write
+  /song/upload:  
+    post:
+      tags:
+        - song
+      summary: Add a new song to the database
+      operationId: addSong
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterSong'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  songId:
+                    type: integer
+                    description: ID of the created song
+                    example: 123
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception (e.g., referenced album does not exist, price not positive, albumId/albumOrder dependency not met)
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+          - write
+  /song/search:
+    get:
+      tags:
+        - song
+      summary: Search a song by an specific metric
+      description: Only one song metric can be use at a time. Other values MUST be null.
+      operationId: searchSong
+      parameters:
+        - name: q
+          in: query
+          description: Query to search ID for
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    songId:
+                      type: integer
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /album/{albumId}:
+    get:
+      tags:
+        - album
+      summary: Gets an album info by Id
+      operationId: getAlbum
+      parameters:
+        - name: albumId
+          in: path
+          description: ID of the album
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Album'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Album not found
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      tags:
+        - album
+      summary: Updates an album in the database with form data.
+      operationId: updateAlbum
+      parameters:
+        - name: albumId
+          in: path
+          description: ID of the album
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterAlbum'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception (e.g., referenced song does not exist, price not positive)
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+          - write
+    delete:
+      tags:
+        - album
+      summary: Deletes an album.
+      operationId: deleteAlbum
+      parameters:
+        - name: albumId
+          in: path
+          description: ID of the album
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+          - write
+  /album/upload:  
+    post:
+      tags:
+        - album
+      summary: Add a new album to the database
+      operationId: addAlbum
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterAlbum'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  albumId:
+                    type: integer
+                    description: ID of the created album
+                    example: 456
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception (e.g., referenced song does not exist, price not positive)
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+          - write
+  /album/search:
+    get:
+      tags:
+        - album
+      summary: Search an album by a specific metric
+      description: Only one album metric can be used at a time. Other values MUST be null.
+      operationId: searchAlbum
+      parameters:
+        - name: q
+          in: query
+          description: Query to search album for
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    albumId:
+                      type: integer
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+
+  /merch/{merchId}:
+    get:
+      tags:
+        - merchandising
+      summary: Gets a merchandising item info by Id
+      operationId: getMerch
+      parameters:
+        - name: merchId
+          in: path
+          description: ID of the Merchandising item
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Merchandising'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Merchandising item not found
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      tags:
+        - merchandising
+      summary: Updates a merchandising item in the database with form data.
+      operationId: updateMerch
+      parameters:
+        - name: merchId
+          in: path
+          description: ID of the Merchandising item
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterMerchandising'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+          - write
+    delete:
+      tags:
+        - merchandising
+      summary: Deletes a merchandising item.
+      operationId: deleteMerch
+      parameters:
+        - name: merchId
+          in: path
+          description: ID of the Merchandising item
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+          - write
+  /merch/upload:  
+    post:
+      tags:
+        - merchandising
+      summary: Add a new merchandising item to the database
+      operationId: addMerch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterMerchandising'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  merchId:
+                    type: integer
+                    description: ID of the created merchandising item
+                    example: 789
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+          - write
+  /merch/search:
+    get:
+      tags:
+        - merchandising
+      summary: Search a merchandising item by a specific metric
+      description: Only one merchandising metric can be used at a time. Other values MUST be null.
+      operationId: searchMerch
+      parameters:
+        - name: q
+          in: query
+          description: Query to search merchandising for
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    merchId:
+                      type: integer
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /artist/{artistId}:
+    get:
+      tags:
+        - artist
+      summary: Gets an artist info by Id
+      operationId: getArtist
+      parameters:
+        - name: artistId
+          in: path
+          description: ID of the artist
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artist'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Artist not found
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      tags:
+        - artist
+      summary: Updates an artist in the database with form data.
+      operationId: updateArtist
+      parameters:
+        - name: artistId
+          in: path
+          description: ID of the artist
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterArtist'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+          - write
+    delete:
+      tags:
+        - artist
+      summary: Deletes an artist.
+      operationId: deleteArtist
+      parameters:
+        - name: artistId
+          in: path
+          description: ID of the artist
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+          - write
+  /artist/upload:  
+    post:
+      tags:
+        - artist
+      summary: Add a new artist to the database
+      operationId: addArtist
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterArtist'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  artistId:
+                    type: integer
+                    description: ID of the created artist
+                    example: 321
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+          - write
+  /artist/search:
+    get:
+      tags:
+        - artist
+      summary: Search an artist by a specific metric
+      description: Only one artist metric can be used at a time. Other values MUST be null.
+      operationId: searchArtist
+      parameters:
+        - name: q
+          in: query
+          description: Query to search artist for
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    artistId:
+                      type: integer
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  
+  /genres:
+    get:
+      tags:
+        - genres
+      summary: Get all available music genres
+      description: Returns a list of all music genres available in the system
+      operationId: getGenres
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Genre'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  securitySchemes:
+    oversounds_auth:
+      type: apiKey
+      in: cookie
+      name: token
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          description: Error code representing the type of error.
+          type: string
+          example: "TYA-001"
+        message:
+          description: Detailed error message.
+          type: string
+          example: "Detailed error message."
+      required:
+        - code
+        - message
+    
+    Genre:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID of the Genre
+          example: 1
+        name:
+          type: string
+          description: Name of the Genre
+          example: "Pop"
+      required:
+        - id
+        - name
+        
+    Song:
+      type: object
+      properties:
+        songId:
+          type: integer
+          description: ID of the Song
+          example: 1
+        title:
+          type: string
+          description: Title of the Song
+          example: California Girls
+        artistId:
+          type: integer
+          description: ID of the Artist that the Song belongs to
+          example: 0
+        collaborators:
+          type: array
+          items:
+            type: integer
+          description: List of IDs of Artists who collaborated on the song
+          example: [1, 2]
+        releaseDate:
+          type: string
+          format: date-time
+          description: Date of release of the Song
+          example: "2010-01-15"
+        description:
+          type: string
+          nullable: true
+          description: Description of the Song
+          example: CELEBRATING TEN YEARS OF TEENAGE DREAM!! REMASTERED IN 4K!
+        duration:
+          type: integer
+          description: Duration of song in seconds.
+          example: 264
+        genres:
+          type: array
+          items:
+            type: integer
+          description: IDs of genres of the Song
+        cover:
+          type: string
+          description: base64 image of the Song cover
+          example: "data:image/png;base64,iVBORw0KGgoAAAAN..."
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Price of the Song (must be positive)
+          example: 10.99
+        albumId:
+          type: integer
+          nullable: true
+          description: ID of the original Album the Song belongs to when uploaded (immutable, null if single). This represents the album the song was originally released with and cannot be changed after creation.
+          example: 0
+        trackId:
+          type: integer
+          description: ID of the Track file that contains the song
+          example: 123456
+        albumOrder:
+          type: integer
+          nullable: true
+          description: Position of the song in the album (null if single).
+          example: 1
+        linked_albums:
+          type: array
+          items:
+            type: integer
+          description: List of IDs of other albums where this song appears (excluding the original albumId).
+          example: [5, 12, 23]
+        
+        
+    RegisterSong:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Title of the Song
+          example: California Girls
+        collaborators:
+          type: array
+          items:
+            type: integer
+          description: List of IDs of Artists who collaborated on the song
+          example: [1, 2]
+        releaseDate:
+          type: string
+          format: date-time
+          description: Date of release of the Song
+          example: "2010-01-15"
+        description:
+          type: string
+          nullable: true
+          description: Description of the Song
+          example: CELEBRATING TEN YEARS OF TEENAGE DREAM!! REMASTERED IN 4K!
+        genres:
+          type: array
+          items:
+            type: integer
+          description: IDs of genres of the Song
+        cover:
+          type: string
+          description: Image file path for the Song cover
+          example: "/images/songs/california-girls-cover.jpg"
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Price of the Song (must be positive)
+          example: 10.99
+        trackId:
+          type: integer
+          description: ID of the audio track file
+          example: 123456
+        duration:
+          type: integer
+          description: Duration of the song in seconds
+          example: 245
+        albumId:
+          type: integer
+          nullable: true
+          description: ID of the original Album the Song belongs to (immutable once created). If specified during creation, albumOrder MUST also be specified and the album must exist. Singles have null albumId.
+          example: 0
+        albumOrder:
+          type: integer
+          nullable: true
+          description: Position of the song in the album (null if single). REQUIRED when albumId is specified.
+          example: 1          
+      required:
+        - title
+        - genres
+        - cover
+        - price
+        - trackId
+        - duration
+        
+    Album:
+      type: object
+      properties:
+        albumId:
+          type: integer
+          description: ID of the Album
+          example: 1
+        title:
+          type: string
+          description: Title of the Album
+          example: Teenage Dream
+        artistId :
+          type: integer
+          description: ID of the Artist who owns the Album
+          example: 0
+        collaborators:
+          type: array
+          items:
+            type: integer
+          description: List of IDs of Artists who collaborated on the Album
+          example: [1, 2, 3]
+        description:
+          type: string
+          description: Description of the Album
+          example: "Third studio album featuring hits like California Gurls and Firework"
+        releaseDate:
+          type: string
+          format: date-time
+          description: Release date of the Album
+          example: "2010-08-24"
+        genres:
+          type: array
+          items:
+            type: integer
+          description: IDs of genres of the Album (read-only, calculated from songs)
+        songs:
+          type: array
+          items:
+            type: integer
+          description: List of IDs of Songs included in the Album
+          example: [1, 2, 3, 4, 5]
+        cover:
+          type: string
+          description: Image file path for the Album cover
+          example: "/images/albums/teenage-dream-cover.jpg"
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Price of the Album (must be positive)
+          example: 15.99
+          
+    RegisterAlbum:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Title of the Album
+          example: Teenage Dream
+        collaborators:
+          type: array
+          items:
+            type: integer
+          description: List of IDs of Artists who collaborated on the Album
+          example: [1, 2, 3]
+        description:
+          type: string
+          description: Description of the Album
+          example: "Third studio album featuring hits like California Gurls and Firework"
+        releaseDate:
+          type: string
+          format: date-time
+          description: Release date of the Album
+          example: "2010-08-24"
+        songs:
+          type: array
+          items:
+            type: integer
+          description: List of IDs of Songs included in the Album. All songs must exist in the database.
+          example: [1, 2, 3, 4, 5]
+        cover:
+          type: string
+          description: Image file path for the Album cover
+          example: "/images/albums/teenage-dream-cover.jpg"
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Price of the Album (must be positive)
+          example: 15.99
+      required:
+        - title
+        - songs
+        - cover
+        - price
+          
+    Artist:
+      type: object
+      properties:
+        artistId:
+          type: integer
+          description: ID of the Artist
+          example: 123
+        artisticName:
+          type: string
+          description: Stage name of the Artist
+          example: Katy Perry
+        artisticBiography:
+          type: string
+          description: Artistic biography of the Artist
+          example: "American singer, songwriter and actress known for her pop hits"
+        artisticEmail:
+          type: string
+          format: email
+          nullable: true
+          description: Artistic contact email of the Artist
+          example: contact@katyperry.com
+        artisticImage:
+          type: string
+          description: base64 image of the Artist profile
+          example: "data:image/png;base64,iVBORw0KGgoAAAAN..."
+        socialMediaUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: URL of the Artist's social media
+          example: https://twitter.com/katyperry
+        registrationDate:
+          type: string
+          format: date-time
+          description: Registration date of the Artist
+          example: "2010-01-15T10:30:00Z"
+        userId:
+          type: integer
+          nullable: true
+          description: ID of the User associated with the Artist
+          example: 123
+        owner_songs:
+          type: array
+          items:
+            type: integer
+          description: List of IDs of Songs where the Artist is the main creator (ft=false)
+          example: [1, 2, 3]
+        owner_albums:
+          type: array
+          items:
+            type: integer
+          description: List of IDs of Albums where the Artist is the main creator (ft=false)
+          example: [1, 2]
+        owner_merch:
+          type: array
+          items:
+            type: integer
+          description: List of IDs of Merchandising where the Artist is associated
+          example: [1, 2]
+
+    RegisterArtist:
+      type: object
+      properties:
+        artisticName:
+          type: string
+          description: Stage name of the Artist
+          example: Katy Perry
+        artisticBiography:
+          type: string
+          description: Artistic biography of the Artist
+          example: "American singer, songwriter and actress known for her pop hits"
+        artisticEmail:
+          type: string
+          format: email
+          description: Artistic contact email of the Artist
+          example: contact@katyperry.com
+        artisticImage:
+          type: string
+          description: Image file path for the Artist profile
+          example: "/images/artists/katy-perry-profile.jpg"
+        socialMediaUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: URL of the Artist's social media (optional)
+          example: https://twitter.com/katyperry
+      required:
+        - artisticName
+        - artisticEmail
+
+
+    Merchandising:
+      type: object
+      properties:
+        merchId:
+          type: integer
+          description: ID of the Merchandising item
+          example: 1
+        title:
+          type: string
+          description: Title of the Merchandising item
+          example: Teenage Dream Tour T-Shirt
+        artistId :
+          type: integer
+          description: ID of the Artist who owns the Merchandising item
+          example: 0
+        collaborators:
+          type: array
+          items:
+            type: integer
+          description: List of IDs of Artists who collaborated on the Merchandising item
+          example: [1, 2]
+        releaseDate:
+          type: string
+          format: date-time
+          description: Release date of the Merchandising item
+          example: "2010-05-15"
+        description:
+          type: string
+          description: Description of the Merchandising item
+          example: "Official tour merchandise featuring the Teenage Dream album artwork"
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Price of the Merchandising item (must be positive)
+          example: 29.99
+        cover:
+          type: string
+          description: Image file path for the Merchandising item
+          example: "/images/merch/teenage-dream-tshirt.jpg"
+
+    RegisterMerchandising:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Title of the Merchandising item
+          example: Teenage Dream Tour T-Shirt
+        collaborators:
+          type: array
+          items:
+            type: integer
+          description: List of IDs of Artists who collaborated on the Merchandising item
+          example: [1, 2]
+        releaseDate:
+          type: string
+          format: date-time
+          description: Release date of the Merchandising item
+          example: "2010-05-15"
+        description:
+          type: string
+          description: Description of the Merchandising item
+          example: "Official tour merchandise featuring the Teenage Dream album artwork"
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Price of the Merchandising item (must be positive)
+          example: 29.99
+        cover:
+          type: string
+          description: Image file path for the Merchandising item
+          example: "/images/merch/teenage-dream-tshirt.jpg"
+      required:
+        - title
+        - price
+        - cover
