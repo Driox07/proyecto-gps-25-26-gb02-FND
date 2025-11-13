@@ -9,7 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const res = await fetch('http://localhost:8080/login', {
+            const loginBtn = document.getElementById('login-btn');
+            const loginUrl = loginBtn.getAttribute('data-login-url');
+            const res = await fetch(loginUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),

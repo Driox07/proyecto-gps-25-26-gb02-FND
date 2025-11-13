@@ -4,16 +4,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const userButton = document.querySelector('.user-button');
     const userDropdown = document.querySelector('.user-dropdown');
 
-    if (userButton && userDropdown) {
-        // Toggle dropdown on click (opcional, ya que hover funciona)
+    if (userMenu && userButton && userDropdown) {
+        let isDropdownOpen = false;
+
+        // Abrir dropdown con mouseenter
+        userMenu.addEventListener('mouseenter', () => {
+            isDropdownOpen = true;
+            userDropdown.classList.add('show');
+        });
+
+        // Cerrar dropdown con mouseleave pero con pequeño delay
+        userMenu.addEventListener('mouseleave', () => {
+            setTimeout(() => {
+                if (!userDropdown.matches(':hover')) {
+                    isDropdownOpen = false;
+                    userDropdown.classList.remove('show');
+                }
+            }, 100);
+        });
+
+        // Toggle dropdown on click
         userButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            userDropdown.classList.toggle('show');
+            isDropdownOpen = !isDropdownOpen;
+            userDropdown.classList.toggle('show', isDropdownOpen);
         });
 
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
-            if (userMenu && !userMenu.contains(e.target)) {
+            if (!userMenu.contains(e.target)) {
+                isDropdownOpen = false;
                 userDropdown.classList.remove('show');
             }
         });
@@ -21,6 +41,32 @@ document.addEventListener('DOMContentLoaded', () => {
         // Prevent dropdown from closing when clicking inside it
         userDropdown.addEventListener('click', (e) => {
             e.stopPropagation();
+        });
+    }
+
+    // Logout functionality
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const logoutUrl = logoutBtn.getAttribute('data-logout-url');
+            
+            try {
+                const response = await fetch(logoutUrl, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                // Recargar la página independientemente de la respuesta
+                window.location.reload();
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+                // Recargar la página incluso si hay error
+                window.location.reload();
+            }
         });
     }
 

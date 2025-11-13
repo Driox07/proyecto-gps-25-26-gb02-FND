@@ -11,17 +11,19 @@ class View():
         pass
 
     # Esta función se va a usar para renderizar la template home.html
-    def get_home_view(self, request: Request, userdata):
-        data = {"userdata": userdata}
+    def get_home_view(self, request: Request, userdata: dict, syu_server: str):
+        data = {"userdata": userdata, "syu_server": syu_server}
         return templates.TemplateResponse("home.html", {"request" : request, "data": data})
     
     # Renderizar la template login.html
-    def get_login_view(self, request: Request):
-        return templates.TemplateResponse("login.html", {"request": request})
+    def get_login_view(self, request: Request, userdata: dict, syu_server: str):
+        data = {"userdata": userdata, "syu_server": syu_server}
+        return templates.TemplateResponse("login.html", {"request": request, "data": data})
 
     # Renderizar la template register.html
-    def get_register_view(self, request: Request):
-        return templates.TemplateResponse("register.html", {"request": request})
+    def get_register_view(self, request: Request, userdata: dict, syu_server: str):
+        data = {"userdata": userdata, "syu_server": syu_server}
+        return templates.TemplateResponse("register.html", {"request": request, "data": data})
 
 
 

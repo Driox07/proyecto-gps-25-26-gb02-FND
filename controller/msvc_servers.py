@@ -1,4 +1,4 @@
-SYU = 'http://localhost:8080'
+SYU = 'http://10.1.1.4:8080'
 TYA = 'http://localhost:8081'
 TPP = 'http://localhost:8082'
 PT  = 'http://localhost:8083'

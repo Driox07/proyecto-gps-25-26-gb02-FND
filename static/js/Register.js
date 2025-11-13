@@ -13,7 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const res = await fetch('http://localhost:8080/register', {
+            const registerBtn = document.getElementById('reg-btn');
+            const registerUrl = registerBtn.getAttribute('data-register-url');
+            const res = await fetch(registerUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.nick }} - Perfil | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/user_profile.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="profile-main">
+        <!-- Profile Header Section -->
+        <section class="profile-header">
+            <div class="profile-header-content">
+                <div class="profile-image-container">
+                    {% if user.imagen %}
+                        <img src="{{ user.imagen }}" alt="{{ user.nick }}" class="profile-image">
+                    {% else %}
+                        <div class="profile-image-placeholder">
+                            {{ user.nick[0].upper() }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="profile-info">
+                    <h1 class="profile-nickname">{{ user.nick }}</h1>
+                    <h2 class="profile-fullname">{{ user.nombre }} {{ user.apellido1 }} {{ user.apellido2 }}</h2>
+                    
+                    {% if user.biografia %}
+                        <p class="profile-bio">{{ user.biografia }}</p>
+                    {% else %}
+                        <p class="profile-bio empty">Sin biografía</p>
+                    {% endif %}
+                    
+                    <div class="profile-meta">
+                        <div class="meta-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line>
+                                <line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line>
+                                <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line>
+                            </svg>
+                            <span>Miembro desde {{ user.fecha_registro }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-actions">
+                        <a href="/profile/edit" class="btn btn-primary">Editar Perfil</a>
+                        <a href="/settings" class="btn btn-secondary">Configuración</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Favorites Section -->
+        <section class="favorites-section">
+            <div class="favorites-container">
+                
+                <!-- Canciones Favoritas -->
+                <div class="favorites-category">
+                    <div class="category-header">
+                        <h2 class="category-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"/>
+                            </svg>
+                            Canciones Favoritas
+                        </h2>
+                        <span class="category-count">{{ canciones_favoritas|length if canciones_favoritas else 0 }}</span>
+                    </div>
+                    
+                    <div class="favorites-grid">
+                        {% if canciones_favoritas %}
+                            {% for cancion in canciones_favoritas %}
+                                <div class="favorite-card">
+                                    <div class="card-image">
+                                        {% if cancion.imagen %}
+                                            <img src="{{ cancion.imagen }}" alt="{{ cancion.nombre }}">
+                                        {% else %}
+                                            <div class="card-image-placeholder">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"/>
+                                                </svg>
+                                            </div>
+                                        {% endif %}
+                                        <div class="card-overlay">
+                                            <button class="play-button">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-content">
+                                        <h3 class="card-title">{{ cancion.nombre }}</h3>
+                                        <p class="card-subtitle">{{ cancion.artista if cancion.artista else 'Artista Desconocido' }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"/>
+                                </svg>
+                                <p>No tienes canciones favoritas aún</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Álbumes Favoritos -->
+                <div class="favorites-category">
+                    <div class="category-header">
+                        <h2 class="category-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                            </svg>
+                            Álbumes Favoritos
+                        </h2>
+                        <span class="category-count">{{ albumes_favoritos|length if albumes_favoritos else 0 }}</span>
+                    </div>
+                    
+                    <div class="favorites-grid">
+                        {% if albumes_favoritos %}
+                            {% for album in albumes_favoritos %}
+                                <div class="favorite-card">
+                                    <div class="card-image">
+                                        {% if album.imagen %}
+                                            <img src="{{ album.imagen }}" alt="{{ album.nombre }}">
+                                        {% else %}
+                                            <div class="card-image-placeholder">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                                    <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                                                </svg>
+                                            </div>
+                                        {% endif %}
+                                        <div class="card-overlay">
+                                            <button class="play-button">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-content">
+                                        <h3 class="card-title">{{ album.nombre }}</h3>
+                                        <p class="card-subtitle">{{ album.artista if album.artista else 'Artista Desconocido' }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                    <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                                </svg>
+                                <p>No tienes álbumes favoritos aún</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Artistas Favoritos -->
+                <div class="favorites-category">
+                    <div class="category-header">
+                        <h2 class="category-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke-width="2"></path>
+                                <circle cx="12" cy="7" r="4" stroke-width="2"></circle>
+                            </svg>
+                            Artistas Favoritos
+                        </h2>
+                        <span class="category-count">{{ artistas_favoritos|length if artistas_favoritos else 0 }}</span>
+                    </div>
+                    
+                    <div class="favorites-grid">
+                        {% if artistas_favoritos %}
+                            {% for artista in artistas_favoritos %}
+                                <div class="favorite-card artist-card">
+                                    <div class="card-image artist-image">
+                                        {% if artista.imagen %}
+                                            <img src="{{ artista.imagen }}" alt="{{ artista.nombre }}">
+                                        {% else %}
+                                            <div class="card-image-placeholder">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke-width="2"></path>
+                                                    <circle cx="12" cy="7" r="4" stroke-width="2"></circle>
+                                                </svg>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-content">
+                                        <h3 class="card-title">{{ artista.nombre }}</h3>
+                                        <p class="card-subtitle">Artista</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke-width="2"></path>
+                                    <circle cx="12" cy="7" r="4" stroke-width="2"></circle>
+                                </svg>
+                                <p>No tienes artistas favoritos aún</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', path='js/user_profile.js') }}"></script>
+</body>
+</html>

@@ -20,8 +20,8 @@
             {% if data and data.userdata %}
                 <div class="user-menu">
                     <button class="user-button">
-                        <span class="user-avatar">{{ data.userdata.nick.upper() }}</span>
-                        <span class="user-name">{{ data.userdata.nick.upper() }}</span>
+                        <span class="user-avatar">{{ data.userdata.nick[0].upper() }}</span>
+                        <span class="user-name">{{ data.userdata.nick }}</span>
                         <svg class="user-dropdown-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         </svg>
@@ -41,7 +41,7 @@
                             Configuración
                         </a>
                         <hr class="dropdown-divider">
-                        <a href="/logout" class="dropdown-item logout-item">
+                        <a href="#" class="dropdown-item logout-item" id="logout-btn" data-logout-url="{{ data.syu_server }}/logout">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                                 <path d="M10 12.5a.5.5 0 01-.5.5h-8a.5.5 0 01-.5-.5v-9a.5.5 0 01.5-.5h8a.5.5 0 01.5.5v2a.5.5 0 001 0v-2A1.5 1.5 0 009.5 2h-8A1.5 1.5 0 000 3.5v9A1.5 1.5 0 001.5 14h8a1.5 1.5 0 001.5-1.5v-2a.5.5 0 00-1 0v2z"/>
                                 <path d="M15.854 8.354a.5.5 0 000-.708l-3-3a.5.5 0 00-.708.708L14.293 7.5H5.5a.5.5 0 000 1h8.793l-2.147 2.146a.5.5 0 00.708.708l3-3z"/>
