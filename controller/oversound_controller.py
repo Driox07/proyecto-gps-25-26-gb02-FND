@@ -35,7 +35,7 @@ def obtain_user_data(token: str):
     if not token:
         return None
     try:
-        resp = requests.get(f"{servers.SYU}/auth/{token}", timeout=2, headers={"Accept": "application/json"})
+        resp = requests.get(f"{servers.SYU}/auth", timeout=2, headers={"Accept": "application/json"})
         resp.raise_for_status()
         return resp.json()
     except requests.RequestException:
@@ -49,19 +49,42 @@ def index(request: Request):
     return osv.get_home_view(request, userdata, servers.SYU)
 
 @app.get("/login")
-def login(request: Request):
+def login_page(request: Request):
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     if userdata:
         return RedirectResponse("/")
     return osv.get_login_view(request, userdata, servers.SYU)
 
+@app.post("/login")
+async def login(request: Request):
+    # Se obtienen los datos del formulario
+    body = await request.json()
+    nick = body.get("nick")
+    contrasena = body.get("contrasena")
+    # Se hace un post a SYU
+    resp = requests.post(
+        f"{servers.SYU}/login", 
+        json={"nick": nick, "contrasena": contrasena},
+        timeout=2, 
+        headers={"Accept": "application/json"}
+    )
+    resp.raise_for_status()
+    response_data = resp.json()
+    if resp.ok:
+        response = Response(content=json.dumps({"message": "Login successful"}), media_type="application/json")
+        response.set_cookie(key="oversound_auth", value=response_data.get("token"), httponly=True, secure=False)
+    else:
+        response = Response(content=response_data, media_type="application/json")
+    return response
+
 @app.post("/logout")
 def logout(request: Request):
     try:
         token = request.cookies.get("oversound_auth")
-        resp = request.get(f"{servers.SYU}/logout/{token}", timeout=2, headers={"Accept": "applications/json"})
+        resp = requests.get(f"{servers.SYU}/logout", timeout=2, headers={"Accept": "applications/json", "Cookie": f"oversound_auth={token}"})
         resp.raise_for_status()
+        Response.delete_cookie("session")
         return resp.json()
     except requests.RequestException:
         return Response(content=json.dumps({"error": "Couldn't connect with authentication service"}), media_type="application/json", status_code=500)
@@ -77,9 +100,8 @@ def register(request: Request):
 @app.get("/user/{nick}")
 def register(request: Request, nick: str):
     token = request.cookies.get("session")
-    userdata = requests.get(f"{servers.SYU}/user/{nick}", timeout=2, headers={"Accept": "application/json", "Cookie": f"session={token}"})
+    userdata = requests.get(f"{servers.SYU}/user/{nick}", timeout=2, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
     userdata.raise_for_status()
-    print(userdata.json())
     return userdata.json()
 
 
