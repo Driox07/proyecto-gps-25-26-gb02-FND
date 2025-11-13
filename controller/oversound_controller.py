@@ -1,5 +1,6 @@
 import json
 from fastapi import FastAPI, Query, Request, Response
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -51,6 +52,8 @@ def index(request: Request):
 def login(request: Request):
     token = request.cookies.get("session")
     userdata = obtain_user_data(token)
+    if userdata:
+        return RedirectResponse("/")
     return osv.get_login_view(request, userdata, servers.SYU)
 
 @app.post("/logout")
@@ -67,9 +70,14 @@ def logout(request: Request):
 def register(request: Request):
     token = request.cookies.get("session")
     userdata = obtain_user_data(token)
+    if userdata:
+        return RedirectResponse("/")
     return osv.get_register_view(request, userdata, servers.SYU)
 
 @app.get("/user/{nick}")
 def register(request: Request, nick: str):
-    userdata = request.get(f"{servers.SYU}/user/{nick}")
-    
+    token = request.cookies.get("session")
+    userdata = requests.get(f"{servers.SYU}/user/{nick}", timeout=2, headers={"Accept": "application/json", "Cookie": f"session={token}"})
+    userdata.raise_for_status()
+    print(userdata.json())
+    return userdata.json()
