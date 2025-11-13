@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+    <!-- Registro para probar, ncesita nombre, ap1, ap2, mail, contraseña -->
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrarse en OverSounds</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/register.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    <div class="main-content">
+        <div class="container">
+            <h2>Registrarse en OverSounds</h2>
+            <form action="/register" method="post">
+                <label for="nick">Nickname:</label>
+                <input type="text" id="nick" name="nick" required>
+
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" name="nombre" required>
+
+                <label for="apellido1">Primer Apellido:</label>
+                <input type="text" id="apellido1" name="apellido1" required>
+
+                <label for="apellido2">Segundo Apellido:</label>
+                <input type="text" id="apellido2" name="apellido2" required>
+
+                <label for="email">Correo Electrónico:</label>
+                <input type="email" id="email" name="email" required>
+
+                <label for="contrasena">Contraseña:</label>
+                <input type="password" id="contrasena" name="contrasena" required>
+
+                <button type="submit">Registrar</button>
+            </form>
+            
+            <div class="login-link">
+                ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', path='js/Register.js') }}"></script>
+</body>
+</html>

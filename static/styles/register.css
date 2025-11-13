@@ -1,4 +1,4 @@
-/* Login Page Styles */
+/* Register Page Styles */
 * {
     margin: 0;
     padding: 0;
@@ -144,45 +144,21 @@ input:invalid:not(:placeholder-shown) {
     border-color: #f56565;
 }
 
-/* Forgot password link - Diseño mejorado */
-.forgot-password {
-    text-align: center;
-    margin-top: 15px;
-}
-
-.forgot-password a {
-    color: #667eea;
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    display: inline-block;
-    padding: 8px 16px;
-    border-radius: 6px;
-    background-color: rgba(102, 126, 234, 0.05);
-}
-
-.forgot-password a:hover {
-    color: #764ba2;
-    background-color: rgba(102, 126, 234, 0.1);
-    transform: translateY(-1px);
-}
-
-/* Register link - Diseño mejorado con botón */
-.register-link {
+/* Login link - Diseño mejorado con botón */
+.login-link {
     text-align: center;
     margin-top: 25px;
     padding-top: 25px;
     border-top: 1px solid #e0e0e0;
 }
 
-.register-link {
+.login-link {
     color: #666;
     font-size: 14px;
     font-weight: 500;
 }
 
-.register-link a {
+.login-link a {
     color: #fff;
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
     text-decoration: none;
@@ -195,7 +171,7 @@ input:invalid:not(:placeholder-shown) {
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-.register-link a:hover {
+.login-link a:hover {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);

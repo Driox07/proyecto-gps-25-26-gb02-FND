@@ -11,8 +11,28 @@ class View():
         pass
 
     # Esta función se va a usar para renderizar la template home.html
-    def get_home_view(self, request: Request):
-        return templates.TemplateResponse("home.html", {"request" : request})
+    def get_home_view(self, request: Request, userdata):
+        data = {"userdata": userdata}
+        return templates.TemplateResponse("home.html", {"request" : request, "data": data})
+    
+    # Renderizar la template login.html
+    def get_login_view(self, request: Request):
+        return templates.TemplateResponse("login.html", {"request": request})
+
+    # Renderizar la template register.html
+    def get_register_view(self, request: Request):
+        return templates.TemplateResponse("register.html", {"request": request})
+
+
+
+
+
+
+
+
+
+
+
     # Esta función se va a usar para renderizar la template shop.html
     def get_shop_view(self, request: Request, songs, genres, artistas, albums, tipoUsuario: bool): 
         return templates.TemplateResponse("main/index.html", {"request" :request, "songs" : songs, "genres": genres, "artistas": artistas, "albums": albums, "tipoUsuario": tipoUsuario})
@@ -27,11 +47,7 @@ class View():
         return templates.TemplateResponse("music/song.html", {"request": request, "song": song_info, "tipoUsuario": tipoUsuario, "usuario": user, "isLiked": isLiked, "inCarrito": inCarrito})
 
     def get_edit_song_view(self, request: Request, song_info):
-        return templates.TemplateResponse("music/song-edit.html", {"request": request, "song": song_info})
-    
-    # Renderizar la template login.html
-    def get_login_view(self, request: Request):
-        return templates.TemplateResponse("login.html", {"request": request})
+        return templates.TemplateResponse("music/song-edit.html", {"request": request, "song": song_info})    
 
     # Renderizar la template logut.html
     def get_logout_view(self, request: Request):
@@ -47,10 +63,6 @@ class View():
             "listas_completas": listas_completas,
             "API_CREDENTIALS" : apicreds
         })
-    
-    # Renderizar la template register.html
-    def get_register_view(self, request: Request):
-        return templates.TemplateResponse("auth/register.html", {"request": request, "API_CREDENTIALS" : apicreds })
     
     # Renderizar la template faqs.html
     def get_faqs_view(self, request: Request, faqs):

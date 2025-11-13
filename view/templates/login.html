@@ -1,137 +1,37 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
+    <!-- Registro para probar, ncesita nombre, ap1, ap2, mail, contraseña -->
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Iniciar sesión — Oversound</title>
-    <meta name="description" content="Página de inicio de sesión de ejemplo para Oversound." />
-    <link rel="stylesheet" href="http://localhost:8000/static/styles/login.css" />
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrarse en OverSounds</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/login.css') }}">
 </head>
 <body>
-    <main class="container" role="main">
-        <section class="marketing" aria-labelledby="welcome">
-            <a class="logo" href="/">
-                <span class="logo-mark" aria-hidden="true"></span>
-                <div>
-                    <strong>Oversound</strong>
-                    <div class="help">Plataforma de audio colaborativo</div>
-                </div>
-            </a>
+    {% include 'common/header.html' %}
+    <div class="main-content">
+        <div class="container">
+            <h2>Registrarse en OverSounds</h2>
+            <form action="/login" method="post">
+                <label for="nick">Nickname o e-mail:</label>
+                <input type="text" id="nick" name="nick" required>
 
-            <h1 id="welcome">Bienvenido de nuevo</h1>
-            <p class="lead">Inicia sesión para continuar con tu trabajo, colaborar con tu equipo y acceder a tus proyectos.</p>
+                <label for="contrasena">Contraseña:</label>
+                <input type="password" id="contrasena" name="contrasena" required>
 
-            <div class="features" aria-hidden="false">
-                <div class="feature">
-                    <div class="feature-bullet">1</div>
-                    <div>
-                        <strong>Progreso guardado</strong>
-                        <div class="help">Tus proyectos se sincronizan automáticamente.</div>
-                    </div>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-bullet">2</div>
-                    <div>
-                        <strong>Colaboración en tiempo real</strong>
-                        <div class="help">Invita compañeros y trabaja juntos en sesiones en vivo.</div>
-                    </div>
-                </div>
-
-                <div class="feature">
-                    <div class="feature-bullet">3</div>
-                    <div>
-                        <strong>Exporta fácilmente</strong>
-                        <div class="help">Descarga tus mezclas en formatos comunes.</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <aside class="card" aria-labelledby="signin">
-            <h2 id="signin" style="margin:0 0 8px;">Iniciar sesión</h2>
-            <form id="loginForm" action="/login" method="post" novalidate>
-                <div>
-                    <label for="email">Correo electrónico</label>
-                    <input id="email" name="email" type="email" class="input" placeholder="tú@ejemplo.com" required aria-required="true" autocomplete="email" />
-                    <div id="emailError" class="error" style="display:none;">Introduce un correo válido.</div>
-                </div>
-
-                <div>
-                    <label for="password">Contraseña</label>
-                    <div style="display:flex;gap:8px;">
-                        <input id="password" name="password" type="password" class="input" placeholder="Contraseña" required aria-required="true" autocomplete="current-password" />
-                        <button type="button" class="toggle-pass" id="togglePass" aria-label="Mostrar contraseña">Mostrar</button>
-                    </div>
-                    <div id="passwordError" class="error" style="display:none;">La contraseña es obligatoria.</div>
-                </div>
-
-                <div class="row">
-                    <label class="checkbox">
-                        <input type="checkbox" name="remember" value="1" />
-                        <small>Recuérdame</small>
-                    </label>
-                    <a class="muted-link" href="/forgot">¿Olvidaste la contraseña?</a>
-                </div>
-
-                <div>
-                    <button class="btn" type="submit">Iniciar sesión</button>
-                </div>
-
-                <div style="display:flex;align-items:center;gap:10px">
-                    <hr style="flex:1;border:none;height:1px;background:#eef2ff"/>
-                    <small class="help">o</small>
-                    <hr style="flex:1;border:none;height:1px;background:#eef2ff"/>
-                </div>
-
-                <div class="socials">
-                    <a href="/auth/google" class="btn alt" title="Iniciar con Google">Google</a>
-                    <a href="/auth/github" class="btn alt" title="Iniciar con GitHub">GitHub</a>
-                </div>
-
-                <p style="margin:12px 0 0;"><small>¿No tienes cuenta? <a href="/register" class="muted-link">Regístrate</a></small></p>
+                <button type="submit">Iniciar Sesión</button>
             </form>
-        </aside>
-    </main>
-
-    <script>
-        // Toggle password visibility
-        (function(){
-            const pass = document.getElementById('password');
-            const btn = document.getElementById('togglePass');
-            btn.addEventListener('click', function(){
-                const showing = pass.type === 'text';
-                pass.type = showing ? 'password' : 'text';
-                btn.textContent = showing ? 'Mostrar' : 'Ocultar';
-                btn.setAttribute('aria-pressed', String(!showing));
-            });
-
-            // Basic client-side validation with accessible messages
-            const form = document.getElementById('loginForm');
-            const email = document.getElementById('email');
-            const emailError = document.getElementById('emailError');
-            const passwordError = document.getElementById('passwordError');
-
-            form.addEventListener('submit', function(e){
-                let ok = true;
-                emailError.style.display = 'none';
-                passwordError.style.display = 'none';
-
-                if (!email.checkValidity()) {
-                    emailError.style.display = 'block';
-                    email.focus();
-                    ok = false;
-                }
-
-                if (!password.value.trim()) {
-                    passwordError.style.display = 'block';
-                    if (ok) password.focus();
-                    ok = false;
-                }
-
-                if (!ok) e.preventDefault();
-            });
-        })();
-    </script>
+            
+            <div class="forgot-password">
+                <a href="/forgot-password">¿Olvidaste tu contraseña?</a>
+            </div>
+            
+            <div class="register-link">
+                ¿No tienes cuenta? <a href="/register">Regístrate aquí</a>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', path='js/Login.js') }}"></script>
 </body>
 </html>
