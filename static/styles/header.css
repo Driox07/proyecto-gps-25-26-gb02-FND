@@ -1,0 +1,23 @@
+
+/* si el ul es hijo directo de header */
+body {
+    margin: 0;
+}
+
+header {
+    display: flex;
+    margin-right: 1rem;
+    margin-left: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+header ul {
+    display: flex;
+}
+
+header li {
+    padding: 1rem;
+    list-style: none;
+}

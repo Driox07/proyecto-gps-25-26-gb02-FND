@@ -10,8 +10,11 @@ class View():
     def __init__(self): 
         pass
 
-    # Esta función se va a usar para renderizar la template index.html
-    def get_index_view(self, request: Request, songs, genres, artistas, albums, tipoUsuario: bool): 
+    # Esta función se va a usar para renderizar la template home.html
+    def get_home_view(self, request: Request):
+        return templates.TemplateResponse("home.html", {"request" : request})
+    # Esta función se va a usar para renderizar la template shop.html
+    def get_shop_view(self, request: Request, songs, genres, artistas, albums, tipoUsuario: bool): 
         return templates.TemplateResponse("main/index.html", {"request" :request, "songs" : songs, "genres": genres, "artistas": artistas, "albums": albums, "tipoUsuario": tipoUsuario})
     # Esta función se va a usar para renderizar la template songs.html
     def get_upload_song_view(self, request: Request):
@@ -28,7 +31,7 @@ class View():
     
     # Renderizar la template login.html
     def get_login_view(self, request: Request):
-        return templates.TemplateResponse("auth/login.html", {"request": request, "API_CREDENTIALS" : apicreds })
+        return templates.TemplateResponse("login.html", {"request": request})
 
     # Renderizar la template logut.html
     def get_logout_view(self, request: Request):
