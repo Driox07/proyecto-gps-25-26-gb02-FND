@@ -16,13 +16,13 @@ class View():
         return templates.TemplateResponse("home.html", {"request" : request, "data": data})
     
     # Renderizar la template login.html
-    def get_login_view(self, request: Request, userdata: dict, syu_server: str):
-        data = {"userdata": userdata, "syu_server": syu_server}
+    def get_login_view(self, request: Request, userdata: dict, fnd_server: str):
+        data = {"userdata": userdata, "fnd_server": fnd_server}
         return templates.TemplateResponse("login.html", {"request": request, "data": data})
 
     # Renderizar la template register.html
-    def get_register_view(self, request: Request, userdata: dict, syu_server: str):
-        data = {"userdata": userdata, "syu_server": syu_server}
+    def get_register_view(self, request: Request, userdata: dict, fnd_server: str):
+        data = {"userdata": userdata, "fnd_server": fnd_server}
         return templates.TemplateResponse("register.html", {"request": request, "data": data})
 
 
