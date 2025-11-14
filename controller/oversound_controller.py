@@ -1,6 +1,6 @@
 import json
 from fastapi import FastAPI, Query, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -35,7 +35,7 @@ def obtain_user_data(token: str):
     if not token:
         return None
     try:
-        resp = requests.get(f"{servers.SYU}/auth", timeout=2, headers={"Accept": "application/json"})
+        resp = requests.get(f"{servers.SYU}/auth", timeout=2, headers={"Accept": "application/json", "Cookie":f"oversound_auth={token}"})
         resp.raise_for_status()
         return resp.json()
     except requests.RequestException:
@@ -54,29 +54,27 @@ def login_page(request: Request):
     userdata = obtain_user_data(token)
     if userdata:
         return RedirectResponse("/")
-    return osv.get_login_view(request, userdata, servers.SYU)
+    return osv.get_login_view(request, userdata, servers.FND)
 
 @app.post("/login")
 async def login(request: Request):
     # Se obtienen los datos del formulario
     body = await request.json()
-    nick = body.get("nick")
-    contrasena = body.get("contrasena")
     # Se hace un post a SYU
     resp = requests.post(
         f"{servers.SYU}/login", 
-        json={"nick": nick, "contrasena": contrasena},
+        json=body,
         timeout=2, 
         headers={"Accept": "application/json"}
     )
-    resp.raise_for_status()
     response_data = resp.json()
     if resp.ok:
-        response = Response(content=json.dumps({"message": "Login successful"}), media_type="application/json")
-        response.set_cookie(key="oversound_auth", value=response_data.get("token"), httponly=True, secure=False)
+        response = JSONResponse(content={"message": "Login successful"})
+        response.set_cookie(key="oversound_auth", value=response_data.get("session_token"), httponly=True, 
+                            secure=False, samesite="lax", path="/")
+        return response
     else:
-        response = Response(content=response_data, media_type="application/json")
-    return response
+        return JSONResponse(content=response_data, status_code=resp.status_code)
 
 @app.post("/logout")
 def logout(request: Request):
@@ -90,12 +88,32 @@ def logout(request: Request):
         return Response(content=json.dumps({"error": "Couldn't connect with authentication service"}), media_type="application/json", status_code=500)
 
 @app.get("/register")
-def register(request: Request):
+def register_page(request: Request):
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     if userdata:
         return RedirectResponse("/")
-    return osv.get_register_view(request, userdata, servers.SYU)
+    return osv.get_register_view(request, userdata, servers.FND)
+
+@app.post("/register")
+async def register(request: Request):
+    # Se obtienen los datos del formulario
+    body = await request.json()
+    # Se hace un post a SYU
+    resp = requests.post(
+        f"{servers.SYU}/register", 
+        json=body,
+        timeout=2, 
+        headers={"Accept": "application/json"}
+    )
+    response_data = resp.json()
+    if resp.ok:
+        response = JSONResponse(content={"message": "Register successful"})
+        response.set_cookie(key="oversound_auth", value=response_data.get("session_token"), httponly=True, 
+                            secure=False, samesite="lax", path="/")
+        return response
+    else:
+        return JSONResponse(content=response_data, status_code=resp.status_code)
 
 @app.get("/user/{nick}")
 def register(request: Request, nick: str):
