@@ -97,6 +97,103 @@ def register(request: Request):
         return RedirectResponse("/")
     return osv.get_register_view(request, userdata, servers.SYU)
 
+@app.get("/shop")
+def shop(request: Request):
+    """
+    Ruta de la tienda - Renderiza la página de tienda con productos
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    # DATOS DE EJEMPLO - Reemplaza estos con tus datos reales de la API
+    songs = [
+        {
+            "id": "song-1",
+            "nombre": "Midnight Dreams",
+            "artista": "Luna Echo",
+            "genero": "Electrónica",
+            "imagen": "https://via.placeholder.com/300?text=Midnight+Dreams",
+            "precio": "1.29"
+        },
+        {
+            "id": "song-2",
+            "nombre": "Ocean Waves",
+            "artista": "The Surfers",
+            "genero": "Indie",
+            "imagen": "https://via.placeholder.com/300?text=Ocean+Waves",
+            "precio": "0.99"
+        },
+        {
+            "id": "song-3",
+            "nombre": "Mountain High",
+            "artista": "Mountain High",
+            "genero": "Rock",
+            "imagen": "https://via.placeholder.com/300?text=Mountain+High",
+            "precio": "1.49"
+        },
+        {
+            "id": "song-4",
+            "nombre": "Urban Beats",
+            "artista": "Urban Beats",
+            "genero": "Hip-Hop",
+            "imagen": "https://via.placeholder.com/300?text=Urban+Beats",
+            "precio": "1.29"
+        },
+        {
+            "id": "song-5",
+            "nombre": "Summer Vibes",
+            "artista": "The Surfers",
+            "genero": "Indie",
+            "imagen": "https://via.placeholder.com/300?text=Summer+Vibes",
+            "precio": "0.99"
+        },
+        {
+            "id": "song-6",
+            "nombre": "Rock Anthem",
+            "artista": "Mountain High",
+            "genero": "Rock",
+            "imagen": "https://via.placeholder.com/300?text=Rock+Anthem",
+            "precio": "1.49"
+        },
+    ]
+    
+    albums = [
+        {
+            "id": "album-1",
+            "nombre": "Neon Lights",
+            "artista": "Luna Echo",
+            "genero": "Electrónica",
+            "imagen": "https://via.placeholder.com/300?text=Neon+Lights",
+            "precio": "9.99"
+        },
+        {
+            "id": "album-2",
+            "nombre": "Coastal Tales",
+            "artista": "The Surfers",
+            "genero": "Indie",
+            "imagen": "https://via.placeholder.com/300?text=Coastal+Tales",
+            "precio": "8.99"
+        },
+        {
+            "id": "album-3",
+            "nombre": "Peak Experience",
+            "artista": "Mountain High",
+            "genero": "Rock",
+            "imagen": "https://via.placeholder.com/300?text=Peak+Experience",
+            "precio": "10.99"
+        },
+    ]
+    
+    genres = ["Electrónica", "Indie", "Rock", "Hip-Hop", "Pop", "Jazz"]
+    artistas = ["Luna Echo", "The Surfers", "Mountain High", "Urban Beats"]
+    
+    # Determinar tipo de usuario (False = Fan, True = Artista)
+    tipoUsuario = False
+    if userdata:
+        tipoUsuario = False  # Por ahora, todos como fans (implementar lógica después)
+    
+    return osv.get_shop_view(request, songs, genres, artistas, albums, tipoUsuario)
+
 @app.get("/user/{nick}")
 def register(request: Request, nick: str):
     token = request.cookies.get("session")
