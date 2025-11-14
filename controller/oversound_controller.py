@@ -309,3 +309,104 @@ def get_song(request: Request, songId: int):
         # En caso de error, mostrar página de error
         return osv.get_error_view(request, userdata, f"No se pudo cargar la canción: {str(e)}")
 
+
+@app.get("/album/{albumId}")
+def get_album(request: Request, albumId: int):
+    """
+    Ruta para mostrar un álbum específico desde la tienda
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    try:
+        # Obtener información del álbum
+        album_resp = requests.get(f"{servers.TYA}/album/{albumId}", timeout=2, headers={"Accept": "application/json"})
+        album_resp.raise_for_status()
+        album_data = album_resp.json()
+        
+        # Resolver artista principal del álbum
+        try:
+            artist_resp = requests.get(f"{servers.TYA}/artist/{album_data['artistId']}", timeout=2, headers={"Accept": "application/json"})
+            artist_resp.raise_for_status()
+            album_data['artist'] = artist_resp.json()
+        except requests.RequestException:
+            album_data['artist'] = {"artistId": album_data['artistId'], "nombre": "Artista desconocido"}
+        
+        # Resolver géneros
+        genres = []
+        if album_data.get('genres'):
+            try:
+                genres_resp = requests.get(f"{servers.TYA}/genres", timeout=2, headers={"Accept": "application/json"})
+                genres_resp.raise_for_status()
+                all_genres = genres_resp.json()
+                genres = [g for g in all_genres if g['id'] in album_data['genres']]
+            except requests.RequestException:
+                pass
+        album_data['genres_data'] = genres
+        
+        # Resolver canciones del álbum
+        tracks = []
+        if album_data.get('tracks'):
+            for track_id in album_data['tracks']:
+                try:
+                    track_resp = requests.get(f"{servers.TYA}/song/{track_id}", timeout=2, headers={"Accept": "application/json"})
+                    track_resp.raise_for_status()
+                    track_data = track_resp.json()
+                    
+                    # Resolver artista de la canción
+                    try:
+                        track_artist_resp = requests.get(f"{servers.TYA}/artist/{track_data['artistId']}", timeout=2, headers={"Accept": "application/json"})
+                        track_artist_resp.raise_for_status()
+                        track_data['artist'] = track_artist_resp.json()
+                    except requests.RequestException:
+                        track_data['artist'] = {"artistId": track_data['artistId'], "nombre": "Artista desconocido"}
+                    
+                    tracks.append(track_data)
+                except requests.RequestException:
+                    pass  # Ignorar canciones que no se puedan cargar
+        album_data['tracks'] = tracks
+        
+        # Resolver álbumes relacionados del mismo artista
+        related_albums = []
+        try:
+            artist_albums_resp = requests.get(f"{servers.TYA}/artist/{album_data['artistId']}/albums", timeout=2, headers={"Accept": "application/json"})
+            artist_albums_resp.raise_for_status()
+            all_artist_albums = artist_albums_resp.json()
+            # Excluir el álbum actual de los relacionados
+            related_albums = [a for a in all_artist_albums if a.get('id') != albumId][:6]
+        except requests.RequestException:
+            pass  # Si no se pueden cargar, dejar vacío
+        album_data['related_albums'] = related_albums
+        
+        # Asegurarse de que el precio sea un número
+        try:
+            album_data['price'] = float(album_data.get('price', 0))
+        except ValueError:
+            album_data['price'] = 0.0
+        
+        # Calcular duración total del álbum
+        total_duration = 0
+        for track in tracks:
+            if track.get('duration'):
+                total_duration += track['duration']
+        
+        # Formatear duración total
+        minutes = total_duration // 60
+        seconds = total_duration % 60
+        tiempo_formateado = f"{minutes}:{seconds:02d}"
+        
+        # Determinar si está en favoritos y carrito (por ahora False, implementar después)
+        isLiked = False
+        inCarrito = False
+        
+        # Determinar tipo de usuario (0: no autenticado, 1: usuario, 2: artista)
+        tipoUsuario = 0
+        if userdata:
+            tipoUsuario = 1  # TODO: Implementar lógica para distinguir artista
+        
+        return osv.get_album_view(request, album_data, tipoUsuario, isLiked, inCarrito, tiempo_formateado)
+        
+    except requests.RequestException as e:
+        # En caso de error, mostrar página de error
+        return osv.get_error_view(request, userdata, f"No se pudo cargar el álbum: {str(e)}")
+

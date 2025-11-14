@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ album.title }} - {{ album.artist.nombre }} | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/album.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="album-main">
+        <!-- Album Header Section -->
+        <section class="album-header">
+            <div class="album-header-content">
+                <!-- Album Cover -->
+                <div class="album-cover-container">
+                    <img src="{{ album.cover }}" alt="Portada de {{ album.title }}" class="album-cover">
+                    <div class="cover-overlay">
+                        <button class="play-button-large" id="play-button-album">
+                            <svg width="50" height="50" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Album Info -->
+                <div class="album-info">
+                    <span class="album-label">ÁLBUM</span>
+                    <h1 class="album-title">{{ album.title }}</h1>
+                    
+                    <div class="album-artist">
+                        <a href="/artist/{{ album.artist.artistId }}">{{ album.artist.nombre }}</a>
+                    </div>
+                    
+                    <div class="album-meta">
+                        <div class="meta-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line>
+                                <line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line>
+                                <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line>
+                            </svg>
+                            <span>{{ album.releaseDate[:10] }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                <path d="M12 6v6l4 2" stroke-width="2"></path>
+                            </svg>
+                            <span>{{ duracion_total }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                            <span>{{ album.tracks|length }} canciones</span>
+                        </div>
+                        <div class="meta-item price-tag">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke-width="2"></path>
+                            </svg>
+                            <span id="album-price">€{{ "%.2f"|format(album.price) }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Album Description -->
+                    {% if album.description %}
+                    <div class="album-description-text">
+                        <p>{{ album.description }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Album Actions -->
+                    <div class="album-actions">
+                        <button class="btn btn-primary" id="buy-album-button">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="9" cy="21" r="1" stroke-width="2"></circle>
+                                <circle cx="20" cy="21" r="1" stroke-width="2"></circle>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" stroke-width="2"></path>
+                            </svg>
+                            Comprar ahora
+                        </button>
+                        <button class="btn btn-secondary" id="add-to-cart-album-button">
+                            Añadir al carrito
+                        </button>
+                        <button class="btn btn-icon" id="favorite-album-button" title="Añadir a favoritos">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-width="2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Album Details Section -->
+        <section class="album-details">
+            <div class="details-container">
+                
+                <!-- Tracklist Section -->
+                <div class="details-section">
+                    <h2 class="section-title">Listado de Canciones</h2>
+                    <div class="tracklist-container">
+                        {% if album.tracks %}
+                            {% for track in album.tracks %}
+                            <div class="track-item" data-track-id="{{ track.id }}">
+                                <div class="track-number">{{ loop.index }}</div>
+                                <div class="track-content">
+                                    <div class="track-name">
+                                        <a href="/song/{{ track.id }}" class="track-link">{{ track.title }}</a>
+                                    </div>
+                                    <div class="track-artist">
+                                        <a href="/artist/{{ track.artist.artistId }}">{{ track.artist.nombre }}</a>
+                                    </div>
+                                </div>
+                                <div class="track-duration">
+                                    {{ (track.duration|int) // 60 }}:{{ "%02d"|format((track.duration|int) % 60) }}
+                                </div>
+                                <button class="track-play-btn" title="Reproducir">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="empty-message">Este álbum no tiene canciones disponibles</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Genres Section -->
+                {% if album.genres_data %}
+                <div class="details-section">
+                    <h2 class="section-title">Géneros</h2>
+                    <div class="genres-container">
+                        {% for genre in album.genres_data %}
+                        <div class="genre-tag" onclick="window.location.href='/search?genre={{ genre.id }}'">
+                            {{ genre.name }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Album Statistics Section -->
+                <div class="details-section">
+                    <h2 class="section-title">Información del Álbum</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Artista</span>
+                            <a href="/artist/{{ album.artist.artistId }}" class="info-value">{{ album.artist.nombre }}</a>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Fecha de Lanzamiento</span>
+                            <span class="info-value">{{ album.releaseDate[:10] }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Número de Canciones</span>
+                            <span class="info-value">{{ album.tracks|length }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Duración Total</span>
+                            <span class="info-value">{{ duracion_total }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Precio</span>
+                            <span class="info-value price">€{{ "%.2f"|format(album.price) }}</span>
+                        </div>
+                        {% if tipoUsuario == 1 or tipoUsuario == 2 %}
+                        <div class="info-item">
+                            <span class="info-label">Estado</span>
+                            <span class="info-value">
+                                {% if inCarrito %}
+                                    <span class="badge badge-carrito">En carrito</span>
+                                {% else %}
+                                    <span class="badge badge-disponible">Disponible</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Description Section -->
+                {% if album.description %}
+                <div class="details-section">
+                    <h2 class="section-title">Descripción</h2>
+                    <p class="album-description">{{ album.description }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Related Albums Section -->
+                {% if album.related_albums %}
+                <div class="details-section">
+                    <h2 class="section-title">Otros Álbumes del Mismo Artista</h2>
+                    <div class="related-albums-container">
+                        {% for related_album in album.related_albums %}
+                        <a href="/album/{{ related_album.id }}" class="related-album-card">
+                            <img src="{{ related_album.cover }}" alt="{{ related_album.title }}" class="related-album-cover">
+                            <div class="related-album-info">
+                                <h3 class="related-album-title">{{ related_album.title }}</h3>
+                                <p class="related-album-year">{{ related_album.releaseDate[:4] }}</p>
+                                <p class="related-album-price">€{{ "%.2f"|format(related_album.price) }}</p>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </section>
+
+    </main>
+
+    <script src="{{ url_for('static', path='js/album.js') }}"></script>
+</body>
+</html>
