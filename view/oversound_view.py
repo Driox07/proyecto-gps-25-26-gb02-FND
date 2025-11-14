@@ -42,7 +42,7 @@ class View():
 
     # Esta función se va a usar para renderizar la template shop.html
     def get_shop_view(self, request: Request, songs, genres, artistas, albums, tipoUsuario: bool): 
-        return templates.TemplateResponse("main/index.html", {"request" :request, "songs" : songs, "genres": genres, "artistas": artistas, "albums": albums, "tipoUsuario": tipoUsuario})
+        return templates.TemplateResponse("shop.html", {"request" :request, "songs" : songs, "genres": genres, "artistas": artistas, "albums": albums, "tipoUsuario": tipoUsuario})
     # Esta función se va a usar para renderizar la template songs.html
     def get_upload_song_view(self, request: Request):
         return templates.TemplateResponse("music/upload-song.html", {"request": request})
@@ -85,7 +85,7 @@ class View():
     
     # Renderizar la template album.html
     def get_album_view(self, request: Request, album_info : dict, tipoUsuario : int, isLiked: bool, inCarrito: bool, tiempo_formateado: str):
-        return templates.TemplateResponse("music/album.html", {"request": request, "album": album_info, "tipoUsuario": tipoUsuario, "isLiked": isLiked, "inCarrito": inCarrito, "duracion_total": tiempo_formateado})
+        return templates.TemplateResponse("album.html", {"request": request, "album": album_info, "tipoUsuario": tipoUsuario, "isLiked": isLiked, "inCarrito": inCarrito, "duracion_total": tiempo_formateado})
     
     # Renderizar la template header.html
     def get_header_view(self, request: Request, user_info : dict):
