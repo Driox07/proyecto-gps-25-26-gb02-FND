@@ -151,3 +151,63 @@ class View():
             "artist": artist,
             "userdata": userdata
         })
+    
+    # Renderizar la template terms.html
+    def get_terms_view(self, request: Request, userdata: dict):
+        from datetime import datetime
+        last_updated = datetime.now().strftime("%d de %B de %Y")
+        return templates.TemplateResponse("terms.html", {
+            "request": request,
+            "userdata": userdata,
+            "last_updated": last_updated
+        })
+    
+    # Renderizar la template privacy.html
+    def get_privacy_view(self, request: Request, userdata: dict):
+        from datetime import datetime
+        last_updated = datetime.now().strftime("%d de %B de %Y")
+        return templates.TemplateResponse("privacy.html", {
+            "request": request,
+            "userdata": userdata,
+            "last_updated": last_updated
+        })
+    
+    # Renderizar la template cookies.html
+    def get_cookies_view(self, request: Request, userdata: dict):
+        from datetime import datetime
+        last_updated = datetime.now().strftime("%d de %B de %Y")
+        return templates.TemplateResponse("cookies.html", {
+            "request": request,
+            "userdata": userdata,
+            "last_updated": last_updated
+        })
+    
+    # Renderizar la template faq.html
+    def get_faq_view(self, request: Request, userdata: dict):
+        from datetime import datetime
+        last_updated = datetime.now().strftime("%d de %B de %Y")
+        return templates.TemplateResponse("faq.html", {
+            "request": request,
+            "userdata": userdata,
+            "last_updated": last_updated
+        })
+    
+    # Renderizar la template contact.html
+    def get_contact_view(self, request: Request, userdata: dict):
+        from datetime import datetime
+        last_updated = datetime.now().strftime("%d de %B de %Y")
+        return templates.TemplateResponse("contact.html", {
+            "request": request,
+            "userdata": userdata,
+            "last_updated": last_updated
+        })
+    
+    # Renderizar la template help.html
+    def get_help_view(self, request: Request, userdata: dict):
+        from datetime import datetime
+        last_updated = datetime.now().strftime("%d de %B de %Y")
+        return templates.TemplateResponse("help.html", {
+            "request": request,
+            "userdata": userdata,
+            "last_updated": last_updated
+        })

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preguntas Frecuentes | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/help.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="help-main">
+        <div class="help-container">
+            <div class="help-header">
+                <h1>Preguntas Frecuentes</h1>
+                <p>Encuentra respuestas a las preguntas más comunes</p>
+            </div>
+
+            <div class="help-search">
+                <input type="text" id="faqSearch" placeholder="Buscar en preguntas frecuentes..." class="search-input">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="11" cy="11" r="8" stroke-width="2"></circle>
+                    <path d="m21 21-4.35-4.35" stroke-width="2"></path>
+                </svg>
+            </div>
+
+            <div class="faq-categories">
+                <button class="category-button active" data-category="general">General</button>
+                <button class="category-button" data-category="account">Cuenta</button>
+                <button class="category-button" data-category="payments">Pagos</button>
+                <button class="category-button" data-category="artists">Artistas</button>
+                <button class="category-button" data-category="technical">Técnico</button>
+            </div>
+
+            <div class="faq-items">
+                <!-- General -->
+                <div class="faq-item" data-category="general">
+                    <div class="faq-question">
+                        <h3>¿Qué es OverSound?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>OverSound es una plataforma de distribución digital de música y merchandise que conecta artistas directamente con sus fans. Los artistas pueden publicar su contenido y los usuarios pueden comprar, escuchar y disfrutar de música exclusiva.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="general">
+                    <div class="faq-question">
+                        <h3>¿Es OverSound gratuito?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Crear una cuenta en OverSound es completamente gratuito. Sin embargo, acceder a contenido premium (canciones, álbumes) requiere una compra. Los artistas pueden subir contenido sin costo.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="general">
+                    <div class="faq-question">
+                        <h3>¿Qué géneros de música hay en OverSound?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>OverSound alberga una variedad de géneros musicales incluyendo pop, rock, electrónica, indie, hip-hop, jazz, clásica y muchos más. Los artistas pueden categorizar su música en los géneros disponibles.</p>
+                    </div>
+                </div>
+
+                <!-- Account -->
+                <div class="faq-item" data-category="account">
+                    <div class="faq-question">
+                        <h3>¿Cómo crear una cuenta?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Haz clic en "Registrarse" en la página de inicio, completa el formulario con tu información personal (nombre, email, contraseña) y verifica tu email. ¡Listo! Tu cuenta está creada.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="account">
+                    <div class="faq-question">
+                        <h3>¿Olvidé mi contraseña. ¿Qué hago?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>En la página de login, haz clic en "¿Olvidaste tu contraseña?" e ingresa tu email. Te enviaremos un enlace para restablecerla en unos minutos.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="account">
+                    <div class="faq-question">
+                        <h3>¿Cómo editar mi perfil?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Inicia sesión, ve a tu perfil y haz clic en "Editar Perfil". Puedes cambiar tu foto, biografía, información de contacto y más.</p>
+                    </div>
+                </div>
+
+                <!-- Payments -->
+                <div class="faq-item" data-category="payments">
+                    <div class="faq-question">
+                        <h3>¿Qué métodos de pago aceptan?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Aceptamos tarjetas de crédito y débito (Visa, Mastercard, American Express), PayPal y transferencias bancarias. Todos los pagos son procesados de forma segura.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="payments">
+                    <div class="faq-question">
+                        <h3>¿Es seguro comprar en OverSound?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Sí, utilizamos encriptación SSL/TLS y procesadores de pago certificados. Tus datos de pago están protegidos y nunca se almacenan en nuestros servidores.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="payments">
+                    <div class="faq-question">
+                        <h3>¿Puedo devolver una compra?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Las compras son finales, pero si encuentras un error técnico o el contenido es defectuoso, contáctanos dentro de 48 horas y revisaremos tu caso para un posible reembolso.</p>
+                    </div>
+                </div>
+
+                <!-- Artists -->
+                <div class="faq-item" data-category="artists">
+                    <div class="faq-question">
+                        <h3>¿Cómo subo mi música?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Ve a tu Studio, haz clic en "Subir Canción", rellena la información (título, artista, género, precio) y sube el archivo de audio. Una vez verificado, estará disponible en OverSound.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="artists">
+                    <div class="faq-question">
+                        <h3>¿Cuál es el límite de tamaño de archivo?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>El límite máximo de tamaño para un archivo de audio es 500 MB. Recomendamos comprimir tu música en MP3 de 320 kbps para mejor calidad con tamaño menor.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="artists">
+                    <div class="faq-question">
+                        <h3>¿Cómo gano dinero con mis canciones?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Establece el precio de tus canciones o álbumes. Cuando alguien compra, recibimos una comisión y tú recibes el resto. Los pagos se procesan mensualmente en tu cuenta bancaria vinculada.</p>
+                    </div>
+                </div>
+
+                <!-- Technical -->
+                <div class="faq-item" data-category="technical">
+                    <div class="faq-question">
+                        <h3>¿Qué navegadores son compatibles?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>OverSound funciona en todos los navegadores modernos: Chrome, Firefox, Safari, Edge. Recomendamos usar la última versión para la mejor experiencia.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="technical">
+                    <div class="faq-question">
+                        <h3>¿OverSound tiene aplicación móvil?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Actualmente, OverSound es una plataforma web responsive optimizada para dispositivos móviles. Las aplicaciones nativas están en desarrollo.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item" data-category="technical">
+                    <div class="faq-question">
+                        <h3>¿Qué debo hacer si encuentro un error?</h3>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Por favor, contáctanos a través del formulario de contacto o envía un email a support@oversound.com con detalles del error. Incluye capturas de pantalla si es posible.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-help-section">
+                <div class="help-card">
+                    <h3>¿No encontraste tu respuesta?</h3>
+                    <p>Si tu pregunta no está aquí, nuestro equipo de soporte está disponible 24/7</p>
+                    <a href="/contact" class="btn btn-primary">Contactar Soporte</a>
+                </div>
+            </div>
+
+            <div class="legal-actions">
+                <a href="/" class="btn btn-secondary">Volver a Inicio</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', path='js/help.js') }}"></script>
+</body>
+</html>

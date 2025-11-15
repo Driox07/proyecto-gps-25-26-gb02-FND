@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Términos de Uso | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/legal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="legal-main">
+        <div class="legal-container">
+            <div class="legal-header">
+                <h1>Términos de Uso</h1>
+                <p class="legal-date">Última actualización: {{ last_updated }}</p>
+            </div>
+
+            <article class="legal-content">
+                <section class="legal-section">
+                    <h2>1. Aceptación de Términos</h2>
+                    <p>Al acceder y utilizar OverSound, aceptas estos Términos de Uso en su totalidad. Si no estás de acuerdo con alguna parte de estos términos, no podrás utilizar nuestros servicios.</p>
+                </section>
+
+                <section class="legal-section">
+                    <h2>2. Descripción del Servicio</h2>
+                    <p>OverSound es una plataforma digital de distribución y venta de música y merchandise. Permitimos a artistas publicar su contenido y a usuarios comprar y disfrutar de dicho contenido.</p>
+                </section>
+
+                <section class="legal-section">
+                    <h2>3. Derechos de Autor y Propiedad Intelectual</h2>
+                    <p>Todo el contenido publicado en OverSound, incluyendo música, imágenes y texto, está protegido por leyes de derechos de autor. Los usuarios aceptan respetar estos derechos y no reproducir, distribuir o vender contenido sin autorización.</p>
+                    <ul>
+                        <li>Los artistas declaran que poseen los derechos necesarios sobre el contenido que publican</li>
+                        <li>OverSound no es responsable de infracciones de derechos de autor cometidas por usuarios</li>
+                        <li>Respetamos los derechos de autor y responderemos a notificaciones de infracción</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2>4. Conducta del Usuario</h2>
+                    <p>Al utilizar OverSound, aceptas:</p>
+                    <ul>
+                        <li>No publicar contenido ilegal, ofensivo o discriminatorio</li>
+                        <li>No acosar, amenazar o difamar a otros usuarios</li>
+                        <li>No intentar acceder sin autorización a sistemas de OverSound</li>
+                        <li>No publicar malware o código malicioso</li>
+                        <li>No manipular comentarios, valoraciones o cualquier información</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2>5. Transacciones y Pagos</h2>
+                    <p>Las transacciones realizadas a través de OverSound están sujetas a los siguientes términos:</p>
+                    <ul>
+                        <li>Los precios están en euros (EUR) e incluyen impuestos aplicables</li>
+                        <li>OverSound actúa como intermediaria entre compradores y vendedores</li>
+                        <li>Las devoluciones seguirán la política de reembolsos específica</li>
+                        <li>OverSound se reserva el derecho de rechazar transacciones sospechosas</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2>6. Garantía Limitada y Exención de Responsabilidad</h2>
+                    <p>OverSound se proporciona "tal como está" sin garantías. No garantizamos:</p>
+                    <ul>
+                        <li>Disponibilidad continua del servicio</li>
+                        <li>Ausencia de errores o interrupciones</li>
+                        <li>Que el servicio satisfaga tus necesidades específicas</li>
+                        <li>La calidad de productos o servicios de terceros</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2>7. Limitación de Responsabilidad</h2>
+                    <p>En la máxima medida permitida por la ley, OverSound no será responsable por:</p>
+                    <ul>
+                        <li>Pérdidas indirectas, incidentales o consecuentes</li>
+                        <li>Pérdida de datos o ingresos</li>
+                        <li>Daños causados por acceso no autorizado a sistemas</li>
+                        <li>Cualquier daño que supere el monto pagado en los últimos 12 meses</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2>8. Terminación de Cuenta</h2>
+                    <p>OverSound puede suspender o eliminar tu cuenta si:</p>
+                    <ul>
+                        <li>Violas estos Términos de Uso</li>
+                        <li>Publicas contenido ilegal o que infringe derechos de terceros</li>
+                        <li>Participas en actividad fraudulenta</li>
+                        <li>Realizas múltiples reportes infundados</li>
+                    </ul>
+                    <p>La eliminación de cuenta puede resultar en la pérdida de acceso a contenido comprado (depende de la licencia específica).</p>
+                </section>
+
+                <section class="legal-section">
+                    <h2>9. Modificación de Términos</h2>
+                    <p>OverSound se reserva el derecho de modificar estos términos en cualquier momento. Los cambios significativos serán notificados con 30 días de anticipación. El uso continuado de OverSound tras notificación constituye aceptación de los cambios.</p>
+                </section>
+
+                <section class="legal-section">
+                    <h2>10. Ley Aplicable</h2>
+                    <p>Estos Términos de Uso se rigen por la ley española. Cualquier disputa será resuelta en los tribunales competentes de España.</p>
+                </section>
+
+                <section class="legal-section contact-section">
+                    <h2>Contacta con Nosotros</h2>
+                    <p>Si tienes preguntas sobre estos Términos de Uso, contáctanos:</p>
+                    <div class="contact-info">
+                        <p><strong>Email:</strong> <a href="mailto:legal@oversound.com">legal@oversound.com</a></p>
+                        <p><strong>Dirección:</strong> OverSound, Badajoz, España</p>
+                    </div>
+                </section>
+            </article>
+
+            <div class="legal-actions">
+                <a href="/" class="btn btn-primary">Volver a Inicio</a>
+                <a href="/privacy" class="btn btn-secondary">Política de Privacidad</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', path='js/legal.js') }}"></script>
+</body>
+</html>

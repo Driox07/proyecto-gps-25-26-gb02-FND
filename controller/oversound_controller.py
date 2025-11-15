@@ -331,6 +331,66 @@ def get_artist_studio(request: Request):
         return osv.get_error_view(request, userdata, f"No se pudo cargar el studio: {str(e)}")
 
 
+@app.get("/terms")
+def get_terms(request: Request):
+    """
+    Ruta para mostrar términos de uso
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_terms_view(request, userdata)
+
+
+@app.get("/privacy")
+def get_privacy(request: Request):
+    """
+    Ruta para mostrar política de privacidad
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_privacy_view(request, userdata)
+
+
+@app.get("/cookies")
+def get_cookies(request: Request):
+    """
+    Ruta para mostrar política de cookies
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_cookies_view(request, userdata)
+
+
+@app.get("/faq")
+def get_faq(request: Request):
+    """
+    Ruta para mostrar preguntas frecuentes
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_faq_view(request, userdata)
+
+
+@app.get("/contact")
+def get_contact(request: Request):
+    """
+    Ruta para mostrar formulario de contacto
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_contact_view(request, userdata)
+
+
+@app.get("/help")
+def get_help(request: Request):
+    """
+    Ruta para mostrar centro de ayuda
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_help_view(request, userdata)
+
+
 @app.get("/user/{nick}")
 def register(request: Request, nick: str):
     token = request.cookies.get("session")
