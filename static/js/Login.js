@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(payload),
                 credentials: 'include'
             });
-
+            
             const json = await res.json();
             console.log('Respuesta del servidor:', json);
             
