@@ -325,7 +325,8 @@ def get_song(request: Request, songId: int):
         
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
-        return osv.get_error_view(request, userdata, f"No se pudo cargar la canción: {str(e)}")
+        print(e)
+        return osv.get_error_view(request, userdata, f"No se pudo cargar la canción")
 
 
 @app.get("/album/{albumId}")
@@ -426,5 +427,5 @@ def get_album(request: Request, albumId: int):
         
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
-        return osv.get_error_view(request, userdata, f"No se pudo cargar el álbum: {str(e)}")
+        return osv.get_error_view(request, userdata, f"No se pudo cargar el álbum")
 
