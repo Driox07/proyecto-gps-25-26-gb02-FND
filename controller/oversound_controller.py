@@ -194,6 +194,125 @@ def shop(request: Request):
     
     return osv.get_shop_view(request, songs, genres, artistas, albums, tipoUsuario)
 
+@app.get("/artist/{artistId}")
+def get_artist_profile(request: Request, artistId: int):
+    """
+    Ruta para mostrar el perfil público de un artista
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    try:
+        # Obtener información del artista
+        artist_resp = requests.get(f"{servers.TYA}/artist/{artistId}", timeout=2, headers={"Accept": "application/json"})
+        artist_resp.raise_for_status()
+        artist_data = artist_resp.json()
+        
+        # Resolver canciones del artista
+        songs = []
+        if artist_data.get('owner_songs'):
+            for song_id in artist_data['owner_songs']:
+                try:
+                    song_resp = requests.get(f"{servers.TYA}/song/{song_id}", timeout=2, headers={"Accept": "application/json"})
+                    song_resp.raise_for_status()
+                    songs.append(song_resp.json())
+                except requests.RequestException:
+                    pass
+        artist_data['owner_songs'] = songs
+        
+        # Resolver álbumes del artista
+        albums = []
+        if artist_data.get('owner_albums'):
+            for album_id in artist_data['owner_albums']:
+                try:
+                    album_resp = requests.get(f"{servers.TYA}/album/{album_id}", timeout=2, headers={"Accept": "application/json"})
+                    album_resp.raise_for_status()
+                    albums.append(album_resp.json())
+                except requests.RequestException:
+                    pass
+        artist_data['owner_albums'] = albums
+        
+        # Resolver merchandise del artista
+        merch = []
+        if artist_data.get('owner_merch'):
+            for merch_id in artist_data['owner_merch']:
+                try:
+                    merch_resp = requests.get(f"{servers.TYA}/merch/{merch_id}", timeout=2, headers={"Accept": "application/json"})
+                    merch_resp.raise_for_status()
+                    merch.append(merch_resp.json())
+                except requests.RequestException:
+                    pass
+        artist_data['owner_merch'] = merch
+        
+        # Determinar si es el perfil del usuario autenticado
+        is_own_profile = userdata and userdata.get('userId') == artist_data.get('userId')
+        
+        return osv.get_artist_profile_view(request, artist_data, userdata, is_own_profile)
+        
+    except requests.RequestException as e:
+        return osv.get_error_view(request, userdata, f"No se pudo cargar el perfil del artista: {str(e)}")
+
+
+@app.get("/artist/studio")
+def get_artist_studio(request: Request):
+    """
+    Ruta para el studio/dashboard del artista autenticado
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    # Verificar que el usuario esté autenticado
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    try:
+        # Obtener información del artista del usuario autenticado
+        artist_resp = requests.get(f"{servers.TYA}/artist/{userdata.get('artistId')}", timeout=2, headers={"Accept": "application/json"})
+        artist_resp.raise_for_status()
+        artist_data = artist_resp.json()
+        
+        # Resolver canciones del artista
+        songs = []
+        if artist_data.get('owner_songs'):
+            for song_id in artist_data['owner_songs']:
+                try:
+                    song_resp = requests.get(f"{servers.TYA}/song/{song_id}", timeout=2, headers={"Accept": "application/json"})
+                    song_resp.raise_for_status()
+                    songs.append(song_resp.json())
+                except requests.RequestException:
+                    pass
+        artist_data['owner_songs'] = songs
+        
+        # Resolver álbumes del artista
+        albums = []
+        if artist_data.get('owner_albums'):
+            for album_id in artist_data['owner_albums']:
+                try:
+                    album_resp = requests.get(f"{servers.TYA}/album/{album_id}", timeout=2, headers={"Accept": "application/json"})
+                    album_resp.raise_for_status()
+                    albums.append(album_resp.json())
+                except requests.RequestException:
+                    pass
+        artist_data['owner_albums'] = albums
+        
+        # Resolver merchandise del artista
+        merch = []
+        if artist_data.get('owner_merch'):
+            for merch_id in artist_data['owner_merch']:
+                try:
+                    merch_resp = requests.get(f"{servers.TYA}/merch/{merch_id}", timeout=2, headers={"Accept": "application/json"})
+                    merch_resp.raise_for_status()
+                    merch.append(merch_resp.json())
+                except requests.RequestException:
+                    pass
+        artist_data['owner_merch'] = merch
+        
+        return osv.get_artist_studio_view(request, artist_data, userdata)
+        
+    except requests.RequestException as e:
+        return osv.get_error_view(request, userdata, f"No se pudo cargar el studio: {str(e)}")
+
+
 @app.get("/user/{nick}")
 def register(request: Request, nick: str):
     token = request.cookies.get("session")

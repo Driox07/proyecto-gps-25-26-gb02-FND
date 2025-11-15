@@ -1,0 +1,738 @@
+/* Artist Studio Page Styles - Coherente con el resto del sistema */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.studio-main {
+    flex: 1;
+    background: #f8f9fa;
+}
+
+/* ===== Studio Header ===== */
+.studio-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 60px 40px;
+    text-align: center;
+}
+
+.studio-header-content h1 {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.studio-header-content p {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== Navigation Tabs ===== */
+.studio-nav {
+    background: white;
+    border-bottom: 2px solid #e0e0e0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.nav-tab {
+    padding: 20px 24px;
+    background: none;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    position: relative;
+    margin-bottom: -2px;
+}
+
+.nav-tab:hover {
+    color: #667eea;
+}
+
+.nav-tab.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+.nav-tab svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ===== Studio Content ===== */
+.studio-content {
+    padding: 60px 40px;
+}
+
+.content-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.content-section {
+    display: none;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.content-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== Dashboard Grid ===== */
+.dashboard-grid {
+    display: grid;
+    gap: 40px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.stat-icon.songs {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-icon.albums {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.stat-icon.merch {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.stat-icon.views {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.stat-content h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+}
+
+/* ===== Quick Actions ===== */
+.quick-actions {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.quick-actions h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #333;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.action-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+}
+
+.action-button.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.action-button.primary:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.action-button.secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.action-button.secondary:hover {
+    background: #e0e0e0;
+    transform: translateY(-4px);
+}
+
+.action-button.tertiary {
+    background: transparent;
+    border: 2px solid #667eea;
+    color: #667eea;
+}
+
+.action-button.tertiary:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-4px);
+}
+
+.action-button svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* ===== Section Header ===== */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.section-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+}
+
+/* ===== Buttons ===== */
+.btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    border: none;
+}
+
+.btn.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn.btn-sm {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.btn.secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn.secondary:hover {
+    background: #e0e0e0;
+}
+
+.btn.tertiary {
+    background: #f5f5f5;
+    color: #d32f2f;
+}
+
+.btn.tertiary:hover {
+    background: #ffebee;
+}
+
+/* ===== Songs List ===== */
+.songs-list {
+    display: grid;
+    gap: 12px;
+}
+
+.song-item {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    gap: 20px;
+}
+
+.song-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.song-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+.song-cover {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.song-cover-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+    flex-shrink: 0;
+}
+
+.song-details h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.song-meta {
+    font-size: 13px;
+    color: #999;
+}
+
+.song-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* ===== Albums Grid ===== */
+.albums-grid,
+.merch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 24px;
+}
+
+.album-card-studio,
+.merch-card-studio {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.album-card-studio:hover,
+.merch-card-studio:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.album-cover,
+.merch-cover {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    overflow: hidden;
+    background: #f0f0f0;
+}
+
+.album-cover img,
+.merch-cover img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.album-card-studio:hover .album-cover img,
+.merch-card-studio:hover .merch-cover img {
+    transform: scale(1.05);
+}
+
+.album-cover-placeholder,
+.merch-cover-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+}
+
+.album-info,
+.merch-info {
+    padding: 20px;
+}
+
+.album-info h3,
+.merch-info h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.album-meta,
+.merch-meta {
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 16px;
+}
+
+.album-actions,
+.merch-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ===== Icon Buttons ===== */
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: none;
+    background: #f0f0f0;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.icon-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: scale(1.05);
+}
+
+.icon-btn.delete-btn:hover {
+    background: #d32f2f;
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.empty-state.full-width {
+    grid-column: 1 / -1;
+}
+
+.empty-state svg {
+    width: 80px;
+    height: 80px;
+    color: #ddd;
+    margin-bottom: 24px;
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    font-size: 14px;
+    color: #999;
+    margin-bottom: 24px;
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 768px) {
+    .studio-header {
+        padding: 40px 20px;
+    }
+
+    .studio-header-content h1 {
+        font-size: 32px;
+    }
+
+    .studio-content {
+        padding: 40px 20px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+
+    .stat-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .albums-grid,
+    .merch-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+    }
+
+    .song-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .song-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav-tab {
+        padding: 16px 20px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .studio-header-content h1 {
+        font-size: 24px;
+    }
+
+    .quick-actions {
+        padding: 24px;
+    }
+
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .albums-grid,
+    .merch-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nav-tab {
+        padding: 14px 16px;
+        font-size: 12px;
+    }
+
+    .stat-card {
+        padding: 16px;
+    }
+
+    .empty-state {
+        padding: 40px 20px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .studio-main {
+        background: #1a1a1a;
+    }
+
+    .studio-nav {
+        background: #2a2a2a;
+        border-bottom-color: #333;
+    }
+
+    .nav-tab {
+        color: #666;
+    }
+
+    .nav-tab:hover,
+    .nav-tab.active {
+        color: #667eea;
+    }
+
+    .stat-card,
+    .quick-actions,
+    .song-item,
+    .album-card-studio,
+    .merch-card-studio,
+    .empty-state {
+        background: #2a2a2a;
+        color: #fff;
+    }
+
+    .section-header h2 {
+        color: #fff;
+    }
+
+    .stat-content h3 {
+        color: #999;
+    }
+
+    .stat-number {
+        color: #fff;
+    }
+
+    .song-details h3,
+    .album-info h3,
+    .merch-info h3 {
+        color: #fff;
+    }
+
+    .action-button.secondary {
+        background: #333;
+        color: #fff;
+    }
+
+    .action-button.secondary:hover {
+        background: #444;
+    }
+
+    .btn.secondary {
+        background: #333;
+        color: #fff;
+    }
+
+    .btn.secondary:hover {
+        background: #444;
+    }
+
+    .icon-btn {
+        background: #333;
+        color: #fff;
+    }
+
+    .icon-btn:hover {
+        background: #667eea;
+    }
+
+    .empty-state svg {
+        color: #555;
+    }
+
+    .empty-state h3 {
+        color: #fff;
+    }
+
+    .empty-state p {
+        color: #999;
+    }
+}

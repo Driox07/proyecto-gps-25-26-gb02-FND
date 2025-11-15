@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ artist.artisticName }} - Perfil | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/artist_profile.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="artist-main">
+        <!-- Artist Header Section -->
+        <section class="artist-header">
+            <div class="artist-header-background">
+                <div class="background-gradient"></div>
+                {% if artist.artisticImage %}
+                    <img src="{{ artist.artisticImage }}" alt="{{ artist.artisticName }}" class="background-image" style="opacity: 0.1;">
+                {% endif %}
+            </div>
+            
+            <div class="artist-header-content">
+                <div class="artist-image-container">
+                    {% if artist.artisticImage %}
+                        <img src="{{ artist.artisticImage }}" alt="{{ artist.artisticName }}" class="artist-image">
+                    {% else %}
+                        <div class="artist-image-placeholder">
+                            {{ artist.artisticName[0].upper() }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="artist-info">
+                    <h1 class="artist-name">{{ artist.artisticName }}</h1>
+                    
+                    {% if artist.artisticBiography %}
+                        <p class="artist-bio">{{ artist.artisticBiography }}</p>
+                    {% else %}
+                        <p class="artist-bio empty">Sin biografía</p>
+                    {% endif %}
+                    
+                    <div class="artist-meta">
+                        {% if artist.registrationDate %}
+                            <div class="meta-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line>
+                                </svg>
+                                <span>Miembro desde {{ artist.registrationDate }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if artist.owner_songs %}
+                            <div class="meta-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"></path>
+                                </svg>
+                                <span>{{ artist.owner_songs|length }} Canciones</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if artist.owner_albums %}
+                            <div class="meta-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                    <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                                </svg>
+                                <span>{{ artist.owner_albums|length }} Álbumes</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if artist.socialMediaUrl %}
+                        <div class="artist-social">
+                            <a href="{{ artist.socialMediaUrl }}" target="_blank" class="social-link" title="Seguir en redes sociales">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2s9 5 20 5a9.5 9.5 0 00-9-5.5c4.75 2.25 7-7 7-7"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="artist-actions">
+                        {% if is_own_profile %}
+                            <a href="/artist/edit" class="btn btn-primary">Editar Perfil</a>
+                            <a href="/artist/studio" class="btn btn-secondary">Mi Studio</a>
+                        {% else %}
+                            <button class="btn btn-primary follow-btn" data-artist-id="{{ artist.artistId }}">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M12 5v14M5 12h14" stroke-width="2" stroke-linecap="round"></path>
+                                </svg>
+                                Seguir
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Tabs -->
+        <section class="content-section">
+            <div class="content-container">
+                <div class="tabs-navigation">
+                    <button class="tab-button active" data-tab="canciones">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"></path>
+                        </svg>
+                        Canciones
+                    </button>
+                    <button class="tab-button" data-tab="albumes">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                            <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                        </svg>
+                        Álbumes
+                    </button>
+                    <button class="tab-button" data-tab="merchandise">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" stroke-width="2"></path>
+                            <line x1="7" y1="7" x2="7.01" y2="7" stroke-width="2"></line>
+                        </svg>
+                        Merchandise
+                    </button>
+                </div>
+
+                <!-- Canciones Tab -->
+                <div class="tab-content active" id="canciones-tab">
+                    <div class="content-header">
+                        <h2>Canciones</h2>
+                        {% if artist.owner_songs %}
+                            <span class="content-count">{{ artist.owner_songs|length }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="songs-grid">
+                        {% if artist.owner_songs %}
+                            {% for song in artist.owner_songs %}
+                                <div class="song-card">
+                                    <div class="card-image">
+                                        {% if song.cover %}
+                                            <img src="{{ song.cover }}" alt="{{ song.title }}">
+                                        {% else %}
+                                            <div class="card-image-placeholder">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"></path>
+                                                </svg>
+                                            </div>
+                                        {% endif %}
+                                        <div class="card-overlay">
+                                            <a href="/song/{{ song.songId }}" class="play-button">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="card-content">
+                                        <h3 class="card-title">{{ song.title }}</h3>
+                                        <p class="card-subtitle">{{ song.duration }}s</p>
+                                        <p class="card-price">€{{ song.price }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"></path>
+                                </svg>
+                                <p>Este artista aún no tiene canciones</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Álbumes Tab -->
+                <div class="tab-content" id="albumes-tab">
+                    <div class="content-header">
+                        <h2>Álbumes</h2>
+                        {% if artist.owner_albums %}
+                            <span class="content-count">{{ artist.owner_albums|length }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="albums-grid">
+                        {% if artist.owner_albums %}
+                            {% for album in artist.owner_albums %}
+                                <div class="album-card">
+                                    <div class="card-image">
+                                        {% if album.cover %}
+                                            <img src="{{ album.cover }}" alt="{{ album.title }}">
+                                        {% else %}
+                                            <div class="card-image-placeholder">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                                    <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                                                </svg>
+                                            </div>
+                                        {% endif %}
+                                        <div class="card-overlay">
+                                            <a href="/album/{{ album.albumId }}" class="play-button">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="card-content">
+                                        <h3 class="card-title">{{ album.title }}</h3>
+                                        <p class="card-subtitle">{{ album.releaseDate }}</p>
+                                        <p class="card-price">€{{ album.price }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                    <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                                </svg>
+                                <p>Este artista aún no tiene álbumes</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Merchandise Tab -->
+                <div class="tab-content" id="merchandise-tab">
+                    <div class="content-header">
+                        <h2>Merchandise</h2>
+                        {% if artist.owner_merch %}
+                            <span class="content-count">{{ artist.owner_merch|length }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="merch-grid">
+                        {% if artist.owner_merch %}
+                            {% for merch in artist.owner_merch %}
+                                <div class="merch-card">
+                                    <div class="card-image">
+                                        {% if merch.cover %}
+                                            <img src="{{ merch.cover }}" alt="{{ merch.title }}">
+                                        {% else %}
+                                            <div class="card-image-placeholder">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" stroke-width="2"></path>
+                                                    <line x1="7" y1="7" x2="7.01" y2="7" stroke-width="2"></line>
+                                                </svg>
+                                            </div>
+                                        {% endif %}
+                                        <div class="card-overlay">
+                                            <a href="/merch/{{ merch.merchId }}" class="play-button">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="card-content">
+                                        <h3 class="card-title">{{ merch.title }}</h3>
+                                        <p class="card-subtitle">{{ merch.releaseDate }}</p>
+                                        <p class="card-price">€{{ merch.price }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" stroke-width="2"></path>
+                                    <line x1="7" y1="7" x2="7.01" y2="7" stroke-width="2"></line>
+                                </svg>
+                                <p>Este artista aún no tiene merchandise</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', path='js/ArtistProfile.js') }}"></script>
+</body>
+</html>

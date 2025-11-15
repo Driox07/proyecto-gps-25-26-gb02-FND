@@ -134,3 +134,20 @@ class View():
     # Renderizar la template search.html
     def get_search_view(self, request: Request, all_items : list[dict]):
         return templates.TemplateResponse("main/search.html", {"request": request, "items": all_items})
+    
+    # Renderizar la template artist_profile.html
+    def get_artist_profile_view(self, request: Request, artist: dict, userdata: dict, is_own_profile: bool):
+        return templates.TemplateResponse("artist_profile.html", {
+            "request": request,
+            "artist": artist,
+            "userdata": userdata,
+            "is_own_profile": is_own_profile
+        })
+    
+    # Renderizar la template artist_studio.html
+    def get_artist_studio_view(self, request: Request, artist: dict, userdata: dict):
+        return templates.TemplateResponse("artist_studio.html", {
+            "request": request,
+            "artist": artist,
+            "userdata": userdata
+        })
