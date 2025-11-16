@@ -596,3 +596,41 @@ body {
         border-radius: 10px;
     }
 }
+
+/* Audio Player State Styles */
+.play-button-large {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.play-button-large.playing {
+    animation: pulse-playing 1.5s ease-in-out infinite;
+}
+
+.play-button-large.playing svg {
+    animation: rotate-playing 0.8s linear infinite;
+}
+
+@keyframes pulse-playing {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes rotate-playing {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Loading state for audio fetch */
+.play-button-large:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
