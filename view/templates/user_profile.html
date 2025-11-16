@@ -55,6 +55,85 @@
             </div>
         </section>
 
+        <!-- Payment Methods Section -->
+        {% if is_own_profile %}
+        <section class="payment-methods-section">
+            <div class="payment-container">
+                <div class="payment-header">
+                    <div class="payment-title-group">
+                        <h2 class="payment-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke-width="2"></rect>
+                                <line x1="1" y1="10" x2="23" y2="10" stroke-width="2"></line>
+                            </svg>
+                            Métodos de Pago
+                        </h2>
+                        <p class="payment-subtitle">Gestiona tus métodos de pago de forma segura</p>
+                    </div>
+                    <button class="btn btn-primary add-payment-btn" id="add-payment-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <line x1="12" y1="5" x2="12" y2="19" stroke-width="2"></line>
+                            <line x1="5" y1="12" x2="19" y2="12" stroke-width="2"></line>
+                        </svg>
+                        Agregar Tarjeta
+                    </button>
+                </div>
+
+                <div class="payment-methods-grid" id="payment-methods-grid">
+                    <!-- Métodos de pago cargados dinámicamente -->
+                </div>
+
+                <!-- Payment Methods Modal -->
+                <div class="payment-modal-overlay" id="payment-modal-overlay">
+                    <div class="payment-modal">
+                        <div class="modal-header">
+                            <h3>Agregar Método de Pago</h3>
+                            <button class="modal-close" id="modal-close">×</button>
+                        </div>
+                        
+                        <form id="payment-form" class="payment-form">
+                            <div class="form-group">
+                                <label for="card-name">Nombre en la Tarjeta</label>
+                                <input type="text" id="card-name" placeholder="Juan García" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="card-number">Número de Tarjeta</label>
+                                <input type="text" id="card-number" placeholder="0000 0000 0000 0000" maxlength="19" required>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="card-expiry">Vencimiento</label>
+                                    <input type="text" id="card-expiry" placeholder="MM/YY" maxlength="5" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="card-cvv">CVV</label>
+                                    <input type="text" id="card-cvv" placeholder="000" maxlength="3" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="card-type">Tipo de Tarjeta</label>
+                                <select id="card-type" required>
+                                    <option value="credit">Tarjeta de Crédito</option>
+                                    <option value="debit">Tarjeta de Débito</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group checkbox">
+                                <input type="checkbox" id="set-default" checked>
+                                <label for="set-default">Establecer como método por defecto</label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary full-width">Guardar Tarjeta</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
         <!-- Label Section -->
         <section class="label-section" id="label-section">
             <div class="label-container">

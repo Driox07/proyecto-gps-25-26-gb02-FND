@@ -1056,3 +1056,273 @@ def get_artist_label(request: Request, artistId: int):
     except Exception as e:
         print(e)
         return JSONResponse(content={"error": "Error al obtener discográfica"}, status_code=500)
+
+
+# ==================== USER PROFILE ROUTES ====================
+
+@app.get("/profile")
+def get_profile(request: Request):
+    """
+    Ruta para mostrar el perfil del usuario autenticado
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    try:
+        # Obtener métodos de pago del usuario
+        payment_methods = []
+        try:
+            payment_resp = requests.get(
+                f"{servers.SYU}/user/{userdata.get('userId')}/payment-methods",
+                timeout=2,
+                headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+            )
+            if payment_resp.ok:
+                payment_methods = payment_resp.json()
+        except requests.RequestException:
+            payment_methods = []
+        
+        # Para simplificar, asumimos datos vacíos de biblioteca y listas
+        # En un caso real, se obtendrían del servidor
+        canciones_biblioteca = []
+        listas_completas = []
+        
+        return osv.get_perfil_view(
+            request, 
+            userdata, 
+            canciones_biblioteca, 
+            listas_completas,
+            is_own_profile=True,
+            payment_methods=payment_methods
+        )
+        
+    except Exception as e:
+        print(e)
+        return osv.get_error_view(request, userdata, "No se pudo cargar el perfil")
+
+
+@app.get("/profile/{nick}")
+def get_user_profile(request: Request, nick: str):
+    """
+    Ruta para mostrar el perfil público de otro usuario
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    try:
+        # Obtener información del usuario
+        user_resp = requests.get(
+            f"{servers.SYU}/user/{nick}",
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        user_resp.raise_for_status()
+        user_data = user_resp.json()
+        
+        # Determinar si es el perfil del usuario autenticado
+        is_own_profile = userdata and userdata.get('nick') == nick
+        
+        # Si es perfil propio, obtener métodos de pago
+        payment_methods = []
+        if is_own_profile:
+            try:
+                payment_resp = requests.get(
+                    f"{servers.SYU}/user/{userdata.get('userId')}/payment-methods",
+                    timeout=2,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                if payment_resp.ok:
+                    payment_methods = payment_resp.json()
+            except requests.RequestException:
+                payment_methods = []
+        
+        # Para simplificar, asumimos datos vacíos de biblioteca y listas
+        canciones_biblioteca = []
+        listas_completas = []
+        
+        return osv.get_perfil_view(
+            request,
+            user_data,
+            canciones_biblioteca,
+            listas_completas,
+            is_own_profile=is_own_profile,
+            payment_methods=payment_methods if is_own_profile else []
+        )
+        
+    except requests.RequestException as e:
+        return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del usuario")
+
+
+# ==================== PAYMENT METHODS API ROUTES ====================
+
+@app.get("/api/user/payment-methods")
+def get_payment_methods(request: Request):
+    """
+    Ruta API para obtener los métodos de pago del usuario autenticado
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        payment_resp = requests.get(
+            f"{servers.SYU}/user/{userdata.get('userId')}/payment-methods",
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        
+        if payment_resp.ok:
+            payment_methods = payment_resp.json()
+            return JSONResponse(content={"payment_methods": payment_methods})
+        elif payment_resp.status_code == 404:
+            return JSONResponse(content={"payment_methods": []})
+        else:
+            return JSONResponse(
+                content={"error": "Error al obtener métodos de pago"},
+                status_code=payment_resp.status_code
+            )
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al obtener métodos de pago"}, status_code=500)
+
+
+@app.post("/api/user/payment-methods")
+async def add_payment_method(request: Request):
+    """
+    Ruta API para agregar un nuevo método de pago
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        body = await request.json()
+        
+        # Validaciones básicas
+        if not body.get("card_number") or not body.get("card_holder") or not body.get("expiry"):
+            return JSONResponse(
+                content={"error": "Faltan datos requeridos"},
+                status_code=400
+            )
+        
+        # Enmascarar número de tarjeta (solo guardar últimos 4 dígitos)
+        card_number = body.get("card_number").replace(" ", "")
+        last_four = card_number[-4:] if len(card_number) >= 4 else card_number
+        
+        # Preparar datos para enviar al servidor
+        payment_data = {
+            "user_id": userdata.get("userId"),
+            "card_holder": body.get("card_holder"),
+            "card_number_last_four": last_four,
+            "expiry": body.get("expiry"),
+            "card_type": body.get("card_type", "credit"),
+            "is_default": body.get("is_default", False)
+        }
+        
+        # Enviar al servidor
+        add_resp = requests.post(
+            f"{servers.SYU}/user/{userdata.get('userId')}/payment-methods",
+            json=payment_data,
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        
+        if add_resp.ok:
+            return JSONResponse(content={"message": "Método de pago agregado correctamente"})
+        else:
+            error_data = add_resp.json() if add_resp.text else {}
+            return JSONResponse(
+                content=error_data or {"error": "Error al agregar método de pago"},
+                status_code=add_resp.status_code
+            )
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al agregar método de pago"}, status_code=500)
+
+
+@app.delete("/api/user/payment-methods/{payment_id}")
+async def delete_payment_method(request: Request, payment_id: str):
+    """
+    Ruta API para eliminar un método de pago
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Eliminar el método de pago
+        delete_resp = requests.delete(
+            f"{servers.SYU}/user/{userdata.get('userId')}/payment-methods/{payment_id}",
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        
+        if delete_resp.ok:
+            return JSONResponse(content={"message": "Método de pago eliminado correctamente"})
+        elif delete_resp.status_code == 404:
+            return JSONResponse(
+                content={"error": "Método de pago no encontrado"},
+                status_code=404
+            )
+        else:
+            error_data = delete_resp.json() if delete_resp.text else {}
+            return JSONResponse(
+                content=error_data or {"error": "Error al eliminar método de pago"},
+                status_code=delete_resp.status_code
+            )
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al eliminar método de pago"}, status_code=500)
+
+
+@app.put("/api/user/payment-methods/{payment_id}")
+async def update_payment_method(request: Request, payment_id: str):
+    """
+    Ruta API para actualizar un método de pago (ej: establecer como predeterminado)
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        body = await request.json()
+        
+        # Actualizar el método de pago
+        update_resp = requests.put(
+            f"{servers.SYU}/user/{userdata.get('userId')}/payment-methods/{payment_id}",
+            json=body,
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        
+        if update_resp.ok:
+            return JSONResponse(content={"message": "Método de pago actualizado correctamente"})
+        elif update_resp.status_code == 404:
+            return JSONResponse(
+                content={"error": "Método de pago no encontrado"},
+                status_code=404
+            )
+        else:
+            error_data = update_resp.json() if update_resp.text else {}
+            return JSONResponse(
+                content=error_data or {"error": "Error al actualizar método de pago"},
+                status_code=update_resp.status_code
+            )
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al actualizar método de pago"}, status_code=500)

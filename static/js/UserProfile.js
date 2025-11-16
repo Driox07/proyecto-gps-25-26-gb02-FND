@@ -1,6 +1,8 @@
 // User Profile Page Interactivity
 document.addEventListener('DOMContentLoaded', () => {
     loadLabelInfo();
+    loadPaymentMethods();
+    setupPaymentMethodsModal();
     
     // Play button functionality for favorite items
     const playButtons = document.querySelectorAll('.play-button');
@@ -118,6 +120,390 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('User Profile page loaded successfully');
 });
+
+// ==================== PAYMENT METHODS FUNCTIONALITY ====================
+
+/**
+ * Load and display user's payment methods
+ */
+async function loadPaymentMethods() {
+    const grid = document.getElementById('payment-methods-grid');
+    if (!grid) return;
+
+    try {
+        const response = await fetch('/api/user/payment-methods', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const paymentMethods = data.payment_methods || [];
+            
+            if (paymentMethods.length > 0) {
+                displayPaymentMethods(paymentMethods);
+            } else {
+                displayEmptyPaymentState();
+            }
+        } else if (response.status === 401) {
+            // User not authenticated
+            grid.innerHTML = '';
+        } else {
+            throw new Error('Error al cargar métodos de pago');
+        }
+    } catch (error) {
+        console.error('Error loading payment methods:', error);
+        grid.innerHTML = `
+            <div class="empty-payments">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke-width="2"></rect>
+                    <line x1="1" y1="10" x2="23" y2="10" stroke-width="2"></line>
+                </svg>
+                <p>Error al cargar métodos de pago</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Display payment methods cards
+ */
+function displayPaymentMethods(methods) {
+    const grid = document.getElementById('payment-methods-grid');
+    grid.innerHTML = methods.map(method => `
+        <div class="payment-card" data-payment-id="${method.id}">
+            <div class="payment-card-header">
+                <div class="card-logo">${getCardLogo(method.card_type)}</div>
+                <div class="card-actions">
+                    <button class="card-action-btn set-default-btn" title="Establecer como predeterminado" data-payment-id="${method.id}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M9 11l3 3L22 4" stroke-width="2" stroke-linecap="round"></path>
+                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke-width="2" stroke-linecap="round"></path>
+                        </svg>
+                    </button>
+                    <button class="card-action-btn delete-btn" title="Eliminar" data-payment-id="${method.id}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="3 6 5 6 21 6" stroke-width="2"></polyline>
+                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke-width="2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17" stroke-width="2"></line>
+                            <line x1="14" y1="11" x2="14" y2="17" stroke-width="2"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="payment-card-number">•••• •••• •••• ${method.card_number_last_four}</div>
+            
+            <div class="payment-card-info">
+                <div class="card-holder">
+                    <div class="info-label">Titular</div>
+                    <div class="info-value">${method.card_holder}</div>
+                </div>
+                <div class="card-expiry">
+                    <div class="info-label">Vencimiento</div>
+                    <div class="info-value">${method.expiry}</div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span class="card-type-badge">${method.card_type === 'credit' ? 'Crédito' : 'Débito'}</span>
+                ${method.is_default ? '<span class="default-badge">Predeterminada</span>' : ''}
+            </div>
+        </div>
+    `).join('');
+
+    // Add event listeners for actions
+    grid.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deletePaymentMethod(btn.dataset.paymentId);
+        });
+    });
+
+    grid.querySelectorAll('.set-default-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setDefaultPaymentMethod(btn.dataset.paymentId);
+        });
+    });
+}
+
+/**
+ * Display empty state for payment methods
+ */
+function displayEmptyPaymentState() {
+    const grid = document.getElementById('payment-methods-grid');
+    grid.innerHTML = `
+        <div class="empty-payments">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke-width="2"></rect>
+                <line x1="1" y1="10" x2="23" y2="10" stroke-width="2"></line>
+            </svg>
+            <p>No tienes métodos de pago agregados</p>
+        </div>
+    `;
+}
+
+/**
+ * Get card type logo
+ */
+function getCardLogo(cardType) {
+    if (cardType === 'credit') {
+        return 'CC';
+    } else if (cardType === 'debit') {
+        return 'DC';
+    }
+    return 'TC';
+}
+
+/**
+ * Setup payment methods modal
+ */
+function setupPaymentMethodsModal() {
+    const modalOverlay = document.getElementById('payment-modal-overlay');
+    const addBtn = document.getElementById('add-payment-btn');
+    const closeBtn = document.getElementById('modal-close');
+    const paymentForm = document.getElementById('payment-form');
+
+    if (!modalOverlay || !addBtn) return;
+
+    // Open modal
+    addBtn.addEventListener('click', () => {
+        modalOverlay.classList.add('active');
+        if (paymentForm) paymentForm.reset();
+    });
+
+    // Close modal
+    closeBtn?.addEventListener('click', () => {
+        modalOverlay.classList.remove('active');
+    });
+
+    // Close on overlay click
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+            modalOverlay.classList.remove('active');
+        }
+    });
+
+    // Format card number
+    const cardNumberInput = document.getElementById('card-number');
+    if (cardNumberInput) {
+        cardNumberInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\s/g, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+            e.target.value = formattedValue;
+        });
+    }
+
+    // Format expiry
+    const cardExpiryInput = document.getElementById('card-expiry');
+    if (cardExpiryInput) {
+        cardExpiryInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value;
+        });
+    }
+
+    // Format CVV (only numbers)
+    const cardCvvInput = document.getElementById('card-cvv');
+    if (cardCvvInput) {
+        cardCvvInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 3);
+        });
+    }
+
+    // Submit form
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await addPaymentMethod();
+        });
+    }
+}
+
+/**
+ * Add new payment method
+ */
+async function addPaymentMethod() {
+    const cardName = document.getElementById('card-name').value;
+    const cardNumber = document.getElementById('card-number').value;
+    const cardExpiry = document.getElementById('card-expiry').value;
+    const cardCvv = document.getElementById('card-cvv').value;
+    const cardType = document.getElementById('card-type').value;
+    const isDefault = document.getElementById('set-default').checked;
+
+    // Basic validation
+    if (!cardName || !cardNumber || !cardExpiry || !cardCvv) {
+        showNotification('Por favor completa todos los campos', 'error');
+        return;
+    }
+
+    if (cardNumber.replace(/\s/g, '').length < 13) {
+        showNotification('Número de tarjeta inválido', 'error');
+        return;
+    }
+
+    if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) {
+        showNotification('Formato de vencimiento inválido (MM/YY)', 'error');
+        return;
+    }
+
+    if (cardCvv.length < 3) {
+        showNotification('CVV inválido', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/user/payment-methods', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                card_holder: cardName,
+                card_number: cardNumber,
+                expiry: cardExpiry,
+                cvv: cardCvv,
+                card_type: cardType,
+                is_default: isDefault
+            })
+        });
+
+        if (response.ok) {
+            showNotification('Tarjeta agregada correctamente', 'success');
+            document.getElementById('payment-modal-overlay').classList.remove('active');
+            document.getElementById('payment-form').reset();
+            loadPaymentMethods(); // Reload methods
+        } else {
+            const data = await response.json();
+            showNotification(data.error || 'Error al agregar tarjeta', 'error');
+        }
+    } catch (error) {
+        console.error('Error adding payment method:', error);
+        showNotification('Error al agregar tarjeta', 'error');
+    }
+}
+
+/**
+ * Delete payment method
+ */
+async function deletePaymentMethod(paymentId) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este método de pago?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/user/payment-methods/${paymentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            showNotification('Método de pago eliminado correctamente', 'success');
+            loadPaymentMethods(); // Reload methods
+        } else {
+            const data = await response.json();
+            showNotification(data.error || 'Error al eliminar tarjeta', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting payment method:', error);
+        showNotification('Error al eliminar tarjeta', 'error');
+    }
+}
+
+/**
+ * Set default payment method
+ */
+async function setDefaultPaymentMethod(paymentId) {
+    try {
+        const response = await fetch(`/api/user/payment-methods/${paymentId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ is_default: true })
+        });
+
+        if (response.ok) {
+            showNotification('Método predeterminado establecido', 'success');
+            loadPaymentMethods(); // Reload methods
+        } else {
+            const data = await response.json();
+            showNotification(data.error || 'Error al establecer método predeterminado', 'error');
+        }
+    } catch (error) {
+        console.error('Error setting default payment method:', error);
+        showNotification('Error al establecer método predeterminado', 'error');
+    }
+}
+
+/**
+ * Show notification message
+ */
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#667eea'};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        z-index: 2000;
+        animation: slideInRight 0.3s ease-out;
+        font-weight: 500;
+    `;
+
+    document.body.appendChild(notification);
+
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Add notification animation styles
+if (!document.querySelector('style[data-notification-styles]')) {
+    const style = document.createElement('style');
+    style.setAttribute('data-notification-styles', 'true');
+    style.innerHTML = `
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
 
 /**
  * Load and display user's label information
