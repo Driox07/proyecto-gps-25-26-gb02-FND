@@ -220,6 +220,10 @@ class View():
     def get_merch_view(self, request: Request, merch_info : dict, tipoUsuario : int, isLiked: bool, inCarrito: bool):
         return templates.TemplateResponse("merch.html", {"request": request, "data": {"userdata": None, "merch": merch_info}, "tipoUsuario": tipoUsuario, "isLiked": isLiked, "inCarrito": inCarrito})
     
+    # Renderizar la template cart.html
+    def get_cart_view(self, request: Request, userdata: dict = None):
+        return templates.TemplateResponse("cart.html", {"request": request, "data": {"userdata": userdata}})
+    
     # Renderizar la template label.html
     def get_label_view(self, request: Request, label_info : dict, is_owner: bool, is_member: bool):
         return templates.TemplateResponse("label.html", {"request": request, "label": label_info, "is_owner": is_owner, "is_member": is_member})

@@ -212,6 +212,16 @@ def shop(request: Request):
     
     return osv.get_shop_view(request, songs, genres, artistas, albums, tipoUsuario)
 
+@app.get("/cart")
+def cart(request: Request):
+    """
+    Ruta del carrito - Renderiza la página del carrito
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    return osv.get_cart_view(request, userdata)
+
 @app.get("/giftcard")
 def giftcard(request: Request):
     """

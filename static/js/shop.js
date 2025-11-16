@@ -121,19 +121,32 @@ function handleAddToCart(event) {
     const card = button.closest('.product-card');
     const productName = card.querySelector('.product-name').textContent;
     const productPrice = card.querySelector('.product-price').textContent;
+    const productArtist = card.querySelector('.product-artist').textContent;
+    const productImage = card.querySelector('.product-image img').src;
 
-    // Crear objeto del carrito
+    // Crear objeto del carrito con más datos
     const cartItem = {
         id: productId,
         type: productType,
         name: productName,
         price: productPrice,
+        artist: productArtist,
+        image: productImage,
+        quantity: 1,
         timestamp: new Date().getTime()
     };
 
     // Guardar en localStorage
     let cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
-    cart.push(cartItem);
+    
+    // Verificar si el producto ya existe en el carrito
+    const existingItem = cart.find(item => item.id === productId && item.type === productType);
+    if (existingItem) {
+        existingItem.quantity = (existingItem.quantity || 1) + 1;
+    } else {
+        cart.push(cartItem);
+    }
+    
     localStorage.setItem('oversound_cart', JSON.stringify(cart));
 
     // Mostrar notificación
