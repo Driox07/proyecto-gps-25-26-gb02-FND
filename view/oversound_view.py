@@ -227,3 +227,7 @@ class View():
     # Renderizar la template label_create.html
     def get_label_create_view(self, request: Request, label_info : dict = None):
         return templates.TemplateResponse("label_create.html", {"request": request, "label": label_info})
+    
+    # Renderizar la template giftcard.html
+    def get_giftcard_view(self, request: Request, userdata: dict):
+        return templates.TemplateResponse("giftcard.html", {"request": request, "userdata": userdata})

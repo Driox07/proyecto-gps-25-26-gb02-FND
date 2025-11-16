@@ -1,0 +1,897 @@
+/* Gift Card Page Styles - Coherente con el resto del sitio */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Gift Card Container */
+.giftcard-container {
+    flex: 1;
+    padding: 60px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Gift Card Header */
+.giftcard-header {
+    text-align: center;
+    margin-bottom: 60px;
+    animation: fadeInDown 0.6s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.giftcard-header h1 {
+    font-size: 48px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 16px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.giftcard-header p {
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Main Layout */
+.giftcard-main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    margin-bottom: 80px;
+    animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+/* Selection Section */
+.giftcard-selection {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    animation: slideInLeft 0.6s ease-out;
+}
+
+.giftcard-selection h2 {
+    font-size: 28px;
+    color: #333;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+/* Preset Amounts */
+.preset-amounts {
+    margin-bottom: 50px;
+}
+
+.preset-amounts h3 {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.amount-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.amount-btn {
+    padding: 25px 15px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.amount-btn:hover {
+    border-color: #667eea;
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+    transform: translateY(-3px);
+}
+
+.amount-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.amount-value {
+    font-size: 24px;
+    font-weight: 700;
+    display: block;
+}
+
+.amount-label {
+    font-size: 12px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.amount-btn.active .amount-label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Custom Amount */
+.custom-amount {
+    margin-bottom: 50px;
+    padding-bottom: 50px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.custom-amount h3 {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.custom-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.currency-symbol {
+    position: absolute;
+    left: 20px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.custom-amount-input {
+    width: 100%;
+    padding: 16px 20px 16px 50px;
+    border: 2px solid #e0e0e0;
+    border-radius: 15px;
+    font-size: 18px;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.custom-amount-input:focus {
+    outline: none;
+    border-color: #667eea;
+    background-color: white;
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.1);
+}
+
+.amount-range {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #999;
+}
+
+/* Gift Card Info */
+.giftcard-info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.info-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.info-item:hover {
+    background: #eff0f7;
+}
+
+.info-item svg {
+    color: #667eea;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.info-item h4 {
+    font-size: 14px;
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.info-item p {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+}
+
+/* Preview Section */
+.giftcard-preview {
+    animation: slideInRight 0.6s ease-out;
+}
+
+.giftcard-preview h2 {
+    font-size: 28px;
+    color: white;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+/* Preview Card */
+.preview-card {
+    margin-bottom: 40px;
+}
+
+.card-front {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 40px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    aspect-ratio: 16 / 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card-front:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+}
+
+.card-background {
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: rotate 8s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.card-content {
+    position: relative;
+    z-index: 1;
+}
+
+.card-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: auto;
+}
+
+.card-code {
+    margin-bottom: 30px;
+}
+
+.code-label {
+    display: block;
+    font-size: 12px;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.code-value {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+}
+
+.card-amount {
+    text-align: right;
+}
+
+.card-amount .amount-label {
+    display: block;
+    font-size: 12px;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    color: white;
+}
+
+.card-amount .amount-value {
+    display: block;
+    font-size: 36px;
+    font-weight: 700;
+}
+
+/* Personal Message */
+.personal-message {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.personal-message h3 {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.message-textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    resize: none;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.message-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    background-color: white;
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.1);
+}
+
+.character-count {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #999;
+    text-align: right;
+}
+
+/* Recipient Email */
+.recipient-email {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.recipient-email h3 {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.email-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.email-input:focus {
+    outline: none;
+    border-color: #667eea;
+    background-color: white;
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.1);
+}
+
+.email-info {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #999;
+}
+
+/* Order Summary */
+.order-summary {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.order-summary h3 {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-row.total {
+    border-top: 2px solid #e0e0e0;
+    border-bottom: none;
+    padding: 15px 0;
+    font-weight: 700;
+    font-size: 16px;
+    color: #667eea;
+}
+
+/* Purchase Button */
+.btn-purchase {
+    width: 100%;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn-purchase:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.btn-purchase:active {
+    transform: translateY(-1px);
+}
+
+.btn-purchase:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Benefits Section */
+.giftcard-benefits {
+    margin-bottom: 80px;
+    text-align: center;
+    animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.giftcard-benefits h2 {
+    font-size: 36px;
+    color: white;
+    margin-bottom: 50px;
+    font-weight: 700;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+}
+
+.benefit-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 40px 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.benefit-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.benefit-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    color: white;
+}
+
+.benefit-card h3 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.benefit-card p {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+    animation: fadeInDown 0.3s ease-out;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #999;
+    transition: color 0.3s ease;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.modal-header svg {
+    display: block;
+    margin: 0 auto 20px;
+    color: #667eea;
+}
+
+.modal-header.error svg {
+    color: #e74c3c;
+}
+
+.modal-header h2 {
+    font-size: 24px;
+    color: #333;
+    font-weight: 700;
+}
+
+.modal-body {
+    margin-bottom: 30px;
+}
+
+.modal-body p {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.modal-code {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.modal-code p {
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 10px;
+}
+
+.code-display {
+    font-size: 16px !important;
+    color: #667eea !important;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    letter-spacing: 2px;
+    word-break: break-all;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 15px;
+    flex-direction: column;
+}
+
+.btn-modal-action,
+.btn-modal-secondary {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-modal-action {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-modal-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn-modal-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn-modal-secondary:hover {
+    background: #e0e0e0;
+}
+
+/* Footer */
+.giftcard-footer {
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    padding: 50px 40px 30px;
+    margin-top: auto;
+}
+
+.footer-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
+    margin-bottom: 30px;
+}
+
+.footer-section h3,
+.footer-section h4 {
+    color: white;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.footer-section p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.footer-section ul {
+    list-style: none;
+}
+
+.footer-section ul li {
+    margin-bottom: 10px;
+}
+
+.footer-section ul li a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.footer-section ul li a:hover {
+    color: white;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 30px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .giftcard-main {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .giftcard-header h1 {
+        font-size: 36px;
+    }
+
+    .giftcard-container {
+        padding: 40px 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .giftcard-container {
+        padding: 30px 15px;
+    }
+
+    .giftcard-header h1 {
+        font-size: 28px;
+    }
+
+    .giftcard-header p {
+        font-size: 16px;
+    }
+
+    .giftcard-selection,
+    .giftcard-preview {
+        padding: 25px;
+    }
+
+    .amount-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .benefits-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card-front {
+        padding: 25px;
+    }
+
+    .card-amount .amount-value {
+        font-size: 28px;
+    }
+
+    .modal-content {
+        padding: 30px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .giftcard-container {
+        padding: 20px 10px;
+    }
+
+    .giftcard-header h1 {
+        font-size: 24px;
+    }
+
+    .giftcard-header p {
+        font-size: 14px;
+    }
+
+    .giftcard-selection h2,
+    .giftcard-preview h2 {
+        font-size: 22px;
+    }
+
+    .giftcard-selection,
+    .giftcard-preview {
+        padding: 20px;
+    }
+
+    .btn-purchase {
+        font-size: 14px;
+        padding: 14px 16px;
+    }
+
+    .amount-value {
+        font-size: 20px;
+    }
+
+    .code-value {
+        font-size: 14px;
+        letter-spacing: 1px;
+    }
+}

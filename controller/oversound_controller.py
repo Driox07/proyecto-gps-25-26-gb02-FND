@@ -212,6 +212,70 @@ def shop(request: Request):
     
     return osv.get_shop_view(request, songs, genres, artistas, albums, tipoUsuario)
 
+@app.get("/giftcard")
+def giftcard(request: Request):
+    """
+    Ruta para mostrar la página de compra de tarjetas regalo
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_giftcard_view(request, userdata)
+
+@app.post("/api/giftcard/purchase")
+async def purchase_giftcard(request: Request):
+    """
+    Ruta API para procesar la compra de una tarjeta regalo
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        body = await request.json()
+        
+        # Validar datos
+        amount = body.get('amount')
+        recipient_email = body.get('recipient_email')
+        message = body.get('message', '')
+        
+        if not amount or not isinstance(amount, (int, float)):
+            return JSONResponse(content={"error": "Monto inválido"}, status_code=400)
+        
+        if amount < 5 or amount > 500:
+            return JSONResponse(content={"error": "El monto debe estar entre €5 y €500"}, status_code=400)
+        
+        if not recipient_email or '@' not in recipient_email:
+            return JSONResponse(content={"error": "Email inválido"}, status_code=400)
+        
+        if len(message) > 200:
+            return JSONResponse(content={"error": "El mensaje es demasiado largo"}, status_code=400)
+        
+        # Generar código único de tarjeta regalo
+        import uuid
+        giftcard_code = str(uuid.uuid4()).upper()[:16]
+        # Formatear como XXXX-XXXX-XXXX-XXXX
+        giftcard_code = '-'.join([giftcard_code[i:i+4] for i in range(0, len(giftcard_code), 4)])
+        
+        # Aquí se podría guardar en la base de datos la tarjeta regalo
+        # Por ahora, simplemente retornar el código generado
+        # En producción, esto debería:
+        # 1. Procesar el pago
+        # 2. Guardar la tarjeta en la base de datos
+        # 3. Enviar email al destinatario
+        
+        return JSONResponse(content={
+            "message": "Tarjeta regalo comprada exitosamente",
+            "code": giftcard_code,
+            "amount": amount,
+            "recipient_email": recipient_email
+        }, status_code=200)
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al procesar la compra"}, status_code=500)
+
 @app.get("/artist/{artistId}")
 def get_artist_profile(request: Request, artistId: int):
     """
