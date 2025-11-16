@@ -211,3 +211,7 @@ class View():
             "userdata": userdata,
             "last_updated": last_updated
         })
+    
+    # Renderizar la template merch.html
+    def get_merch_view(self, request: Request, merch_info : dict, tipoUsuario : int, isLiked: bool, inCarrito: bool):
+        return templates.TemplateResponse("merch.html", {"request": request, "data": {"userdata": None, "merch": merch_info}, "tipoUsuario": tipoUsuario, "isLiked": isLiked, "inCarrito": inCarrito})

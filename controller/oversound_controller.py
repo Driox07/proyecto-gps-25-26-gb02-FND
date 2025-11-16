@@ -608,3 +608,60 @@ def get_album(request: Request, albumId: int):
         # En caso de error, mostrar página de error
         return osv.get_error_view(request, userdata, f"No se pudo cargar el álbum")
 
+
+@app.get("/merch/{merchId}")
+def get_merch(request: Request, merchId: int):
+    """
+    Ruta para mostrar un producto de merchandising específico desde la tienda
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    try:
+        # Obtener información del merch
+        merch_resp = requests.get(f"{servers.TYA}/merch/{merchId}", timeout=2, headers={"Accept": "application/json"})
+        merch_resp.raise_for_status()
+        merch_data = merch_resp.json()
+        
+        # Resolver artista principal del merch
+        try:
+            artist_resp = requests.get(f"{servers.TYA}/artist/{merch_data['artistId']}", timeout=2, headers={"Accept": "application/json"})
+            artist_resp.raise_for_status()
+            merch_data['artist'] = artist_resp.json()
+        except requests.RequestException:
+            merch_data['artist'] = {"artistId": merch_data['artistId'], "nombre": "Artista desconocido"}
+        
+        # Resolver merchandising relacionado del mismo artista
+        related_merch = []
+        try:
+            artist_merch_resp = requests.get(f"{servers.TYA}/artist/{merch_data['artistId']}/merch", timeout=2, headers={"Accept": "application/json"})
+            artist_merch_resp.raise_for_status()
+            all_artist_merch = artist_merch_resp.json()
+            # Excluir el merch actual de los relacionados
+            related_merch = [m for m in all_artist_merch if m.get('id') != merchId][:6]
+        except requests.RequestException:
+            pass  # Si no se pueden cargar, dejar vacío
+        merch_data['related_merch'] = related_merch
+        
+        # Asegurarse de que el precio sea un número
+        try:
+            merch_data['price'] = float(merch_data.get('price', 0))
+        except ValueError:
+            merch_data['price'] = 0.0
+        
+        # Determinar si está en favoritos y carrito (por ahora False, implementar después)
+        isLiked = False
+        inCarrito = False
+        
+        # Determinar tipo de usuario (0: no autenticado, 1: usuario, 2: artista)
+        tipoUsuario = 0
+        if userdata:
+            tipoUsuario = 1  # TODO: Implementar lógica para distinguir artista
+        
+        return osv.get_merch_view(request, merch_data, tipoUsuario, isLiked, inCarrito)
+        
+    except requests.RequestException as e:
+        # En caso de error, mostrar página de error
+        print(e)
+        return osv.get_error_view(request, userdata, f"No se pudo cargar el producto de merchandising")
+
