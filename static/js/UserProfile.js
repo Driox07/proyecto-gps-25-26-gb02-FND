@@ -1,6 +1,7 @@
 // User Profile Page Interactivity
 document.addEventListener('DOMContentLoaded', () => {
     loadLabelInfo();
+    loadArtistInfo();
     loadPaymentMethods();
     setupPaymentMethodsModal();
     
@@ -130,25 +131,31 @@ async function loadPaymentMethods() {
     const grid = document.getElementById('payment-methods-grid');
     if (!grid) return;
 
+    // Por ahora mostramos estado vacío hasta que el backend implemente el endpoint
+    displayEmptyPaymentState();
+    
+    // TODO: Cuando el backend esté listo, descomentar:
+    /*
     try {
-        const response = await fetch('/api/user/payment-methods', {
+        // Las peticiones se harán directamente al microservicio SYU
+        // El backend de SYU debe manejar la autenticación con cookies
+        const response = await fetch(`${SERVER_CONFIG.SYU}/user/payment-methods`, {
             method: 'GET',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
 
         if (response.ok) {
-            const data = await response.json();
-            const paymentMethods = data.payment_methods || [];
+            const paymentMethods = await response.json();
             
-            if (paymentMethods.length > 0) {
+            if (paymentMethods && paymentMethods.length > 0) {
                 displayPaymentMethods(paymentMethods);
             } else {
                 displayEmptyPaymentState();
             }
         } else if (response.status === 401) {
-            // User not authenticated
             grid.innerHTML = '';
         } else {
             throw new Error('Error al cargar métodos de pago');
@@ -165,6 +172,7 @@ async function loadPaymentMethods() {
             </div>
         `;
     }
+    */
 }
 
 /**
@@ -358,9 +366,15 @@ async function addPaymentMethod() {
         return;
     }
 
+    // TODO: Implementar cuando el backend esté listo
+    showNotification('Funcionalidad en desarrollo', 'info');
+    
+    // TODO: Cuando el backend esté listo, usar esto:
+    /*
     try {
-        const response = await fetch('/api/user/payment-methods', {
+        const response = await fetch(`${SERVER_CONFIG.SYU}/user/payment-methods`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -378,7 +392,7 @@ async function addPaymentMethod() {
             showNotification('Tarjeta agregada correctamente', 'success');
             document.getElementById('payment-modal-overlay').classList.remove('active');
             document.getElementById('payment-form').reset();
-            loadPaymentMethods(); // Reload methods
+            loadPaymentMethods();
         } else {
             const data = await response.json();
             showNotification(data.error || 'Error al agregar tarjeta', 'error');
@@ -387,6 +401,7 @@ async function addPaymentMethod() {
         console.error('Error adding payment method:', error);
         showNotification('Error al agregar tarjeta', 'error');
     }
+    */
 }
 
 /**
@@ -397,9 +412,15 @@ async function deletePaymentMethod(paymentId) {
         return;
     }
 
+    // TODO: Implementar cuando el backend esté listo
+    showNotification('Funcionalidad en desarrollo', 'info');
+    
+    // TODO: Cuando el backend esté listo, usar esto:
+    /*
     try {
-        const response = await fetch(`/api/user/payment-methods/${paymentId}`, {
+        const response = await fetch(`${SERVER_CONFIG.SYU}/user/payment-methods/${paymentId}`, {
             method: 'DELETE',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -407,7 +428,7 @@ async function deletePaymentMethod(paymentId) {
 
         if (response.ok) {
             showNotification('Método de pago eliminado correctamente', 'success');
-            loadPaymentMethods(); // Reload methods
+            loadPaymentMethods();
         } else {
             const data = await response.json();
             showNotification(data.error || 'Error al eliminar tarjeta', 'error');
@@ -416,15 +437,22 @@ async function deletePaymentMethod(paymentId) {
         console.error('Error deleting payment method:', error);
         showNotification('Error al eliminar tarjeta', 'error');
     }
+    */
 }
 
 /**
  * Set default payment method
  */
 async function setDefaultPaymentMethod(paymentId) {
+    // TODO: Implementar cuando el backend esté listo
+    showNotification('Funcionalidad en desarrollo', 'info');
+    
+    // TODO: Cuando el backend esté listo, usar esto:
+    /*
     try {
-        const response = await fetch(`/api/user/payment-methods/${paymentId}`, {
+        const response = await fetch(`${SERVER_CONFIG.SYU}/user/payment-methods/${paymentId}`, {
             method: 'PUT',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -433,7 +461,7 @@ async function setDefaultPaymentMethod(paymentId) {
 
         if (response.ok) {
             showNotification('Método predeterminado establecido', 'success');
-            loadPaymentMethods(); // Reload methods
+            loadPaymentMethods();
         } else {
             const data = await response.json();
             showNotification(data.error || 'Error al establecer método predeterminado', 'error');
@@ -442,6 +470,7 @@ async function setDefaultPaymentMethod(paymentId) {
         console.error('Error setting default payment method:', error);
         showNotification('Error al establecer método predeterminado', 'error');
     }
+    */
 }
 
 /**
@@ -827,4 +856,384 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', addLabelStyles);
 } else {
     addLabelStyles();
+}
+
+// ==================== ARTIST FUNCTIONALITY ====================
+
+/**
+ * Load artist info
+ */
+async function loadArtistInfo() {
+    const artistContent = document.getElementById('artist-content');
+    if (!artistContent) return;
+
+    // Por ahora mostramos estado sin artista hasta que el backend implemente el endpoint
+    displayNoArtist();
+    
+    // TODO: Cuando TYA implemente el endpoint /artist/by-user/{userId}, descomentar:
+    /*
+    try {
+        // Primero necesitamos obtener el userId del usuario autenticado
+        // Esto debería venir del data.userdata en el template
+        const userId = window.userData?.userId; // Asume que userData está disponible globalmente
+        
+        if (!userId) {
+            displayNoArtist();
+            return;
+        }
+        
+        // Hacer petición directa al microservicio TYA
+        const response = await fetch(`${SERVER_CONFIG.TYA}/artist/by-user/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const artistData = await response.json();
+            displayExistingArtist(artistData);
+        } else if (response.status === 404) {
+            displayNoArtist();
+        } else {
+            displayArtistError();
+        }
+    } catch (error) {
+        console.error('Error loading artist info:', error);
+        displayArtistError();
+    }
+    */
+}
+
+/**
+ * Display existing artist info
+ */
+function displayExistingArtist(artist) {
+    const artistContent = document.getElementById('artist-content');
+    if (!artistContent) return;
+
+    artistContent.innerHTML = `
+        <div class="existing-artist">
+            <div class="artist-card">
+                <div class="artist-avatar">
+                    ${artist.profileImage ? 
+                        `<img src="${artist.profileImage}" alt="${artist.artisticName}">` :
+                        `<div class="avatar-placeholder">${artist.artisticName ? artist.artisticName[0].toUpperCase() : 'A'}</div>`
+                    }
+                </div>
+                <div class="artist-info">
+                    <h3 class="artist-name">${artist.artisticName || 'Sin nombre artístico'}</h3>
+                    ${artist.biography ? `<p class="artist-description">${artist.biography}</p>` : ''}
+                    <div class="artist-stats">
+                        <div class="stat-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"/>
+                            </svg>
+                            <span>${artist.owner_songs?.length || 0} canciones</span>
+                        </div>
+                        <div class="stat-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                            </svg>
+                            <span>${artist.owner_albums?.length || 0} álbumes</span>
+                        </div>
+                        ${artist.labelId ? `
+                        <div class="stat-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke-width="2"></path>
+                                <circle cx="9" cy="7" r="4" stroke-width="2"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke-width="2"></path>
+                            </svg>
+                            <span>Discográfica asociada</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="artist-actions">
+                        <a href="/artist/studio" class="btn btn-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke-width="2"></path>
+                            </svg>
+                            Ir al Estudio
+                        </a>
+                        <a href="/artist/${artist.artistId}" class="btn btn-secondary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-width="2"></path>
+                                <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                            </svg>
+                            Ver Perfil Público
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Display no artist state
+ */
+function displayNoArtist() {
+    const artistContent = document.getElementById('artist-content');
+    if (!artistContent) return;
+
+    artistContent.innerHTML = `
+        <div class="no-artist">
+            <div class="empty-state">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"/>
+                </svg>
+                <h3>No tienes un perfil de artista</h3>
+                <p>Crea tu perfil de artista para poder subir canciones, álbumes y gestionar tu contenido musical.</p>
+                <a href="/artist/create" class="btn btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="12" y1="5" x2="12" y2="19" stroke-width="2"></line>
+                        <line x1="5" y1="12" x2="19" y2="12" stroke-width="2"></line>
+                    </svg>
+                    Crear Perfil de Artista
+                </a>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Display artist error state
+ */
+function displayArtistError() {
+    const artistContent = document.getElementById('artist-content');
+    if (!artistContent) return;
+
+    artistContent.innerHTML = `
+        <div class="artist-error">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p>No se pudo cargar la información del artista</p>
+            <button class="btn btn-secondary" onclick="loadArtistInfo()">Reintentar</button>
+        </div>
+    `;
+}
+
+// Add styles for artist section
+function addArtistStyles() {
+    if (!document.querySelector('style[data-artist-styles]')) {
+        const style = document.createElement('style');
+        style.setAttribute('data-artist-styles', 'true');
+        style.innerHTML = `
+            .artist-section {
+                padding: 60px 20px;
+                background: linear-gradient(135deg, rgba(118, 75, 162, 0.05) 0%, rgba(237, 100, 166, 0.05) 100%);
+                border-top: 1px solid rgba(118, 75, 162, 0.1);
+                border-bottom: 1px solid rgba(118, 75, 162, 0.1);
+            }
+
+            .artist-container {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+
+            .artist-header {
+                text-align: center;
+                margin-bottom: 40px;
+            }
+
+            .artist-header h2 {
+                font-size: 32px;
+                font-weight: 700;
+                color: #fff;
+                margin-bottom: 8px;
+            }
+
+            .artist-subtitle {
+                font-size: 16px;
+                color: rgba(255, 255, 255, 0.7);
+            }
+
+            .artist-content {
+                display: flex;
+                justify-content: center;
+            }
+
+            .existing-artist {
+                width: 100%;
+                max-width: 700px;
+            }
+
+            .artist-card {
+                display: flex;
+                align-items: center;
+                gap: 30px;
+                padding: 30px;
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(118, 75, 162, 0.2);
+                border-radius: 15px;
+                backdrop-filter: blur(10px);
+            }
+
+            .artist-avatar {
+                width: 120px;
+                height: 120px;
+                min-width: 120px;
+                border-radius: 50%;
+                overflow: hidden;
+                background: rgba(255, 255, 255, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .artist-avatar img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .avatar-placeholder {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, #764ba2 0%, #ed64a6 100%);
+                color: white;
+                font-size: 48px;
+                font-weight: 700;
+            }
+
+            .artist-info {
+                flex: 1;
+            }
+
+            .artist-name {
+                font-size: 24px;
+                font-weight: 700;
+                color: #fff;
+                margin-bottom: 12px;
+            }
+
+            .artist-description {
+                font-size: 14px;
+                color: rgba(255, 255, 255, 0.7);
+                margin-bottom: 16px;
+                line-height: 1.6;
+            }
+
+            .artist-stats {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 16px;
+                margin-bottom: 20px;
+            }
+
+            .stat-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 13px;
+                color: rgba(255, 255, 255, 0.7);
+            }
+
+            .stat-item svg {
+                color: #764ba2;
+            }
+
+            .artist-actions {
+                display: flex;
+                gap: 12px;
+                margin-top: 20px;
+            }
+
+            .no-artist {
+                width: 100%;
+                max-width: 500px;
+            }
+
+            .no-artist .empty-state {
+                text-align: center;
+                padding: 40px;
+                background: rgba(255, 255, 255, 0.08);
+                border: 2px dashed rgba(118, 75, 162, 0.3);
+                border-radius: 15px;
+                backdrop-filter: blur(10px);
+            }
+
+            .no-artist .empty-state svg {
+                margin-bottom: 20px;
+                opacity: 0.5;
+            }
+
+            .no-artist .empty-state h3 {
+                font-size: 20px;
+                font-weight: 600;
+                color: #fff;
+                margin-bottom: 12px;
+            }
+
+            .no-artist .empty-state p {
+                font-size: 14px;
+                color: rgba(255, 255, 255, 0.7);
+                margin-bottom: 24px;
+                line-height: 1.6;
+            }
+
+            .artist-error {
+                text-align: center;
+                padding: 40px;
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(245, 101, 101, 0.3);
+                border-radius: 15px;
+                backdrop-filter: blur(10px);
+            }
+
+            .artist-error svg {
+                margin-bottom: 16px;
+                color: #f56565;
+            }
+
+            .artist-error p {
+                font-size: 14px;
+                color: rgba(255, 255, 255, 0.7);
+                margin-bottom: 20px;
+            }
+
+            @media (max-width: 768px) {
+                .artist-section {
+                    padding: 40px 20px;
+                }
+
+                .artist-header h2 {
+                    font-size: 24px;
+                }
+
+                .artist-card {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 20px;
+                }
+
+                .artist-actions {
+                    flex-direction: column;
+                }
+
+                .artist-actions a {
+                    width: 100%;
+                }
+
+                .artist-stats {
+                    justify-content: center;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Add artist styles when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addArtistStyles);
+} else {
+    addArtistStyles();
 }

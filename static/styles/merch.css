@@ -41,16 +41,17 @@ body {
     align-items: flex-start;
 }
 
-/* Merch Image */
+/* Merch Image - Positioned on the right */
 .merch-image-container {
     position: relative;
-    width: 300px;
-    height: 300px;
+    width: 350px;
+    height: 350px;
     flex-shrink: 0;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     transition: transform 0.3s ease;
+    order: 2; /* Forces image to the right */
 }
 
 .merch-image-container:hover {
@@ -98,10 +99,14 @@ body {
     background: white;
 }
 
-/* Merch Info */
+/* Merch Info - Positioned on the left */
 .merch-info {
     flex: 1;
     color: white;
+    order: 1; /* Forces text to the left */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .merch-label {
@@ -123,19 +128,43 @@ body {
 }
 
 .merch-artist {
-    font-size: 24px;
-    margin-bottom: 24px;
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.merch-artist-prefix {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+    margin-right: 8px;
 }
 
 .merch-artist a {
     color: rgba(255, 255, 255, 0.95);
     text-decoration: none;
     transition: color 0.3s ease;
+    font-weight: 600;
 }
 
 .merch-artist a:hover {
     color: white;
     text-decoration: underline;
+}
+
+/* Description in header */
+.merch-description-header {
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 20px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border-left: 4px solid rgba(255, 255, 255, 0.5);
+}
+
+.merch-description-header.empty {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.6);
 }
 
 /* Merch Meta */
@@ -178,11 +207,37 @@ body {
     font-weight: 700;
 }
 
+/* Price Display */
+.merch-price-large {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.price-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.price-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
 /* Merch Actions */
 .merch-actions {
     display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .btn {
@@ -194,6 +249,7 @@ body {
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
     cursor: pointer;
     border: 2px solid transparent;
@@ -222,6 +278,45 @@ body {
     transform: translateY(-2px);
 }
 
+/* Full-width button */
+.btn-full {
+    width: 100%;
+}
+
+/* Button group for horizontal layout */
+.btn-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Half-width button in groups */
+.btn-half {
+    flex: 1;
+}
+
+/* Square icon button */
+.btn-icon-square {
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.btn-icon-square:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: white;
+    transform: scale(1.05);
+}
+
+/* Legacy icon button (circular) */
 .btn-icon {
     width: 50px;
     height: 50px;
@@ -429,6 +524,11 @@ body {
         text-align: center;
     }
 
+    .merch-image-container,
+    .merch-info {
+        order: 0; /* Reset order on mobile */
+    }
+
     .merch-image-container {
         width: 250px;
         height: 250px;
@@ -447,7 +547,20 @@ body {
     }
 
     .merch-actions {
-        justify-content: center;
+        width: 100%;
+    }
+
+    .btn-group {
+        flex-direction: column;
+    }
+
+    .btn-half {
+        width: 100%;
+    }
+
+    .btn-icon-square {
+        width: 100%;
+        height: 50px;
     }
 
     .details-section {
@@ -495,7 +608,16 @@ body {
         border-radius: 10px;
     }
 
+    .btn-icon-square {
+        width: 100%;
+        height: 50px;
+    }
+
     .specs-grid {
         grid-template-columns: 1fr;
+    }
+
+    .price-value {
+        font-size: 24px;
     }
 }

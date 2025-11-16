@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ data.merch.name }} | OverSound</title>
+    <title>{{ data.merch.title }} | OverSound</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles/merch.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
 </head>
@@ -15,35 +15,21 @@
         <!-- Merch Header Section -->
         <section class="merch-header">
             <div class="merch-header-content">
-                <!-- Merch Image -->
-                <div class="merch-image-container">
-                    <img src="{{ data.merch.image }}" alt="{{ data.merch.name }}" class="merch-image">
-                    <div class="image-overlay">
-                        <button class="view-button-large" id="view-button">
-                            <svg width="50" height="50" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Merch Info -->
+                <!-- Merch Info (texto a la izquierda) -->
                 <div class="merch-info">
                     <span class="merch-label">MERCHANDISING</span>
-                    <h1 class="merch-name" id="merch-name">{{ data.merch.name }}</h1>
+                    <h1 class="merch-name" id="merch-name">{{ data.merch.title }}</h1>
                     
                     <div class="merch-artist">
-                        <a href="/artist/{{ data.merch.artist.artistId }}" id="artist-link">{{ data.merch.artist.nombre }}</a>
+                        <span>Por</span>
+                        <a href="/artist/{{ data.merch.artist.artistId }}" id="artist-link">{{ data.merch.artist.artisticName }}</a>
                     </div>
                     
+                    {% if data.merch.description %}
+                        <p class="merch-description-header" id="merch-description">{{ data.merch.description }}</p>
+                    {% endif %}
+                    
                     <div class="merch-meta">
-                        <div class="meta-item">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke-width="2"></rect>
-                                <path d="M16 3v4M8 3v4" stroke-width="2"></path>
-                            </svg>
-                            <span id="merch-type">{{ data.merch.product_type }}</span>
-                        </div>
                         <div class="meta-item">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect>
@@ -53,23 +39,15 @@
                             </svg>
                             <span id="merch-release-date">{{ data.merch.releaseDate[:10] }}</span>
                         </div>
-                        <div class="meta-item">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke-width="2"></path>
-                            </svg>
-                            <span id="merch-price">€{{ "%.2f"|format(data.merch.price) }}</span>
-                        </div>
                     </div>
-
-                    {% if data.merch.stock is defined %}
-                    <div class="merch-stock">
-                        <span class="stock-label">Stock disponible:</span>
-                        <span class="stock-value" id="stock-value">{{ data.merch.stock }}</span> unidades
+                    
+                    <div class="merch-price-large">
+                        <span class="price-label">Precio</span>
+                        <span class="price-value" id="merch-price">€{{ "%.2f"|format(data.merch.price) }}</span>
                     </div>
-                    {% endif %}
                     
                     <div class="merch-actions">
-                        <button class="btn btn-primary" id="buy-button">
+                        <button class="btn btn-primary btn-full" id="buy-button">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <circle cx="9" cy="21" r="1" stroke-width="2"></circle>
                                 <circle cx="20" cy="21" r="1" stroke-width="2"></circle>
@@ -77,12 +55,31 @@
                             </svg>
                             Comprar ahora
                         </button>
-                        <button class="btn btn-secondary" id="add-to-cart-button">
-                            Añadir al carrito
-                        </button>
-                        <button class="btn btn-icon" id="favorite-button" title="Añadir a favoritos">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-width="2"></path>
+                        <div class="btn-group">
+                            <button class="btn btn-secondary btn-half" id="add-to-cart-button">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="9" cy="21" r="1" stroke-width="2"></circle>
+                                    <circle cx="20" cy="21" r="1" stroke-width="2"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" stroke-width="2"></path>
+                                </svg>
+                                Añadir al carrito
+                            </button>
+                            <button class="btn btn-icon-square" id="favorite-button" title="Añadir a favoritos">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-width="2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Merch Image (imagen a la derecha) -->
+                <div class="merch-image-container">
+                    <img src="{{ data.merch.cover }}" alt="{{ data.merch.title }}" class="merch-image">
+                    <div class="image-overlay">
+                        <button class="view-button-large" id="view-button">
+                            <svg width="50" height="50" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                             </svg>
                         </button>
                     </div>
@@ -109,12 +106,8 @@
                     <h2 class="section-title">Detalles del Producto</h2>
                     <div class="specs-grid">
                         <div class="spec-item">
-                            <span class="spec-label">Tipo de Producto</span>
-                            <span class="spec-value">{{ data.merch.product_type }}</span>
-                        </div>
-                        <div class="spec-item">
                             <span class="spec-label">Artista</span>
-                            <a href="/artist/{{ data.merch.artist.artistId }}" class="spec-value-link">{{ data.merch.artist.nombre }}</a>
+                            <a href="/artist/{{ data.merch.artist.artistId }}" class="spec-value-link">{{ data.merch.artist.artisticName }}</a>
                         </div>
                         <div class="spec-item">
                             <span class="spec-label">Fecha de Lanzamiento</span>
@@ -124,12 +117,6 @@
                             <span class="spec-label">Precio</span>
                             <span class="spec-value price">€{{ "%.2f"|format(data.merch.price) }}</span>
                         </div>
-                        {% if data.merch.stock is defined %}
-                        <div class="spec-item">
-                            <span class="spec-label">Stock</span>
-                            <span class="spec-value">{{ data.merch.stock }} unidades</span>
-                        </div>
-                        {% endif %}
                         {% if tipoUsuario == 1 or tipoUsuario == 2 %}
                         <div class="spec-item">
                             <span class="spec-label">Estado</span>
@@ -151,11 +138,10 @@
                     <h2 class="section-title">Otros Productos del Artista</h2>
                     <div class="related-merch-container">
                         {% for related_item in data.merch.related_merch %}
-                        <a href="/merch/{{ related_item.id }}" class="related-merch-card">
-                            <img src="{{ related_item.image }}" alt="{{ related_item.name }}" class="related-merch-image">
+                        <a href="/merch/{{ related_item.merchId }}" class="related-merch-card">
+                            <img src="{{ related_item.cover }}" alt="{{ related_item.title }}" class="related-merch-image">
                             <div class="related-merch-info">
-                                <h3 class="related-merch-name">{{ related_item.name }}</h3>
-                                <p class="related-merch-type">{{ related_item.product_type }}</p>
+                                <h3 class="related-merch-name">{{ related_item.title }}</h3>
                                 <p class="related-merch-price">€{{ "%.2f"|format(related_item.price) }}</p>
                             </div>
                         </a>

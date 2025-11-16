@@ -49,7 +49,6 @@
                     
                     <div class="profile-actions">
                         <a href="/profile/edit" class="btn btn-primary">Editar Perfil</a>
-                        <a href="/settings" class="btn btn-secondary">Configuración</a>
                     </div>
                 </div>
             </div>
@@ -133,6 +132,24 @@
             </div>
         </section>
         {% endif %}
+
+        <!-- Artist Section -->
+        <section class="artist-section" id="artist-section">
+            <div class="artist-container">
+                <div class="artist-header">
+                    <h2>Perfil de Artista</h2>
+                    <p class="artist-subtitle">Gestiona tu perfil de artista</p>
+                </div>
+                
+                <div class="artist-content" id="artist-content">
+                    <!-- Contenido cargado dinámicamente -->
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <p>Cargando información...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <!-- Label Section -->
         <section class="label-section" id="label-section">
@@ -312,6 +329,13 @@
         </section>
     </main>
 
+    <script>
+        // Configuración de servidores para JavaScript
+        const SERVER_CONFIG = {
+            SYU: "{{ syu_server }}",
+            TYA: "{{ tya_server }}"
+        };
+    </script>
     <script src="{{ url_for('static', path='js/UserProfile.js') }}"></script>
 </body>
 </html>

@@ -22,6 +22,38 @@ tags:
     description: Access to music genres information
     
 paths:
+  /song/list:
+    get:
+      tags:
+        - song
+      summary: Get songs by a list of IDs
+      description: Returns all songs whose IDs are in the provided list
+      operationId: listSongs
+      parameters:
+        - name: ids
+          in: query
+          description: Comma-separated list of song IDs
+          required: true
+          schema:
+            type: string
+          example: "1,2,3,5,8"
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Song'
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /song/{songId}:
     get:
       tags:
@@ -198,7 +230,106 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /song/filter:
+    get:
+      tags:
+        - song
+      summary: Filter songs by genres and/or artists
+      description: Returns songs that match the specified genre and/or artist filters
+      operationId: filterSongs
+      parameters:
+        - name: genres
+          in: query
+          description: Comma-separated list of genre IDs to filter by
+          required: false
+          schema:
+            type: string
+          example: "1,3,5"
+        - name: artists
+          in: query
+          description: Comma-separated list of artist IDs to filter by
+          required: false
+          schema:
+            type: string
+          example: "2,4"
+        - name: order
+          in: query
+          description: Field to order results by
+          required: false
+          schema:
+            type: string
+            enum: [date, name]
+          example: "date"
+        - name: direction
+          in: query
+          description: Order direction
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+          example: "asc"
+        - name: page
+          in: query
+          description: Page number for pagination (1-indexed, limit is 9 items per page)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    songId:
+                      type: integer
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
+  /album/list:
+    get:
+      tags:
+        - album
+      summary: Get albums by a list of IDs
+      description: Returns all albums whose IDs are in the provided list
+      operationId: listAlbums
+      parameters:
+        - name: ids
+          in: query
+          description: Comma-separated list of album IDs
+          required: true
+          schema:
+            type: string
+          example: "1,2,3,5,8"
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Album'
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /album/{albumId}:
     get:
       tags:
@@ -364,8 +495,106 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /album/filter:
+    get:
+      tags:
+        - album
+      summary: Filter albums by genres and/or artists
+      description: Returns albums that match the specified genre and/or artist filters
+      operationId: filterAlbums
+      parameters:
+        - name: genres
+          in: query
+          description: Comma-separated list of genre IDs to filter by
+          required: false
+          schema:
+            type: string
+          example: "1,3,5"
+        - name: artists
+          in: query
+          description: Comma-separated list of artist IDs to filter by
+          required: false
+          schema:
+            type: string
+          example: "2,4"
+        - name: order
+          in: query
+          description: Field to order results by
+          required: false
+          schema:
+            type: string
+            enum: [date, name]
+          example: "date"
+        - name: direction
+          in: query
+          description: Order direction
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+          example: "asc"
+        - name: page
+          in: query
+          description: Page number for pagination (1-indexed, limit is 9 items per page)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    albumId:
+                      type: integer
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-
+  /merch/list:
+    get:
+      tags:
+        - merchandising
+      summary: Get merchandising items by a list of IDs
+      description: Returns all merchandising items whose IDs are in the provided list
+      operationId: listMerch
+      parameters:
+        - name: ids
+          in: query
+          description: Comma-separated list of merchandising IDs
+          required: true
+          schema:
+            type: string
+          example: "1,2,3,5,8"
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Merchandising'
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /merch/{merchId}:
     get:
       tags:
@@ -531,7 +760,106 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /merch/filter:
+    get:
+      tags:
+        - merchandising
+      summary: Filter merchandising items by genres and/or artists
+      description: Returns merchandising items that match the specified genre and/or artist filters
+      operationId: filterMerch
+      parameters:
+        - name: genres
+          in: query
+          description: Comma-separated list of genre IDs to filter by
+          required: false
+          schema:
+            type: string
+          example: "1,3,5"
+        - name: artists
+          in: query
+          description: Comma-separated list of artist IDs to filter by
+          required: false
+          schema:
+            type: string
+          example: "2,4"
+        - name: order
+          in: query
+          description: Field to order results by
+          required: false
+          schema:
+            type: string
+            enum: [date, name]
+          example: "date"
+        - name: direction
+          in: query
+          description: Order direction
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+          example: "asc"
+        - name: page
+          in: query
+          description: Page number for pagination (1-indexed, limit is 9 items per page)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    merchId:
+                      type: integer
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
+  /artist/list:
+    get:
+      tags:
+        - artist
+      summary: Get artists by a list of IDs
+      description: Returns all artists whose IDs are in the provided list
+      operationId: listArtists
+      parameters:
+        - name: ids
+          in: query
+          description: Comma-separated list of artist IDs
+          required: true
+          schema:
+            type: string
+          example: "1,2,3,5,8"
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Artist'
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /artist/{artistId}:
     get:
       tags:
@@ -677,6 +1005,73 @@ paths:
           required: true
           schema:
             type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    artistId:
+                      type: integer
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /artist/filter:
+    get:
+      tags:
+        - artist
+      summary: Filter artists by genres and/or artists
+      description: Returns artists that match the specified genre and/or artist filters
+      operationId: filterArtists
+      parameters:
+        - name: genres
+          in: query
+          description: Comma-separated list of genre IDs to filter by
+          required: false
+          schema:
+            type: string
+          example: "1,3,5"
+        - name: artists
+          in: query
+          description: Comma-separated list of artist IDs to filter by
+          required: false
+          schema:
+            type: string
+          example: "2,4"
+        - name: order
+          in: query
+          description: Field to order results by
+          required: false
+          schema:
+            type: string
+            enum: [date, name]
+          example: "date"
+        - name: direction
+          in: query
+          description: Order direction
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+          example: "asc"
+        - name: page
+          in: query
+          description: Page number for pagination (1-indexed, limit is 9 items per page)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
       responses:
         '200':
           description: Successful operation

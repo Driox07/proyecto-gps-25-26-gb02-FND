@@ -63,7 +63,7 @@ body {
     font-weight: 700;
     color: white;
     margin-bottom: 16px;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .shop-header p {
@@ -74,7 +74,7 @@ body {
 
 /* Shop Controls */
 .shop-controls {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 30px;
@@ -92,22 +92,23 @@ body {
 .search-input {
     width: 100%;
     padding: 16px 20px 16px 50px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 15px;
     font-size: 16px;
     transition: all 0.3s ease;
-    background-color: #f8f9fa;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #000000;
 }
 
 .search-input:focus {
     outline: none;
-    border-color: #667eea;
-    background-color: #fff;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
 }
 
 .search-input::placeholder {
-    color: #aaa;
+    color: #ffffff;
 }
 
 .search-icon {
@@ -150,6 +151,12 @@ body {
     color: #333;
     cursor: pointer;
     transition: all 0.3s ease;
+}
+
+.filter-select option {
+    background-color: #ffffff;
+    color: #333;
+    padding: 10px;
 }
 
 .filter-select:hover {
@@ -708,15 +715,15 @@ body {
 /* Dark Mode Compatibility */
 @media (prefers-color-scheme: dark) {
     .shop-controls {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.2);
         color: white;
     }
 
     .search-input,
     .filter-select {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: rgba(255, 255, 255, 0.2);
         color: white;
-        border-color: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.3);
     }
 
     .product-card {
