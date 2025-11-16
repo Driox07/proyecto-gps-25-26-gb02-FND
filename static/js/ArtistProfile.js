@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     initFollowButton();
     initCardInteractions();
+    loadArtistLabelInfo();
 });
 
 /**
@@ -280,3 +281,374 @@ window.ArtistProfile = {
     showNotification,
     formatDuration
 };
+
+/**
+ * Load artist's label information
+ */
+async function loadArtistLabelInfo() {
+    const labelContent = document.getElementById('artist-label-content');
+    if (!labelContent) return;
+
+    // Get artist ID from URL or data attribute
+    const artistId = getArtistIdFromPage();
+    
+    try {
+        const response = await fetch(`/api/artist/${artistId}/label`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.label) {
+                displayArtistLabel(data.label, data.is_owner);
+            } else {
+                displayArtistNoLabel(data.is_owner);
+            }
+        } else if (response.status === 404) {
+            displayArtistNoLabel(false);
+        } else {
+            throw new Error('Error al cargar información de discográfica');
+        }
+    } catch (error) {
+        console.error('Error loading artist label:', error);
+        labelContent.innerHTML = `
+            <div class="label-error">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05L13.71 3.86a2 2 0 0 0-3.42 0z" stroke-width="2"></path>
+                    <line x1="12" y1="9" x2="12" y2="13" stroke-width="2"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2"></line>
+                </svg>
+                <p>No se pudo cargar la información de discográfica</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Get artist ID from page
+ */
+function getArtistIdFromPage() {
+    // Try to get from data attribute on main element
+    const mainElement = document.querySelector('.artist-main');
+    if (mainElement && mainElement.dataset.artistId) {
+        return mainElement.dataset.artistId;
+    }
+    
+    // Try to get from artist name element
+    const artistNameElement = document.querySelector('.artist-name');
+    if (artistNameElement && artistNameElement.dataset.artistId) {
+        return artistNameElement.dataset.artistId;
+    }
+    
+    // Fallback: return null if not found
+    return null;
+}
+
+/**
+ * Display artist's label
+ */
+function displayArtistLabel(label, isOwner) {
+    const labelContent = document.getElementById('artist-label-content');
+    
+    let ownerActions = '';
+    if (isOwner) {
+        ownerActions = `
+            <div class="label-owner-actions">
+                <a href="/label/${label.id}/edit" class="btn btn-secondary">Editar Discográfica</a>
+                <button class="btn btn-danger" onclick="deleteArtistLabel('${label.id}')">Eliminar Discográfica</button>
+            </div>
+        `;
+    }
+    
+    labelContent.innerHTML = `
+        <div class="artist-label-display">
+            <div class="label-card-artist">
+                <div class="label-logo">
+                    ${label.logo ? `<img src="${label.logo}" alt="${label.name}">` : `<div class="logo-placeholder">${label.name[0].toUpperCase()}</div>`}
+                </div>
+                <div class="label-info">
+                    <h3 class="label-name">${label.name}</h3>
+                    ${label.description ? `<p class="label-description">${label.description}</p>` : ''}
+                    ${label.country ? `<p class="label-meta"><strong>País:</strong> ${label.country}</p>` : ''}
+                    ${label.foundationDate ? `<p class="label-meta"><strong>Fundación:</strong> ${label.foundationDate}</p>` : ''}
+                    ${label.artistCount ? `<p class="label-meta"><strong>Artistas:</strong> ${label.artistCount}</p>` : ''}
+                </div>
+                <div class="label-actions">
+                    <a href="/label/${label.id}" class="btn btn-primary">Ver Discográfica Completa</a>
+                    ${ownerActions}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Display when artist has no label
+ */
+function displayArtistNoLabel(isOwner) {
+    const labelContent = document.getElementById('artist-label-content');
+    
+    let createButton = '';
+    if (isOwner) {
+        createButton = `<a href="/label/create" class="btn btn-primary">Crear Discográfica</a>`;
+    }
+    
+    labelContent.innerHTML = `
+        <div class="artist-no-label">
+            <div class="empty-state">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke-width="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" stroke-width="2"></path>
+                </svg>
+                <h3>Sin discográfica</h3>
+                <p>${isOwner ? 'Aún no tienes una discográfica. ¡Crea una ahora!' : 'Este artista aún no pertenece a ninguna discográfica.'}</p>
+                ${createButton}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Delete artist label (owner only)
+ */
+async function deleteArtistLabel(labelId) {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta discográfica? Esta acción no se puede deshacer.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/label/${labelId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            showNotification('Discográfica eliminada correctamente', 'success');
+            setTimeout(() => {
+                loadArtistLabelInfo();
+            }, 1500);
+        } else if (response.status === 403) {
+            showNotification('No tienes permiso para eliminar esta discográfica', 'error');
+        } else {
+            throw new Error('Error al eliminar discográfica');
+        }
+    } catch (error) {
+        console.error('Error deleting label:', error);
+        showNotification('Error al eliminar la discográfica', 'error');
+    }
+}
+
+// Add styles for label section in artist profile
+function addArtistLabelStyles() {
+    if (!document.querySelector('style[data-artist-label-styles]')) {
+        const style = document.createElement('style');
+        style.setAttribute('data-artist-label-styles', 'true');
+        style.innerHTML = `
+            .label-content {
+                min-height: 300px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .artist-label-display,
+            .artist-no-label {
+                width: 100%;
+            }
+
+            .label-card-artist {
+                display: flex;
+                align-items: center;
+                gap: 30px;
+                padding: 30px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(102, 126, 234, 0.2);
+                border-radius: 15px;
+                backdrop-filter: blur(10px);
+            }
+
+            .label-logo {
+                width: 140px;
+                height: 140px;
+                min-width: 140px;
+                border-radius: 12px;
+                overflow: hidden;
+                background: rgba(255, 255, 255, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .label-logo img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .logo-placeholder {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                font-size: 56px;
+                font-weight: 700;
+            }
+
+            .label-name {
+                font-size: 24px;
+                font-weight: 700;
+                color: #fff;
+                margin-bottom: 12px;
+            }
+
+            .label-description {
+                font-size: 14px;
+                color: rgba(255, 255, 255, 0.7);
+                margin-bottom: 12px;
+                line-height: 1.6;
+            }
+
+            .label-meta {
+                font-size: 13px;
+                color: rgba(255, 255, 255, 0.6);
+                margin-bottom: 6px;
+            }
+
+            .label-actions {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+                margin-top: 20px;
+            }
+
+            .label-owner-actions {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .artist-no-label .empty-state {
+                text-align: center;
+                padding: 40px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 2px dashed rgba(102, 126, 234, 0.3);
+                border-radius: 15px;
+                backdrop-filter: blur(10px);
+            }
+
+            .artist-no-label .empty-state svg {
+                margin-bottom: 20px;
+                opacity: 0.5;
+            }
+
+            .artist-no-label .empty-state h3 {
+                font-size: 20px;
+                font-weight: 600;
+                color: #fff;
+                margin-bottom: 12px;
+            }
+
+            .artist-no-label .empty-state p {
+                font-size: 14px;
+                color: rgba(255, 255, 255, 0.7);
+                margin-bottom: 24px;
+                line-height: 1.6;
+            }
+
+            .label-error {
+                text-align: center;
+                padding: 40px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(245, 101, 101, 0.3);
+                border-radius: 15px;
+                backdrop-filter: blur(10px);
+            }
+
+            .label-error svg {
+                margin-bottom: 16px;
+                color: #f56565;
+            }
+
+            .label-error p {
+                font-size: 14px;
+                color: rgba(255, 255, 255, 0.7);
+            }
+
+            .loading-spinner {
+                text-align: center;
+                padding: 40px;
+            }
+
+            .spinner {
+                width: 40px;
+                height: 40px;
+                border: 3px solid rgba(102, 126, 234, 0.2);
+                border-top: 3px solid #667eea;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 16px;
+            }
+
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+
+            .loading-spinner p {
+                color: rgba(255, 255, 255, 0.6);
+                font-size: 14px;
+            }
+
+            @media (max-width: 768px) {
+                .label-card-artist {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 20px;
+                    padding: 20px;
+                }
+
+                .label-logo {
+                    width: 120px;
+                    height: 120px;
+                    min-width: 120px;
+                }
+
+                .label-actions {
+                    flex-direction: column;
+                    width: 100%;
+                }
+
+                .label-actions a,
+                .label-actions button {
+                    width: 100%;
+                }
+
+                .label-owner-actions {
+                    flex-direction: column;
+                    width: 100%;
+                }
+
+                .label-owner-actions a,
+                .label-owner-actions button {
+                    width: 100%;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Add styles when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addArtistLabelStyles);
+} else {
+    addArtistLabelStyles();
+}

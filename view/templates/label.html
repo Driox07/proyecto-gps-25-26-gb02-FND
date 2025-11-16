@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ label.name }} - Discográfica | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/label.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="label-main">
+        <!-- Label Header Section -->
+        <section class="label-header">
+            <div class="label-header-background">
+                <div class="background-gradient"></div>
+                {% if label.logo %}
+                    <img src="{{ label.logo }}" alt="{{ label.name }}" class="background-image">
+                {% endif %}
+            </div>
+            
+            <div class="label-header-content">
+                <div class="label-image-container">
+                    {% if label.logo %}
+                        <img src="{{ label.logo }}" alt="{{ label.name }}" class="label-image">
+                    {% else %}
+                        <div class="label-image-placeholder">
+                            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                            </svg>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="label-info">
+                    <h1 class="label-name">{{ label.name }}</h1>
+                    
+                    {% if label.description %}
+                        <p class="label-bio">{{ label.description }}</p>
+                    {% else %}
+                        <p class="label-bio empty">Sin descripción</p>
+                    {% endif %}
+                    
+                    <div class="label-meta">
+                        {% if label.foundationDate %}
+                            <div class="meta-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line>
+                                </svg>
+                                <span>Fundada en {{ label.foundationDate }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if label.artists_count %}
+                            <div class="meta-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                <span>{{ label.artists_count }} Artistas</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="label-actions">
+                        {% if is_owner %}
+                            <a href="/label/edit" class="btn btn-primary">Editar</a>
+                            <button class="btn btn-danger" id="delete-label-btn">Eliminar Discográfica</button>
+                        {% else %}
+                            {% if is_member %}
+                                <button class="btn btn-secondary" id="leave-label-btn">Salir de la Discográfica</button>
+                            {% else %}
+                                <button class="btn btn-primary" id="join-label-btn">Unirse a Discográfica</button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Label Content Section -->
+        <section class="label-content">
+            <div class="content-container">
+                <!-- Artists Section -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Artistas</h2>
+                        {% if label.artists %}
+                            <span class="section-count">{{ label.artists|length }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="artists-grid">
+                        {% if label.artists %}
+                            {% for artist in label.artists %}
+                                <div class="artist-card">
+                                    <div class="card-image">
+                                        {% if artist.artisticImage %}
+                                            <img src="{{ artist.artisticImage }}" alt="{{ artist.artisticName }}">
+                                        {% else %}
+                                            <div class="card-image-placeholder">
+                                                {{ artist.artisticName[0].upper() }}
+                                            </div>
+                                        {% endif %}
+                                        <div class="card-overlay">
+                                            <a href="/artist/{{ artist.artistId }}" class="view-button">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="card-content">
+                                        <h3 class="card-title">{{ artist.artisticName }}</h3>
+                                        {% if is_owner %}
+                                            <button class="remove-artist-btn" data-artist-id="{{ artist.artistId }}" title="Eliminar artista">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <line x1="18" y1="6" x2="6" y2="18" stroke-width="2"></line>
+                                                    <line x1="6" y1="6" x2="18" y2="18" stroke-width="2"></line>
+                                                </svg>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                </svg>
+                                <p>Esta discográfica no tiene artistas aún</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Info Section -->
+                <div class="content-section">
+                    <h2>Información de la Discográfica</h2>
+                    <div class="info-box">
+                        <div class="info-item">
+                            <span class="info-label">Nombre</span>
+                            <span class="info-value">{{ label.name }}</span>
+                        </div>
+                        {% if label.country %}
+                            <div class="info-item">
+                                <span class="info-label">País</span>
+                                <span class="info-value">{{ label.country }}</span>
+                            </div>
+                        {% endif %}
+                        {% if label.createdAt %}
+                            <div class="info-item">
+                                <span class="info-label">Creada</span>
+                                <span class="info-value">{{ label.createdAt[:10] }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="info-item">
+                            <span class="info-label">Número de Artistas</span>
+                            <span class="info-value">{{ label.artists|length if label.artists else 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', path='js/label.js') }}"></script>
+</body>
+</html>

@@ -11,7 +11,7 @@
 <body>
     {% include 'common/header.html' %}
     
-    <main class="artist-main">
+    <main class="artist-main" data-artist-id="{{ artist.artistId }}">
         <!-- Artist Header Section -->
         <section class="artist-header">
             <div class="artist-header-background">
@@ -124,6 +124,13 @@
                             <line x1="7" y1="7" x2="7.01" y2="7" stroke-width="2"></line>
                         </svg>
                         Merchandise
+                    </button>
+                    <button class="tab-button" data-tab="label">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke-width="2"></rect>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" stroke-width="2"></path>
+                        </svg>
+                        Discográfica
                     </button>
                 </div>
 
@@ -276,6 +283,21 @@
                                 <p>Este artista aún no tiene merchandise</p>
                             </div>
                         {% endif %}
+                    </div>
+                </div>
+
+                <!-- Label Tab -->
+                <div class="tab-content" id="label-tab">
+                    <div class="content-header">
+                        <h2>Discográfica</h2>
+                    </div>
+                    
+                    <div class="label-content" id="artist-label-content">
+                        <!-- Contenido cargado dinámicamente -->
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <p>Cargando información...</p>
+                        </div>
                     </div>
                 </div>
             </div>
