@@ -48,7 +48,7 @@ function initDeleteButtons() {
             // Show confirmation dialog
             if (confirm(`¿Estás seguro de que quieres eliminar este ${type}? Esta acción no se puede deshacer.`)) {
                 try {
-                    const endpoint = `/api/${type}/${id}`;
+                    const endpoint = type === 'song' ? `/song/${id}` : type === 'album' ? `/album/${id}` : `/merch/${id}`;
                     const response = await fetch(endpoint, {
                         method: 'DELETE',
                         headers: {

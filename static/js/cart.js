@@ -326,7 +326,7 @@ async function processPay() {
         showNotification('Procesando pago...');
 
         // Aquí se puede hacer una llamada a la API para procesar el pago
-        // const response = await fetch('/api/checkout', {
+        // const response = await fetch('/purchase', {
         //     method: 'POST',
         //     headers: { 'Content-Type': 'application/json' },
         //     body: JSON.stringify({
@@ -389,7 +389,7 @@ function saveCart() {
  */
 async function checkAuthenticationStatus() {
     try {
-        const response = await fetch('/api/user/payment-methods', {
+        const response = await fetch('/payment', {
             method: 'GET',
             credentials: 'include',
             headers: {

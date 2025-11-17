@@ -48,9 +48,10 @@ function initFollowButton() {
         const isFollowing = followBtn.classList.contains('following');
 
         try {
-            const endpoint = isFollowing ? '/api/follow/remove' : '/api/follow/add';
+            const endpoint = isFollowing ? `/favs/artists/${artistId}` : `/favs/artists/${artistId}`;
+            const method = isFollowing ? 'DELETE' : 'POST';
             const response = await fetch(endpoint, {
-                method: 'POST',
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -293,7 +294,7 @@ async function loadArtistLabelInfo() {
     const artistId = getArtistIdFromPage();
     
     try {
-        const response = await fetch(`/api/artist/${artistId}/label`, {
+        const response = await fetch(`/artist/${artistId}/label`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'

@@ -165,7 +165,7 @@ async function processPurchase() {
 
     try {
         // Simular llamada a servidor (reemplazar con endpoint real)
-        const response = await fetch('/api/giftcard/purchase', {
+        const response = await fetch('/giftcard', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

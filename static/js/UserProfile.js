@@ -542,7 +542,7 @@ async function loadLabelInfo() {
     
     try {
         // Get user ID from cookie or session
-        const response = await fetch('/api/user/label', {
+        const response = await fetch('/user/label', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
