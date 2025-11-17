@@ -3,6 +3,7 @@ from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
 import os
 import requests
 import view.oversound_view as osv
@@ -10,6 +11,23 @@ import controller.msvc_servers as servers
 
 app = FastAPI()
 osv = osv.View()
+
+def obtain_user_data(token: str):
+    if not token:
+        return None
+    try:
+        resp = requests.get(f"{servers.SYU}/auth", timeout=2, headers={"Accept": "application/json", "Cookie":f"oversound_auth={token}"})
+        resp.raise_for_status()
+        return resp.json()
+    except requests.RequestException:
+        return None
+
+# Exception handler para errores de validación (422)
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_error_view(request, userdata, "Te has columpiado con la URL")
 
 # Configuración de CORS
 origins = [
@@ -30,16 +48,6 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory='static'), name="static")
-
-def obtain_user_data(token: str):
-    if not token:
-        return None
-    try:
-        resp = requests.get(f"{servers.SYU}/auth", timeout=2, headers={"Accept": "application/json", "Cookie":f"oversound_auth={token}"})
-        resp.raise_for_status()
-        return resp.json()
-    except requests.RequestException:
-        return None
 
 @app.get("/")
 def index(request: Request):
@@ -116,374 +124,129 @@ async def register(request: Request):
         return JSONResponse(content=response_data, status_code=resp.status_code)
 
 @app.get("/shop")
-def shop(request: Request):
-    """
-    Ruta de la tienda - Renderiza la página de tienda con productos
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    # DATOS DE EJEMPLO - Reemplaza estos con tus datos reales de la API
-    songs = [
-        {
-            "id": "song-1",
-            "nombre": "Midnight Dreams",
-            "artista": "Luna Echo",
-            "genero": "Electrónica",
-            "imagen": "https://via.placeholder.com/300?text=Midnight+Dreams",
-            "precio": "1.29"
-        },
-        {
-            "id": "song-2",
-            "nombre": "Ocean Waves",
-            "artista": "The Surfers",
-            "genero": "Indie",
-            "imagen": "https://via.placeholder.com/300?text=Ocean+Waves",
-            "precio": "0.99"
-        },
-        {
-            "id": "song-3",
-            "nombre": "Mountain High",
-            "artista": "Mountain High",
-            "genero": "Rock",
-            "imagen": "https://via.placeholder.com/300?text=Mountain+High",
-            "precio": "1.49"
-        },
-        {
-            "id": "song-4",
-            "nombre": "Urban Beats",
-            "artista": "Urban Beats",
-            "genero": "Hip-Hop",
-            "imagen": "https://via.placeholder.com/300?text=Urban+Beats",
-            "precio": "1.29"
-        },
-        {
-            "id": "song-5",
-            "nombre": "Summer Vibes",
-            "artista": "The Surfers",
-            "genero": "Indie",
-            "imagen": "https://via.placeholder.com/300?text=Summer+Vibes",
-            "precio": "0.99"
-        },
-        {
-            "id": "song-6",
-            "nombre": "Rock Anthem",
-            "artista": "Mountain High",
-            "genero": "Rock",
-            "imagen": "https://via.placeholder.com/300?text=Rock+Anthem",
-            "precio": "1.49"
-        },
-    ]
-    
-    albums = [
-        {
-            "id": "album-1",
-            "nombre": "Neon Lights",
-            "artista": "Luna Echo",
-            "genero": "Electrónica",
-            "imagen": "https://via.placeholder.com/300?text=Neon+Lights",
-            "precio": "9.99"
-        },
-        {
-            "id": "album-2",
-            "nombre": "Coastal Tales",
-            "artista": "The Surfers",
-            "genero": "Indie",
-            "imagen": "https://via.placeholder.com/300?text=Coastal+Tales",
-            "precio": "8.99"
-        },
-        {
-            "id": "album-3",
-            "nombre": "Peak Experience",
-            "artista": "Mountain High",
-            "genero": "Rock",
-            "imagen": "https://via.placeholder.com/300?text=Peak+Experience",
-            "precio": "10.99"
-        },
-    ]
-    
-    genres = ["Electrónica", "Indie", "Rock", "Hip-Hop", "Pop", "Jazz"]
-    artistas = ["Luna Echo", "The Surfers", "Mountain High", "Urban Beats"]
-    
-    # Determinar tipo de usuario (False = Fan, True = Artista)
-    tipoUsuario = False
-    if userdata:
-        tipoUsuario = False  # Por ahora, todos como fans (implementar lógica después)
-    
-    return osv.get_shop_view(request, songs, genres, artistas, albums, tipoUsuario, userdata, servers.SYU)
+def shop(request: Request, artists: str = Query(default=None), genres: str = Query(default=None), 
+         order: str = Query(default="date"), direction: str = Query(default="desc")):
 
-@app.get("/cart")
-def cart(request: Request):
-    """
-    Ruta del carrito - Renderiza la página del carrito
-    """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
-    
-    return osv.get_cart_view(request, userdata, servers.SYU)
 
-@app.get("/giftcard")
-def giftcard(request: Request):
-    """
-    Ruta para mostrar la página de compra de tarjetas regalo
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    return osv.get_giftcard_view(request, userdata, servers.SYU)
+    # Construir parámetros para las peticiones
+    filter_params = {
+        "order": order,
+        "direction": direction
+    }
+    if genres:
+        filter_params["genres"] = genres
+    if artists:
+        filter_params["artists"] = artists
 
-@app.post("/api/giftcard/purchase")
-async def purchase_giftcard(request: Request):
-    """
-    Ruta API para procesar la compra de una tarjeta regalo
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
-    
+    # Obtener géneros disponibles
     try:
-        body = await request.json()
-        
-        # Validar datos
-        amount = body.get('amount')
-        recipient_email = body.get('recipient_email')
-        message = body.get('message', '')
-        
-        if not amount or not isinstance(amount, (int, float)):
-            return JSONResponse(content={"error": "Monto inválido"}, status_code=400)
-        
-        if amount < 5 or amount > 500:
-            return JSONResponse(content={"error": "El monto debe estar entre €5 y €500"}, status_code=400)
-        
-        if not recipient_email or '@' not in recipient_email:
-            return JSONResponse(content={"error": "Email inválido"}, status_code=400)
-        
-        if len(message) > 200:
-            return JSONResponse(content={"error": "El mensaje es demasiado largo"}, status_code=400)
-        
-        # Generar código único de tarjeta regalo
-        import uuid
-        giftcard_code = str(uuid.uuid4()).upper()[:16]
-        # Formatear como XXXX-XXXX-XXXX-XXXX
-        giftcard_code = '-'.join([giftcard_code[i:i+4] for i in range(0, len(giftcard_code), 4)])
-        
-        # Aquí se podría guardar en la base de datos la tarjeta regalo
-        # Por ahora, simplemente retornar el código generado
-        # En producción, esto debería:
-        # 1. Procesar el pago
-        # 2. Guardar la tarjeta en la base de datos
-        # 3. Enviar email al destinatario
-        
-        return JSONResponse(content={
-            "message": "Tarjeta regalo comprada exitosamente",
-            "code": giftcard_code,
-            "amount": amount,
-            "recipient_email": recipient_email
-        }, status_code=200)
-    
-    except Exception as e:
-        print(e)
-        return JSONResponse(content={"error": "Error al procesar la compra"}, status_code=500)
-
-# IMPORTANTE: Las rutas específicas (/artist/create, /artist/studio) DEBEN ir ANTES que /artist/{artistId}
-# para evitar que FastAPI intente parsear "create" o "studio" como un artistId integer
-
-@app.get("/artist/create")
-def get_artist_create(request: Request):
-    """
-    Ruta para mostrar el formulario de creación de artista
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return RedirectResponse("/login")
-    
-    # Verificar si el usuario ya tiene un artista asociado
-    if userdata.get('artistId'):
-        return RedirectResponse(f"/artist/{userdata.get('artistId')}")
-    
-    return osv.get_artist_create_view(request, userdata, servers.SYU)
-
-
-@app.post("/artist/create")
-async def create_artist(request: Request):
-    """
-    Ruta para procesar la creación de un nuevo artista
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
-    
-    # Verificar si el usuario ya tiene un artista asociado
-    if userdata.get('artistId'):
-        return JSONResponse(content={"error": "Ya tienes un perfil de artista"}, status_code=400)
-    
-    try:
-        body = await request.json()
-        
-        # Validar campos requeridos
-        if not body.get('artisticName') or not body.get('artisticEmail'):
-            return JSONResponse(
-                content={"error": "Nombre artístico y email son obligatorios"},
-                status_code=400
-            )
-        
-        # Preparar datos para enviar al servidor TYA
-        artist_data = {
-            "artisticName": body.get('artisticName'),
-            "artisticBiography": body.get('artisticBiography', ''),
-            "artisticEmail": body.get('artisticEmail'),
-            "artisticImage": body.get('artisticImage', ''),
-            "socialMediaUrl": body.get('socialMediaUrl')
-        }
-        
-        # Enviar petición al servidor TYA con cookie de autenticación
-        token = request.cookies.get("oversound_auth")
-        create_resp = requests.post(
-            f"{servers.TYA}/artist/upload",
-            json=artist_data,
-            timeout=5,
-            headers={"Accept": "application/json"},
-            cookies={"oversound_auth": token}
-        )
-        
-        if create_resp.ok:
-            created_artist = create_resp.json()
-            return JSONResponse(content={
-                "message": "Artista creado correctamente",
-                "artistId": created_artist.get('artistId')
-            })
-        else:
-            error_data = create_resp.json() if create_resp.text else {}
-            return JSONResponse(
-                content=error_data or {"error": "Error al crear el artista"},
-                status_code=create_resp.status_code
-            )
-    
-    except Exception as e:
-        print(e)
-        return JSONResponse(content={"error": "Error al crear el artista"}, status_code=500)
-
-
-@app.get("/artist/studio")
-def get_artist_studio(request: Request):
-    """
-    Ruta para el studio/dashboard del artista autenticado
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    # Verificar que el usuario esté autenticado
-    if not userdata:
-        return RedirectResponse("/login")
-    
-    try:
-        # Obtener información del artista del usuario autenticado
-        artist_resp = requests.get(f"{servers.TYA}/artist/{userdata.get('artistId')}", timeout=2, headers={"Accept": "application/json"})
-        artist_resp.raise_for_status()
-        artist_data = artist_resp.json()
-        
-        # Resolver canciones del artista
-        songs = []
-        if artist_data.get('owner_songs'):
-            for song_id in artist_data['owner_songs']:
-                try:
-                    song_resp = requests.get(f"{servers.TYA}/song/{song_id}", timeout=2, headers={"Accept": "application/json"})
-                    song_resp.raise_for_status()
-                    songs.append(song_resp.json())
-                except requests.RequestException:
-                    pass
-        artist_data['owner_songs'] = songs
-        
-        # Resolver álbumes del artista
-        albums = []
-        if artist_data.get('owner_albums'):
-            for album_id in artist_data['owner_albums']:
-                try:
-                    album_resp = requests.get(f"{servers.TYA}/album/{album_id}", timeout=2, headers={"Accept": "application/json"})
-                    album_resp.raise_for_status()
-                    albums.append(album_resp.json())
-                except requests.RequestException:
-                    pass
-        artist_data['owner_albums'] = albums
-        
-        # Resolver merchandise del artista
-        merch = []
-        if artist_data.get('owner_merch'):
-            for merch_id in artist_data['owner_merch']:
-                try:
-                    merch_resp = requests.get(f"{servers.TYA}/merch/{merch_id}", timeout=2, headers={"Accept": "application/json"})
-                    merch_resp.raise_for_status()
-                    merch.append(merch_resp.json())
-                except requests.RequestException:
-                    pass
-        artist_data['owner_merch'] = merch
-        
-        return osv.get_artist_studio_view(request, artist_data, userdata, servers.SYU)
-        
+        genres_resp = requests.get(f"{servers.TYA}/genres", timeout=5, headers={"Accept": "application/json"})
+        genres_resp.raise_for_status()
+        all_genres = genres_resp.json()
     except requests.RequestException as e:
-        return osv.get_error_view(request, userdata, f"No se pudo cargar el studio: {str(e)}")
-
-
-@app.get("/artist/{artistId}")
-def get_artist_profile(request: Request, artistId: int):
-    """
-    Ruta para mostrar el perfil público de un artista
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
+        print(f"Error obteniendo géneros: {e}")
+        all_genres = []
     
+    # Obtener los artistas (ID's)
     try:
-        # Obtener información del artista
-        artist_resp = requests.get(f"{servers.TYA}/artist/{artistId}", timeout=2, headers={"Accept": "application/json"})
-        artist_resp.raise_for_status()
-        artist_data = artist_resp.json()
-        
-        # Resolver canciones del artista
-        songs = []
-        if artist_data.get('owner_songs'):
-            for song_id in artist_data['owner_songs']:
-                try:
-                    song_resp = requests.get(f"{servers.TYA}/song/{song_id}", timeout=2, headers={"Accept": "application/json"})
-                    song_resp.raise_for_status()
-                    songs.append(song_resp.json())
-                except requests.RequestException:
-                    pass
-        artist_data['owner_songs'] = songs
-        
-        # Resolver álbumes del artista
-        albums = []
-        if artist_data.get('owner_albums'):
-            for album_id in artist_data['owner_albums']:
-                try:
-                    album_resp = requests.get(f"{servers.TYA}/album/{album_id}", timeout=2, headers={"Accept": "application/json"})
-                    album_resp.raise_for_status()
-                    albums.append(album_resp.json())
-                except requests.RequestException:
-                    pass
-        artist_data['owner_albums'] = albums
-        
-        # Resolver merchandise del artista
-        merch = []
-        if artist_data.get('owner_merch'):
-            for merch_id in artist_data['owner_merch']:
-                try:
-                    merch_resp = requests.get(f"{servers.TYA}/merch/{merch_id}", timeout=2, headers={"Accept": "application/json"})
-                    merch_resp.raise_for_status()
-                    merch.append(merch_resp.json())
-                except requests.RequestException:
-                    pass
-        artist_data['owner_merch'] = merch
-        
-        # Determinar si es el perfil del usuario autenticado
-        is_own_profile = userdata and userdata.get('userId') == artist_data.get('userId')
-        
-        return osv.get_artist_profile_view(request, artist_data, userdata, is_own_profile, servers.SYU)
-        
+        artist_ids_resp = requests.get(f"{servers.TYA}/artist/filter", timeout=5, headers={"Accept": "application/json"})
+        artist_ids_resp.raise_for_status()
+        artist_ids = artist_ids_resp.json()
+    except requests.RequestException as e:
+        print(f"Error obteniendo IDs de artistas: {e}")
+        artist_ids = []
+    
+    # Resolver ID's de los artistas
+    all_artists = []
+    if artist_ids:
+        try:
+            ids_str = ",".join(map(str, artist_ids))
+            artists_resp = requests.get(
+                f"{servers.TYA}/artist/list",
+                params={"ids": ids_str},
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            artists_resp.raise_for_status()
+            all_artists = artists_resp.json()
+        except requests.RequestException as e:
+            print(f"Error obteniendo artistas: {e}")
+            all_artists = []
+
+    # Obtener las canciones (ID's)
+    try:
+        song_filter_resp = requests.get(
+            f"{servers.TYA}/song/filter",
+            params=filter_params,
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        song_filter_resp.raise_for_status()
+        song_ids = song_filter_resp.json()
+    except requests.RequestException as e:
+        print(f"Error filtrando canciones: {e}")
+        song_ids = []
+
+    # Resolver ID's de las canciones
+    songs = []
+    if song_ids:
+        try:
+            ids_str = ",".join(map(str, song_ids))
+            songs_resp = requests.get(
+                f"{servers.TYA}/song/list",
+                params={"ids": ids_str},
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            songs_resp.raise_for_status()
+            songs = songs_resp.json()
+        except requests.RequestException as e:
+            print(f"Error obteniendo canciones: {e}")
+            songs = []
+
+    # Obtener los albumes (ID's)
+    try:
+        album_filter_resp = requests.get(
+            f"{servers.TYA}/album/filter",
+            params=filter_params,
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        album_filter_resp.raise_for_status()
+        album_ids = album_filter_resp.json()
+    except requests.RequestException as e:
+        print(f"Error filtrando álbumes: {e}")
+        album_ids = []
+
+    # Resolver ID's de los albumes
+    albums = []
+    if album_ids:
+        try:
+            ids_str = ",".join(map(str, album_ids))
+            albums_resp = requests.get(
+                f"{servers.TYA}/album/list",
+                params={"ids": ids_str},
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            albums_resp.raise_for_status()
+            albums = albums_resp.json()
+        except requests.RequestException as e:
+            print(f"Error obteniendo álbumes: {e}")
+            albums = []
+
+    # Obtener IDs de merchandising filtrado
+    try:
+        merch_filter_resp = requests.get(
+            f"{servers.TYA}/merch/filter",
+            params=filter_params,
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        merch_filter_resp.raise_for_status()
+        merch_ids = merch_filter_resp.json()
     except requests.RequestException as e:
         return osv.get_error_view(request, userdata, f"No se pudo cargar el perfil del artista: {str(e)}")
 
@@ -772,6 +535,17 @@ def get_album(request: Request, albumId: int):
         # En caso de error, mostrar página de error
         return osv.get_error_view(request, userdata, f"No se pudo cargar el álbum")
 
+@app.exception_handler(500)
+def internal_server_error_handler(request: Request, exc: Exception):
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_error_view(request, userdata, "Algo ha salido mal")
+
+@app.exception_handler(422)
+def unproc_content_error_handler(request: Request, exce: Exception):
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_error_view(request, userdata, "Te has columpiado")
 
 @app.get("/merch/{merchId}")
 def get_merch(request: Request, merchId: int):

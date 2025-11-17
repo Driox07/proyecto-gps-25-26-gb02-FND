@@ -30,6 +30,10 @@ class View():
         data = {"userdata": userdata, "error_message": error_message}
         return templates.TemplateResponse("error.html", {"request": request, "data": data})
 
+    # Renderizar la template shop.html
+    def get_shop_view(self, request: Request, userdata: dict, songs, genres, artistas, albums, merch):
+        data = {"userdata": userdata, "songs": songs, "genres": genres, "artistas": artistas, "albums": albums, "merch": merch}
+        return templates.TemplateResponse("shop.html", {"request": request, "data": data})
 
 
 
