@@ -366,13 +366,8 @@ async function addPaymentMethod() {
         return;
     }
 
-    // TODO: Implementar cuando el backend esté listo
-    showNotification('Funcionalidad en desarrollo', 'info');
-    
-    // TODO: Cuando el backend esté listo, usar esto:
-    /*
     try {
-        const response = await fetch(`${SERVER_CONFIG.SYU}/user/payment-methods`, {
+        const response = await fetch('/payment', {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -401,7 +396,6 @@ async function addPaymentMethod() {
         console.error('Error adding payment method:', error);
         showNotification('Error al agregar tarjeta', 'error');
     }
-    */
 }
 
 /**
@@ -412,13 +406,8 @@ async function deletePaymentMethod(paymentId) {
         return;
     }
 
-    // TODO: Implementar cuando el backend esté listo
-    showNotification('Funcionalidad en desarrollo', 'info');
-    
-    // TODO: Cuando el backend esté listo, usar esto:
-    /*
     try {
-        const response = await fetch(`${SERVER_CONFIG.SYU}/user/payment-methods/${paymentId}`, {
+        const response = await fetch(`/payment/${paymentId}`, {
             method: 'DELETE',
             credentials: 'include',
             headers: {
@@ -437,21 +426,15 @@ async function deletePaymentMethod(paymentId) {
         console.error('Error deleting payment method:', error);
         showNotification('Error al eliminar tarjeta', 'error');
     }
-    */
 }
 
 /**
  * Set default payment method
  */
 async function setDefaultPaymentMethod(paymentId) {
-    // TODO: Implementar cuando el backend esté listo
-    showNotification('Funcionalidad en desarrollo', 'info');
-    
-    // TODO: Cuando el backend esté listo, usar esto:
-    /*
     try {
-        const response = await fetch(`${SERVER_CONFIG.SYU}/user/payment-methods/${paymentId}`, {
-            method: 'PUT',
+        const response = await fetch(`/payment/${paymentId}`, {
+            method: 'PATCH',
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
@@ -470,7 +453,6 @@ async function setDefaultPaymentMethod(paymentId) {
         console.error('Error setting default payment method:', error);
         showNotification('Error al establecer método predeterminado', 'error');
     }
-    */
 }
 
 /**

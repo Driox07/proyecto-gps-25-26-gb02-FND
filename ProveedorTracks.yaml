@@ -1,0 +1,218 @@
+openapi: 3.0.4
+info:
+  title: Proveedor de Pistas (PP)
+  description: Esta es la documentación para la API del Microservicio de Proveedor
+    de Pistas (PP) del proyecto OverSounds.
+  version: 1.0.0
+externalDocs:
+  description: Github access
+  url: https://github.com/orgs/UniExtremadura/teams/gb02
+servers:
+- url: http://localhost
+tags:
+- name: root
+  description: Microservice root
+- name: track
+  description: Access to tracks
+paths:
+  /:
+    get:
+      tags:
+      - root
+      summary: Returns microservice name and version
+      operationId: get_root
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Track Provider
+      x-openapi-router-controller: swagger_server.controllers.root_controller
+  /track/{trackId}:
+    get:
+      tags:
+      - track
+      summary: Gets a track info by idtrack
+      operationId: get_track
+      parameters:
+      - name: trackId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Track"
+        "400":
+          description: Invalid idtrack supplied
+        "404":
+          description: Track not found
+        "422":
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+      - oversound_auth:
+        - read:tracks
+      x-openapi-router-controller: swagger_server.controllers.track_controller
+    delete:
+      tags:
+      - track
+      summary: Deletes a track.
+      operationId: delete_track
+      parameters:
+      - name: trackId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: successful operation
+        "204":
+          description: "No Content, track deleted"
+        "400":
+          description: Invalid input
+        "422":
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+      - oversound_auth:
+        - write:tracks
+        - read:tracks
+      x-openapi-router-controller: swagger_server.controllers.track_controller
+    patch:
+      tags:
+      - track
+      summary: Updates a track from the database with form data.
+      operationId: update_track
+      parameters:
+      - name: trackId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Track"
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+        "400":
+          description: Invalid input
+        "422":
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+      - oversound_auth:
+        - write:tracks
+        - read:tracks
+      x-openapi-router-controller: swagger_server.controllers.track_controller
+  /track/upload:
+    post:
+      tags:
+      - track
+      summary: Add a new track to the database
+      operationId: add_track
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Track"
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Track"
+        "400":
+          description: Invalid input
+        "422":
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+      - oversound_auth:
+        - write:tracks
+      x-openapi-router-controller: swagger_server.controllers.track_controller
+components:
+  schemas:
+    Track:
+      required:
+      - track
+      - idtrack
+      type: object
+      properties:
+        idtrack:
+          type: integer
+          format: int64
+          example: 1
+        track:
+          type: string
+          format: byte
+          example: VTI5dVp5QlVhWFJzWlNCaWVTQkJjblJwYzNRPQ==
+      example:
+        track: VTI5dVp5QlVhWFJzWlNCaWVTQkJjblJwYzNRPQ==
+        idtrack: 1
+    Error:
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+  requestBodies:
+    Track:
+      description: Track object that needs to be added or updated
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Track"
+  securitySchemes:
+    oversound_auth:
+      type: apiKey
+      name: oversound_auth
+      in: cookie
+      x-apikeyInfoFunc: swagger_server.controllers.authorization_controller.check_oversound_auth
+

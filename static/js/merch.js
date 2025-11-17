@@ -18,46 +18,95 @@ function setupButtonListeners() {
         });
     }
 
-    // Buy button
+    // Buy button - Redirige al carrito
     const buyButton = document.getElementById('buy-button');
     if (buyButton) {
         buyButton.addEventListener('click', () => {
-            const merchName = document.getElementById('merch-name').textContent;
-            const merchPrice = document.getElementById('merch-price').textContent;
-            console.log('Buying merch:', merchName);
-            alert(`Comprando: ${merchName}\nPrecio: ${merchPrice}\n(Funcionalidad de compra pendiente)`);
-            // TODO: Implement purchase functionality
+            window.location.href = '/cart';
         });
     }
 
     // Add to cart button
     const addToCartButton = document.getElementById('add-to-cart-button');
     if (addToCartButton) {
-        addToCartButton.addEventListener('click', () => {
+        addToCartButton.addEventListener('click', async () => {
             const merchName = document.getElementById('merch-name').textContent;
-            console.log('Adding to cart:', merchName);
-            alert(`Añadido al carrito: ${merchName}`);
-            // TODO: Implement add to cart functionality
+            const merchPrice = document.getElementById('merch-price').textContent;
+            const merchImage = document.querySelector('.merch-image')?.src || 'https://via.placeholder.com/120?text=Sin+Imagen';
+            
+            // Obtener ID de merch desde el URL
+            const merchId = window.location.pathname.split('/').pop();
+            
+            try {
+                // Agregar a carrito local
+                const cartItem = {
+                    id: parseInt(merchId),
+                    name: merchName,
+                    price: merchPrice,
+                    type: 'merch',
+                    image: merchImage,
+                    quantity: 1
+                };
+
+                let cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
+                const existingItem = cart.find(item => item.id === parseInt(merchId));
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push(cartItem);
+                }
+
+                localStorage.setItem('oversound_cart', JSON.stringify(cart));
+                
+                // Intentar sincronizar con backend si el usuario está autenticado
+                try {
+                    await fetch('/cart', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            productId: parseInt(merchId),
+                            productType: 'merch',
+                            quantity: 1,
+                            price: merchPrice
+                        })
+                    });
+                } catch (error) {
+                    console.warn('No se pudo sincronizar con backend, usando localStorage:', error);
+                }
+
+                // Emitir evento para actualizar el header
+                window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
+                
+                alert(`${merchName} añadido al carrito`);
+                
+            } catch (error) {
+                console.error('Error al añadir al carrito:', error);
+                alert('Error al añadir el producto al carrito');
+            }
         });
     }
 
     // Favorite button
     const favoriteButton = document.getElementById('favorite-button');
     if (favoriteButton) {
-        let isFavorite = false;
         favoriteButton.addEventListener('click', () => {
-            const merchName = document.getElementById('merch-name').textContent;
-            isFavorite = !isFavorite;
-            const path = favoriteButton.querySelector('path');
-            
-            if (isFavorite) {
-                path.setAttribute('fill', 'currentColor');
-                alert(`${merchName} añadido a favoritos`);
-            } else {
-                path.setAttribute('fill', 'none');
-                alert(`${merchName} eliminado de favoritos`);
+            const merchId = window.location.pathname.split('/').pop();
+            if (!merchId) {
+                alert('ID de mercancía no disponible');
+                return;
             }
-            // TODO: Implement favorite functionality with backend
+            // Nota: Si la API soporta favoritos de merch, usar toggleFavoriteMerch
+            // Por ahora comentado ya que podría no estar implementado
+            if (typeof toggleFavoriteMerch === 'function') {
+                toggleFavoriteMerch(parseInt(merchId), favoriteButton);
+            } else {
+                alert('Los favoritos de mercancía aún no están disponibles');
+            }
         });
     }
 }
