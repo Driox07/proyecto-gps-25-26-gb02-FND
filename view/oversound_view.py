@@ -30,6 +30,10 @@ class View():
         data = {"userdata": userdata, "error_message": error_message}
         return templates.TemplateResponse("error.html", {"request": request, "data": data})
 
+    # Renderizar la template shop.html
+    def get_shop_view(self, request: Request, userdata: dict, songs, genres, artistas, albums, merch):
+        data = {"userdata": userdata, "songs": songs, "genres": genres, "artistas": artistas, "albums": albums, "merch": merch}
+        return templates.TemplateResponse("shop.html", {"request": request, "data": data})
 
 
 
@@ -39,10 +43,7 @@ class View():
 
 
 
-
-    # Esta función se va a usar para renderizar la template shop.html
-    def get_shop_view(self, request: Request, songs, genres, artistas, albums, tipoUsuario: bool): 
-        return templates.TemplateResponse("shop.html", {"request" :request, "songs" : songs, "genres": genres, "artistas": artistas, "albums": albums, "tipoUsuario": tipoUsuario})
+    
     # Esta función se va a usar para renderizar la template songs.html
     def get_upload_song_view(self, request: Request):
         return templates.TemplateResponse("music/upload-song.html", {"request": request})

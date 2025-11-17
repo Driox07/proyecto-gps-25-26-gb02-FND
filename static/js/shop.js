@@ -1,258 +1,432 @@
-// Shop.js - Funcionalidad de la tienda OverSound
+// Shop Page JavaScript - Custom Dropdowns & Pagination
 
-document.addEventListener('DOMContentLoaded', function() {
-    initializeShop();
+// Estado de la paginación para cada sección
+const paginationState = {
+    songs: { currentPage: 1, itemsPerPage: 9 },
+    albums: { currentPage: 1, itemsPerPage: 9 },
+    merch: { currentPage: 1, itemsPerPage: 9 }
+};
+
+// Inicialización cuando el DOM está listo
+document.addEventListener('DOMContentLoaded', () => {
+    initCustomDropdowns();
+    initFilters();
+    initPagination();
+    initCart();
+    restoreScrollPosition();
 });
 
-/**
- * Inicializa todos los componentes de la tienda
- */
-function initializeShop() {
-    setupEventListeners();
-    checkNoProducts();
-}
+// ============ CUSTOM DROPDOWNS ============
+function initCustomDropdowns() {
+    // Dropdown de géneros
+    const genreHeader = document.getElementById('genre-dropdown-header');
+    const genreContent = document.getElementById('genre-dropdown-content');
+    const genreCheckboxes = document.querySelectorAll('.genre-checkbox');
+    const genreSelectedText = document.getElementById('genre-selected-text');
 
-/**
- * Configura todos los event listeners
- */
-function setupEventListeners() {
-    // Búsqueda
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-        searchInput.addEventListener('input', filterProducts);
+    if (genreHeader) {
+        genreHeader.addEventListener('click', (e) => {
+            e.stopPropagation();
+            genreHeader.classList.toggle('active');
+            genreContent.classList.toggle('show');
+            
+            // Cerrar el otro dropdown si está abierto
+            const artistHeader = document.getElementById('artist-dropdown-header');
+            const artistContent = document.getElementById('artist-dropdown-content');
+            if (artistHeader.classList.contains('active')) {
+                artistHeader.classList.remove('active');
+                artistContent.classList.remove('show');
+            }
+        });
+
+        genreCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                updateDropdownText('genre', genreCheckboxes, genreSelectedText);
+            });
+        });
     }
 
-    // Filtros
-    const genreFilter = document.getElementById('genre-filter');
-    const artistFilter = document.getElementById('artist-filter');
-    const typeFilter = document.getElementById('type-filter');
+    // Dropdown de artistas
+    const artistHeader = document.getElementById('artist-dropdown-header');
+    const artistContent = document.getElementById('artist-dropdown-content');
+    const artistCheckboxes = document.querySelectorAll('.artist-checkbox');
+    const artistSelectedText = document.getElementById('artist-selected-text');
+
+    if (artistHeader) {
+        artistHeader.addEventListener('click', (e) => {
+            e.stopPropagation();
+            artistHeader.classList.toggle('active');
+            artistContent.classList.toggle('show');
+            
+            // Cerrar el otro dropdown si está abierto
+            if (genreHeader.classList.contains('active')) {
+                genreHeader.classList.remove('active');
+                genreContent.classList.remove('show');
+            }
+        });
+
+        artistCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                updateDropdownText('artist', artistCheckboxes, artistSelectedText);
+            });
+        });
+    }
+
+    // Cerrar dropdowns al hacer click fuera
+    document.addEventListener('click', (e) => {
+        if (genreHeader && !genreHeader.contains(e.target) && !genreContent.contains(e.target)) {
+            genreHeader.classList.remove('active');
+            genreContent.classList.remove('show');
+        }
+        if (artistHeader && !artistHeader.contains(e.target) && !artistContent.contains(e.target)) {
+            artistHeader.classList.remove('active');
+            artistContent.classList.remove('show');
+        }
+    });
+
+    // Preseleccionar checkboxes según URL params
+    preselectFiltersFromURL();
+}
+
+function updateDropdownText(type, checkboxes, textElement) {
+    const selected = Array.from(checkboxes)
+        .filter(cb => cb.checked)
+        .map(cb => cb.dataset.name);
+    
+    if (selected.length === 0) {
+        textElement.textContent = type === 'genre' ? 'Seleccionar géneros' : 'Seleccionar artistas';
+    } else if (selected.length === 1) {
+        textElement.textContent = selected[0];
+    } else {
+        textElement.textContent = `${selected.length} seleccionados`;
+    }
+}
+
+function preselectFiltersFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Preseleccionar géneros
+    const genresParam = urlParams.get('genres');
+    if (genresParam) {
+        const genreIds = genresParam.split(',');
+        genreIds.forEach(id => {
+            const checkbox = document.querySelector(`.genre-checkbox[value="${id}"]`);
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        const genreCheckboxes = document.querySelectorAll('.genre-checkbox');
+        const genreSelectedText = document.getElementById('genre-selected-text');
+        updateDropdownText('genre', genreCheckboxes, genreSelectedText);
+    }
+    
+    // Preseleccionar artistas
+    const artistsParam = urlParams.get('artists');
+    if (artistsParam) {
+        const artistIds = artistsParam.split(',');
+        artistIds.forEach(id => {
+            const checkbox = document.querySelector(`.artist-checkbox[value="${id}"]`);
+            if (checkbox) checkbox.checked = true;
+        });
+        
+        const artistCheckboxes = document.querySelectorAll('.artist-checkbox');
+        const artistSelectedText = document.getElementById('artist-selected-text');
+        updateDropdownText('artist', artistCheckboxes, artistSelectedText);
+    }
+    
+    // Preseleccionar orden
+    const orderParam = urlParams.get('order');
+    const orderSelect = document.getElementById('order-filter');
+    if (orderParam && orderSelect) {
+        orderSelect.value = orderParam;
+    }
+    
+    // Preseleccionar dirección
+    const directionParam = urlParams.get('direction');
+    const directionSelect = document.getElementById('direction-filter');
+    if (directionParam && directionSelect) {
+        directionSelect.value = directionParam;
+    }
+}
+
+// ============ FILTERS ============
+function initFilters() {
+    const applyButton = document.getElementById('apply-filters');
     const resetButton = document.getElementById('reset-filters');
 
-    if (genreFilter) genreFilter.addEventListener('change', filterProducts);
-    if (artistFilter) artistFilter.addEventListener('change', filterProducts);
-    if (typeFilter) typeFilter.addEventListener('change', filterProducts);
-    if (resetButton) resetButton.addEventListener('click', resetFilters);
+    if (applyButton) {
+        applyButton.addEventListener('click', applyFilters);
+    }
 
-    // Botones de agregar al carrito
-    const addCartButtons = document.querySelectorAll('.btn-add-cart');
-    addCartButtons.forEach(button => {
-        button.addEventListener('click', handleAddToCart);
-    });
-
-    // Botones de ver detalles
-    const viewButtons = document.querySelectorAll('.btn-view');
-    viewButtons.forEach(button => {
-        button.addEventListener('click', handleViewDetails);
-    });
+    if (resetButton) {
+        resetButton.addEventListener('click', resetFilters);
+    }
 }
 
-/**
- * Filtra los productos según los criterios especificados
- */
-function filterProducts() {
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    const selectedGenre = document.getElementById('genre-filter').value;
-    const selectedArtist = document.getElementById('artist-filter').value;
-    const selectedType = document.getElementById('type-filter').value;
+function applyFilters() {
+    const selectedGenres = Array.from(document.querySelectorAll('.genre-checkbox:checked'))
+        .map(cb => cb.value);
+    
+    const selectedArtists = Array.from(document.querySelectorAll('.artist-checkbox:checked'))
+        .map(cb => cb.value);
+    
+    const order = document.getElementById('order-filter')?.value || 'date';
+    const direction = document.getElementById('direction-filter')?.value || 'desc';
 
-    const productCards = document.querySelectorAll('.product-card');
-    let visibleCount = 0;
+    const params = new URLSearchParams();
+    
+    if (selectedGenres.length > 0) {
+        params.append('genres', selectedGenres.join(','));
+    }
+    
+    if (selectedArtists.length > 0) {
+        params.append('artists', selectedArtists.join(','));
+    }
+    
+    params.append('order', order);
+    params.append('direction', direction);
 
-    productCards.forEach(card => {
-        const productName = card.querySelector('.product-name').textContent.toLowerCase();
-        const productArtist = card.querySelector('.product-artist').textContent.toLowerCase();
-        const productGenre = card.getAttribute('data-genre').toLowerCase();
-        const productType = card.getAttribute('data-type');
+    // Guardar posición de scroll antes de recargar
+    saveScrollPosition();
+    
+    window.location.href = `/shop?${params.toString()}`;
+}
 
-        // Verificar búsqueda
-        const matchesSearch = productName.includes(searchTerm) || 
-                            productArtist.includes(searchTerm);
+function resetFilters() {
+    saveScrollPosition();
+    window.location.href = '/shop';
+}
 
-        // Verificar género
-        const matchesGenre = !selectedGenre || productGenre === selectedGenre.toLowerCase();
+// ============ PAGINATION ============
+function initPagination() {
+    setupPaginationForSection('songs');
+    setupPaginationForSection('albums');
+    setupPaginationForSection('merch');
+}
 
-        // Verificar artista
-        const matchesArtist = !selectedArtist || productArtist === selectedArtist.toLowerCase();
+function setupPaginationForSection(sectionName) {
+    const grid = document.getElementById(`${sectionName}-grid`);
+    if (!grid) return;
 
-        // Verificar tipo
-        const matchesType = !selectedType || productType === selectedType;
+    const allCards = Array.from(grid.querySelectorAll('.product-card'));
+    const total = allCards.length;
+    const state = paginationState[sectionName];
+    
+    if (total === 0) return;
 
-        // Mostrar u ocultar
-        if (matchesSearch && matchesGenre && matchesArtist && matchesType) {
-            card.style.display = '';
-            card.style.animation = 'scaleIn 0.5s ease-out';
-            visibleCount++;
-        } else {
-            card.style.display = 'none';
+    const totalPages = Math.ceil(total / state.itemsPerPage);
+    
+    // Mostrar primera página
+    showPage(sectionName, 1, allCards, totalPages);
+    
+    // Crear controles de paginación
+    createPaginationControls(sectionName, totalPages, allCards);
+}
+
+function showPage(sectionName, pageNumber, allCards, totalPages) {
+    const state = paginationState[sectionName];
+    state.currentPage = pageNumber;
+    
+    const startIndex = (pageNumber - 1) * state.itemsPerPage;
+    const endIndex = startIndex + state.itemsPerPage;
+    
+    // Ocultar todas las cards
+    allCards.forEach(card => card.classList.remove('visible'));
+    
+    // Mostrar solo las cards de la página actual
+    allCards.slice(startIndex, endIndex).forEach(card => {
+        card.classList.add('visible');
+    });
+    
+    // Actualizar info de página
+    const pageInfo = document.getElementById(`${sectionName}-page-info`);
+    if (pageInfo) {
+        const showing = Math.min(endIndex, allCards.length);
+        pageInfo.textContent = `Página ${pageNumber} de ${totalPages}`;
+    }
+}
+
+function createPaginationControls(sectionName, totalPages, allCards) {
+    const paginationContainer = document.getElementById(`${sectionName}-pagination`);
+    if (!paginationContainer) return;
+    
+    paginationContainer.innerHTML = '';
+    
+    if (totalPages <= 1) return; // No mostrar controles si solo hay una página
+    
+    // Botón anterior
+    const prevButton = document.createElement('button');
+    prevButton.textContent = '‹ Anterior';
+    prevButton.disabled = paginationState[sectionName].currentPage === 1;
+    prevButton.addEventListener('click', () => {
+        const currentPage = paginationState[sectionName].currentPage;
+        if (currentPage > 1) {
+            showPage(sectionName, currentPage - 1, allCards, totalPages);
+            createPaginationControls(sectionName, totalPages, allCards);
+            scrollToSection(sectionName);
         }
     });
-
-    checkNoProducts();
-}
-
-/**
- * Reinicia todos los filtros
- */
-function resetFilters() {
-    document.getElementById('search-input').value = '';
-    document.getElementById('genre-filter').value = '';
-    document.getElementById('artist-filter').value = '';
-    document.getElementById('type-filter').value = '';
-
-    // Mostrar todos los productos
-    const productCards = document.querySelectorAll('.product-card');
-    productCards.forEach(card => {
-        card.style.display = '';
+    paginationContainer.appendChild(prevButton);
+    
+    // Botones de número de página
+    const maxButtons = 5;
+    let startPage = Math.max(1, paginationState[sectionName].currentPage - Math.floor(maxButtons / 2));
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+    
+    if (endPage - startPage < maxButtons - 1) {
+        startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+    
+    if (startPage > 1) {
+        const firstButton = createPageButton(1, sectionName, allCards, totalPages);
+        paginationContainer.appendChild(firstButton);
+        
+        if (startPage > 2) {
+            const ellipsis = document.createElement('span');
+            ellipsis.textContent = '...';
+            ellipsis.className = 'page-info';
+            paginationContainer.appendChild(ellipsis);
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const pageButton = createPageButton(i, sectionName, allCards, totalPages);
+        paginationContainer.appendChild(pageButton);
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const ellipsis = document.createElement('span');
+            ellipsis.textContent = '...';
+            ellipsis.className = 'page-info';
+            paginationContainer.appendChild(ellipsis);
+        }
+        
+        const lastButton = createPageButton(totalPages, sectionName, allCards, totalPages);
+        paginationContainer.appendChild(lastButton);
+    }
+    
+    // Botón siguiente
+    const nextButton = document.createElement('button');
+    nextButton.textContent = 'Siguiente ›';
+    nextButton.disabled = paginationState[sectionName].currentPage === totalPages;
+    nextButton.addEventListener('click', () => {
+        const currentPage = paginationState[sectionName].currentPage;
+        if (currentPage < totalPages) {
+            showPage(sectionName, currentPage + 1, allCards, totalPages);
+            createPaginationControls(sectionName, totalPages, allCards);
+            scrollToSection(sectionName);
+        }
     });
-
-    checkNoProducts();
+    paginationContainer.appendChild(nextButton);
 }
 
-/**
- * Maneja la adición de productos al carrito
- */
-function handleAddToCart(event) {
-    event.preventDefault();
-    const button = event.currentTarget;
-    const productId = button.getAttribute('data-product-id');
-    const productType = button.getAttribute('data-product-type');
+function createPageButton(pageNumber, sectionName, allCards, totalPages) {
+    const button = document.createElement('button');
+    button.textContent = pageNumber;
+    button.className = paginationState[sectionName].currentPage === pageNumber ? 'active' : '';
+    button.addEventListener('click', () => {
+        showPage(sectionName, pageNumber, allCards, totalPages);
+        createPaginationControls(sectionName, totalPages, allCards);
+        scrollToSection(sectionName);
+    });
+    return button;
+}
 
-    // Obtener datos del producto
-    const card = button.closest('.product-card');
-    const productName = card.querySelector('.product-name').textContent;
-    const productPrice = card.querySelector('.product-price').textContent;
+function scrollToSection(sectionName) {
+    const section = document.getElementById(`${sectionName}-section`);
+    if (section) {
+        const yOffset = -100; // Offset para el header
+        const y = section.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+}
 
-    // Crear objeto del carrito
-    const cartItem = {
-        id: productId,
-        type: productType,
-        name: productName,
-        price: productPrice,
-        timestamp: new Date().getTime()
-    };
+// ============ CART ============
+function initCart() {
+    const addToCartButtons = document.querySelectorAll('.btn-add-cart');
+    
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const productId = button.dataset.productId;
+            const productType = button.dataset.productType;
+            
+            addToCart(productId, productType);
+        });
+    });
+}
 
-    // Guardar en localStorage
-    let cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
-    cart.push(cartItem);
+function addToCart(productId, productType) {
+    let cart = JSON.parse(localStorage.getItem('oversound_cart') || '[]');
+    
+    // Verificar si el producto ya está en el carrito
+    const existingItem = cart.find(item => 
+        item.id === productId && item.type === productType
+    );
+    
+    if (existingItem) {
+        existingItem.quantity = (existingItem.quantity || 1) + 1;
+    } else {
+        cart.push({
+            id: productId,
+            type: productType,
+            quantity: 1,
+            addedAt: new Date().toISOString()
+        });
+    }
+    
     localStorage.setItem('oversound_cart', JSON.stringify(cart));
-
-    // Mostrar notificación
-    showCartNotification(`${productName} añadido al carrito`);
-
-    // Animación del botón
-    animateButton(button);
-
-    // Emitir evento personalizado para actualizar el header del carrito
-    window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
+    
+    showNotification(`Producto añadido al carrito (${cart.length} items)`);
 }
 
-/**
- * Muestra una notificación de carrito
- */
-function showCartNotification(message) {
+function showNotification(message) {
     const notification = document.getElementById('cart-notification');
-    if (!notification) return;
-
     const notificationText = document.getElementById('notification-text');
-    notificationText.textContent = message;
-
-    notification.style.display = 'flex';
-    notification.style.animation = 'slideInRight 0.4s ease-out';
-
-    // Ocultar después de 3 segundos
-    setTimeout(() => {
-        notification.style.animation = 'slideOutRight 0.4s ease-out';
+    
+    if (notification && notificationText) {
+        notificationText.textContent = message;
+        notification.style.display = 'flex';
+        
         setTimeout(() => {
             notification.style.display = 'none';
-        }, 400);
-    }, 3000);
-}
-
-/**
- * Anima el botón al hacer click
- */
-function animateButton(button) {
-    button.style.transform = 'scale(0.9)';
-    setTimeout(() => {
-        button.style.transform = 'scale(1)';
-    }, 200);
-}
-
-/**
- * Maneja la visualización de detalles del producto
- */
-function handleViewDetails(event) {
-    event.preventDefault();
-    const link = event.currentTarget;
-    const href = link.getAttribute('href');
-    
-    // Guardar la posición de scroll
-    sessionStorage.setItem('shop_scroll_position', window.scrollY);
-    
-    // Navegar a la página de detalles
-    window.location.href = href;
-}
-
-/**
- * Verifica si hay productos visibles y muestra el mensaje correspondiente
- */
-function checkNoProducts() {
-    const productCards = document.querySelectorAll('.product-card');
-    const visibleProducts = Array.from(productCards).filter(card => card.style.display !== 'none');
-    const noProductsMessage = document.getElementById('no-products');
-
-    if (visibleProducts.length === 0) {
-        if (noProductsMessage) {
-            noProductsMessage.style.display = 'flex';
-        }
-    } else {
-        if (noProductsMessage) {
-            noProductsMessage.style.display = 'none';
-        }
+        }, 3000);
     }
 }
 
-/**
- * Restaura la posición de scroll cuando se vuelve a la tienda
- */
-window.addEventListener('load', function() {
-    const scrollPosition = sessionStorage.getItem('shop_scroll_position');
+// ============ SCROLL POSITION ============
+function saveScrollPosition() {
+    sessionStorage.setItem('shopScrollPosition', window.scrollY.toString());
+}
+
+function restoreScrollPosition() {
+    const scrollPosition = sessionStorage.getItem('shopScrollPosition');
     if (scrollPosition) {
         window.scrollTo(0, parseInt(scrollPosition));
-        sessionStorage.removeItem('shop_scroll_position');
+        sessionStorage.removeItem('shopScrollPosition');
     }
-});
-
-/**
- * Manejo de eventos globales del carrito
- */
-window.addEventListener('cartUpdated', function(event) {
-    // Aquí se puede hacer cualquier acción adicional cuando el carrito se actualiza
-    console.log('Carrito actualizado:', event.detail);
-});
-
-/**
- * Debugging y utilidades
- */
-function getCartSummary() {
-    const cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
-    console.log(`Productos en carrito: ${cart.length}`);
-    console.log(cart);
-    return cart;
 }
 
-/**
- * Limpia el carrito (útil para testing)
- */
-function clearCart() {
-    localStorage.removeItem('oversound_cart');
-    console.log('Carrito limpiado');
-}
-
-// Exportar funciones para acceso global
-window.shopUtils = {
-    filterProducts,
-    resetFilters,
-    getCartSummary,
-    clearCart
+// ============ INTERSECTION OBSERVER (Animaciones) ============
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
 };
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, observerOptions);
+
+// Observar todas las cards visibles
+document.querySelectorAll('.product-card.visible').forEach(card => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(card);
+});
+
