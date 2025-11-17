@@ -116,7 +116,7 @@ paths:
         '400':
           description: Invalid input
         '422':
-          description: Validation exception (e.g., price not positive)
+          description: Validation exception (e.g., referenced genre does not exist, price not positive)
         default:
           description: Unexpected error
           content:
@@ -186,7 +186,7 @@ paths:
         '400':
           description: Invalid input
         '422':
-          description: Validation exception (e.g., referenced album does not exist, price not positive, albumId/albumOrder dependency not met)
+          description: Validation exception (e.g., referenced album does not exist, referenced genre does not exist, price not positive, albumId/albumOrder dependency not met)
         default:
           description: Unexpected error
           content:
@@ -270,12 +270,11 @@ paths:
           example: "asc"
         - name: page
           in: query
-          description: Page number for pagination (1-indexed, limit is 9 items per page)
+          description: Page number for pagination (1-indexed, limit is 9 items per page). If not provided, all results are returned without pagination.
           required: false
           schema:
             type: integer
             minimum: 1
-            default: 1
           example: 1
       responses:
         '200':
@@ -285,10 +284,8 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    songId:
-                      type: integer
+                  type: integer
+                description: List of song IDs matching the filter criteria
         '400':
           description: Invalid input
         default:
@@ -535,12 +532,11 @@ paths:
           example: "asc"
         - name: page
           in: query
-          description: Page number for pagination (1-indexed, limit is 9 items per page)
+          description: Page number for pagination (1-indexed, limit is 9 items per page). If not provided, all results are returned without pagination.
           required: false
           schema:
             type: integer
             minimum: 1
-            default: 1
           example: 1
       responses:
         '200':
@@ -550,10 +546,8 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    albumId:
-                      type: integer
+                  type: integer
+                description: List of album IDs matching the filter criteria
         '400':
           description: Invalid input
         default:
@@ -800,12 +794,11 @@ paths:
           example: "asc"
         - name: page
           in: query
-          description: Page number for pagination (1-indexed, limit is 9 items per page)
+          description: Page number for pagination (1-indexed, limit is 9 items per page). If not provided, all results are returned without pagination.
           required: false
           schema:
             type: integer
             minimum: 1
-            default: 1
           example: 1
       responses:
         '200':
@@ -815,10 +808,8 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    merchId:
-                      type: integer
+                  type: integer
+                description: List of merchandising IDs matching the filter criteria
         '400':
           description: Invalid input
         default:
@@ -1065,12 +1056,11 @@ paths:
           example: "asc"
         - name: page
           in: query
-          description: Page number for pagination (1-indexed, limit is 9 items per page)
+          description: Page number for pagination (1-indexed, limit is 9 items per page). If not provided, all results are returned without pagination.
           required: false
           schema:
             type: integer
             minimum: 1
-            default: 1
           example: 1
       responses:
         '200':
@@ -1080,10 +1070,8 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    artistId:
-                      type: integer
+                  type: integer
+                description: List of artist IDs matching the filter criteria
         '400':
           description: Invalid input
         default:
@@ -1121,7 +1109,7 @@ components:
     oversounds_auth:
       type: apiKey
       in: cookie
-      name: token
+      name: oversound_auth
   schemas:
     Error:
       type: object
@@ -1312,6 +1300,7 @@ components:
           example: [1, 2, 3]
         description:
           type: string
+          nullable: true
           description: Description of the Album
           example: "Third studio album featuring hits like California Gurls and Firework"
         releaseDate:
@@ -1356,6 +1345,7 @@ components:
           example: [1, 2, 3]
         description:
           type: string
+          nullable: true
           description: Description of the Album
           example: "Third studio album featuring hits like California Gurls and Firework"
         releaseDate:
