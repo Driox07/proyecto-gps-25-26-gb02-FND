@@ -94,4 +94,34 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Initialize cart badge
+    updateCartBadge();
+
+    // Listen for cart updates
+    window.addEventListener('cartUpdated', updateCartBadge);
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'oversound_cart') {
+            updateCartBadge();
+        }
+    });
 });
+
+/**
+ * Actualiza el badge del carrito en el header
+ */
+function updateCartBadge() {
+    const cartBadge = document.getElementById('cart-badge');
+    const cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
+    
+    if (!cartBadge) return;
+
+    const totalItems = cart.length;
+
+    if (totalItems > 0) {
+        cartBadge.textContent = totalItems;
+        cartBadge.style.display = 'flex';
+    } else {
+        cartBadge.style.display = 'none';
+    }
+}

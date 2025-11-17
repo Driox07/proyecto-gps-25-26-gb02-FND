@@ -146,8 +146,9 @@ body {
 .artist-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 24px;
+    gap: 12px;
     margin-bottom: 24px;
+    align-items: center;
 }
 
 .meta-item {
@@ -160,38 +161,70 @@ body {
     padding: 8px 16px;
     border-radius: 20px;
     backdrop-filter: blur(10px);
+    text-decoration: none;
+    border: none;
+    cursor: default;
+    transition: all 0.3s ease;
 }
 
 .meta-item svg {
     color: rgba(255, 255, 255, 0.8);
+    flex-shrink: 0;
+}
+
+.meta-social {
+    cursor: pointer;
+    background: white;
+    color: #667eea;
+    padding: 12px 24px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.meta-social svg {
+    color: #667eea;
+    width: 18px;
+    height: 18px;
+}
+
+.meta-social:hover {
+    background: #f8f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.meta-action {
+    cursor: pointer;
+    background: white;
+    color: #667eea;
+    padding: 12px 24px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.meta-action svg {
+    color: #667eea;
+    width: 18px;
+    height: 18px;
+}
+
+.meta-action:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.meta-action:hover svg {
+    color: white;
 }
 
 .artist-social {
-    margin-bottom: 24px;
-}
-
-.social-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    color: white;
-    transition: all 0.3s ease;
-    text-decoration: none;
-}
-
-.social-link:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
+    display: none;
 }
 
 .artist-actions {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
+    display: none;
 }
 
 /* Buttons */
@@ -469,6 +502,33 @@ body {
     font-size: 13px;
     color: #999;
     margin-bottom: 8px;
+}
+
+.card-description {
+    font-size: 13px;
+    color: #ffffff;
+    margin-bottom: 6px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 36px;
+}
+
+.card-date {
+    font-size: 12px;
+    color: #ffffff;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-date svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
 }
 
 .card-price {

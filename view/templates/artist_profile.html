@@ -11,7 +11,7 @@
 <body>
     {% include 'common/header.html' %}
     
-    <main class="artist-main">
+    <main class="artist-main" data-artist-id="{{ artist.artistId }}">
         <!-- Artist Header Section -->
         <section class="artist-header">
             <div class="artist-header-background">
@@ -72,28 +72,37 @@
                                 <span>{{ artist.owner_albums|length }} Álbumes</span>
                             </div>
                         {% endif %}
-                    </div>
-                    
-                    {% if artist.socialMediaUrl %}
-                        <div class="artist-social">
-                            <a href="{{ artist.socialMediaUrl }}" target="_blank" class="social-link" title="Seguir en redes sociales">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        
+                        {% if artist.socialMediaUrl %}
+                            <a href="{{ artist.socialMediaUrl }}" target="_blank" class="meta-item meta-social" title="Seguir en redes sociales">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2s9 5 20 5a9.5 9.5 0 00-9-5.5c4.75 2.25 7-7 7-7"></path>
                                 </svg>
+                                <span>Redes Sociales</span>
                             </a>
-                        </div>
-                    {% endif %}
-                    
-                    <div class="artist-actions">
+                        {% endif %}
+                        
                         {% if is_own_profile %}
-                            <a href="/artist/edit" class="btn btn-primary">Editar Perfil</a>
-                            <a href="/artist/studio" class="btn btn-secondary">Mi Studio</a>
+                            <a href="/artist/edit" class="meta-item meta-action">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke-width="2"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke-width="2"></path>
+                                </svg>
+                                <span>Editar Perfil</span>
+                            </a>
+                            <a href="/artist/studio" class="meta-item meta-action">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke-width="2"></rect>
+                                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" stroke-width="2"></path>
+                                </svg>
+                                <span>Mi Studio</span>
+                            </a>
                         {% else %}
-                            <button class="btn btn-primary follow-btn" data-artist-id="{{ artist.artistId }}">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <button class="meta-item meta-action follow-btn" data-artist-id="{{ artist.artistId }}">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path d="M12 5v14M5 12h14" stroke-width="2" stroke-linecap="round"></path>
                                 </svg>
-                                Seguir
+                                <span>Seguir</span>
                             </button>
                         {% endif %}
                     </div>
@@ -124,6 +133,13 @@
                             <line x1="7" y1="7" x2="7.01" y2="7" stroke-width="2"></line>
                         </svg>
                         Merchandise
+                    </button>
+                    <button class="tab-button" data-tab="label">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke-width="2"></rect>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" stroke-width="2"></path>
+                        </svg>
+                        Discográfica
                     </button>
                 </div>
 
@@ -160,7 +176,18 @@
                                     </div>
                                     <div class="card-content">
                                         <h3 class="card-title">{{ song.title }}</h3>
-                                        <p class="card-subtitle">{{ song.duration }}s</p>
+                                        {% if song.description %}
+                                            <p class="card-description">{{ song.description[:80] }}{% if song.description|length > 80 %}...{% endif %}</p>
+                                        {% else %}
+                                            <p class="card-description">Sin descripción</p>
+                                        {% endif %}
+                                        <p class="card-date">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                                <path d="M12 6v6l4 2" stroke-width="2"></path>
+                                            </svg>
+                                            {{ song.releaseDate[:10] if song.releaseDate else 'Fecha desconocida' }}
+                                        </p>
                                         <p class="card-price">€{{ song.price }}</p>
                                     </div>
                                 </div>
@@ -210,7 +237,18 @@
                                     </div>
                                     <div class="card-content">
                                         <h3 class="card-title">{{ album.title }}</h3>
-                                        <p class="card-subtitle">{{ album.releaseDate }}</p>
+                                        {% if album.description %}
+                                            <p class="card-description">{{ album.description[:80] }}{% if album.description|length > 80 %}...{% endif %}</p>
+                                        {% else %}
+                                            <p class="card-description">Sin descripción</p>
+                                        {% endif %}
+                                        <p class="card-date">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                                <path d="M12 6v6l4 2" stroke-width="2"></path>
+                                            </svg>
+                                            {{ album.releaseDate[:10] if album.releaseDate else 'Fecha desconocida' }}
+                                        </p>
                                         <p class="card-price">€{{ album.price }}</p>
                                     </div>
                                 </div>
@@ -262,7 +300,18 @@
                                     </div>
                                     <div class="card-content">
                                         <h3 class="card-title">{{ merch.title }}</h3>
-                                        <p class="card-subtitle">{{ merch.releaseDate }}</p>
+                                        {% if merch.description %}
+                                            <p class="card-description">{{ merch.description[:80] }}{% if merch.description|length > 80 %}...{% endif %}</p>
+                                        {% else %}
+                                            <p class="card-description">Sin descripción</p>
+                                        {% endif %}
+                                        <p class="card-date">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                                <path d="M12 6v6l4 2" stroke-width="2"></path>
+                                            </svg>
+                                            {{ merch.releaseDate[:10] if merch.releaseDate else 'Fecha desconocida' }}
+                                        </p>
                                         <p class="card-price">€{{ merch.price }}</p>
                                     </div>
                                 </div>
@@ -276,6 +325,21 @@
                                 <p>Este artista aún no tiene merchandise</p>
                             </div>
                         {% endif %}
+                    </div>
+                </div>
+
+                <!-- Label Tab -->
+                <div class="tab-content" id="label-tab">
+                    <div class="content-header">
+                        <h2>Discográfica</h2>
+                    </div>
+                    
+                    <div class="label-content" id="artist-label-content">
+                        <!-- Contenido cargado dinámicamente -->
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <p>Cargando información...</p>
+                        </div>
                     </div>
                 </div>
             </div>

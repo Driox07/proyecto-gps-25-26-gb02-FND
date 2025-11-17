@@ -1,0 +1,348 @@
+/* Legal Pages Styles - Terms, Privacy, Cookies */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.legal-main {
+    flex: 1;
+    background: #f8f9fa;
+}
+
+/* Legal Container */
+.legal-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 40px;
+}
+
+/* Legal Header */
+.legal-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.legal-header h1 {
+    font-size: 42px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.legal-date {
+    font-size: 14px;
+    color: #999;
+    font-style: italic;
+}
+
+/* Legal Content */
+.legal-content {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 40px;
+    line-height: 1.8;
+    color: #555;
+}
+
+.legal-section {
+    margin-bottom: 36px;
+}
+
+.legal-section:last-child {
+    margin-bottom: 0;
+}
+
+.legal-section h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.legal-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-top: 16px;
+    margin-bottom: 12px;
+}
+
+.legal-section p {
+    font-size: 15px;
+    line-height: 1.8;
+    margin-bottom: 12px;
+    color: #666;
+}
+
+.legal-section ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 16px;
+}
+
+.legal-section li {
+    padding-left: 24px;
+    margin-bottom: 8px;
+    position: relative;
+    font-size: 15px;
+    color: #666;
+}
+
+.legal-section li:before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.legal-section a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.legal-section a:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+/* Contact Section */
+.contact-section {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    padding: 24px;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+}
+
+.contact-info {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.contact-info p {
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+/* Cookies Table */
+.cookies-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 14px;
+}
+
+.cookies-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.cookies-table th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.cookies-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.cookies-table tbody tr:hover {
+    background: #f9f9f9;
+}
+
+/* Legal Actions */
+.legal-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 40px;
+}
+
+.btn {
+    padding: 12px 32px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-block;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+    border: 2px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+    border-color: #ccc;
+    transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .legal-container {
+        padding: 40px 20px;
+    }
+
+    .legal-header h1 {
+        font-size: 32px;
+    }
+
+    .legal-content {
+        padding: 24px;
+    }
+
+    .legal-section h2 {
+        font-size: 20px;
+    }
+
+    .legal-section h3 {
+        font-size: 16px;
+    }
+
+    .legal-section p {
+        font-size: 14px;
+    }
+
+    .cookies-table {
+        font-size: 12px;
+    }
+
+    .cookies-table th,
+    .cookies-table td {
+        padding: 8px;
+    }
+
+    .legal-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .legal-container {
+        padding: 30px 15px;
+    }
+
+    .legal-header h1 {
+        font-size: 24px;
+    }
+
+    .legal-content {
+        padding: 16px;
+    }
+
+    .legal-section h2 {
+        font-size: 18px;
+    }
+
+    .contact-section {
+        padding: 16px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .legal-main {
+        background: #1a1a1a;
+    }
+
+    .legal-content {
+        background: #2a2a2a;
+        color: #ddd;
+    }
+
+    .legal-section h2,
+    .legal-section h3 {
+        color: #fff;
+    }
+
+    .legal-section p {
+        color: #bbb;
+    }
+
+    .legal-section li {
+        color: #bbb;
+    }
+
+    .contact-section {
+        background: rgba(102, 126, 234, 0.05);
+        border-left-color: #667eea;
+    }
+
+    .cookies-table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .cookies-table tbody tr:hover {
+        background: #333;
+    }
+
+    .cookies-table td {
+        border-bottom-color: #444;
+    }
+
+    .btn-secondary {
+        background: #333;
+        color: #fff;
+        border-color: #555;
+    }
+
+    .btn-secondary:hover {
+        background: #444;
+        border-color: #666;
+    }
+
+    .legal-date {
+        color: #777;
+    }
+}

@@ -31,7 +31,7 @@
                 <div class="song-cover-container">
                     <img id="song-cover" src="{{ data.song.cover }}" alt="Portada de {{ data.song.title }}" class="song-cover">
                     <div class="cover-overlay">
-                        <button class="play-button-large" id="play-button">
+                        <button class="play-button-large" id="play-button" data-track-id="{{ data.song.songId }}">
                             <svg width="50" height="50" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M8 5v14l11-7z"/>
                             </svg>
@@ -165,6 +165,7 @@
 
     </main>
 
+    <script src="{{ url_for('static', path='js/config.js') }}"></script>
     <script src="{{ url_for('static', path='js/song.js') }}"></script>
 </body>
 </html>

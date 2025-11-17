@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/legal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="legal-main">
+        <div class="legal-container">
+            <div class="legal-header">
+                <h1>Política de Privacidad</h1>
+                <p class="legal-date">Última actualización: {{ last_updated }}</p>
+            </div>
+
+            <article class="legal-content">
+                <section class="legal-section">
+                    <h2>1. Introducción</h2>
+                    <p>En OverSound, respetamos tu privacidad y nos comprometemos a proteger tus datos personales. Esta Política de Privacidad explica cómo recopilamos, utilizamos y protegemos tu información.</p>
+                </section>
+
+                <section class="legal-section">
+                    <h2>2. Información que Recopilamos</h2>
+                    <p>Recopilamos los siguientes tipos de información:</p>
+                    <ul>
+                        <li><strong>Información de Cuenta:</strong> Nombre, email, contraseña, foto de perfil</li>
+                        <li><strong>Información de Pago:</strong> Datos de tarjeta de crédito (procesados por proveedores seguros)</li>
+                        <li><strong>Información de Uso:</strong> Historial de compras, descargas, búsquedas, interacciones</li>
+                        <li><strong>Datos Técnicos:</strong> Dirección IP, tipo de navegador, dispositivo, ubicación aproximada</li>
+                        <li><strong>Información de Comunicación:</strong> Mensajes, reportes, comentarios que envías</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2>3. Cómo Utilizamos tu Información</h2>
+                    <p>Utilizamos tu información para:</p>
+                    <ul>
+                        <li>Proporcionar, mejorar y personalizar nuestros servicios</li>
+                        <li>Procesar transacciones y enviar recibos</li>
+                        <li>Enviar notificaciones sobre tu cuenta y actualizaciones del servicio</li>
+                        <li>Analizar tendencias y mejorar la experiencia de usuario</li>
+                        <li>Prevenir fraude y actividad maliciosa</li>
+                        <li>Cumplir con obligaciones legales</li>
+                        <li>Contactarte con ofertas personalizadas (con tu consentimiento)</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2>4. Base Legal para el Procesamiento</h2>
+                    <p>Procesamos tu información bajo las siguientes bases legales:</p>
+                    <ul>
+                        <li>Consentimiento: Cuando has dado permiso explícito</li>
+                        <li>Contrato: Para cumplir con la relación contractual</li>
+                        <li>Obligación Legal: Cuando la ley lo requiere</li>
+                        <li>Intereses Legítimos: Para mejorar servicios y prevenir fraude</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2>5. Compartir tu Información</h2>
+                    <p>No vendemos tu información personal. Podemos compartirla con:</p>
+                    <ul>
+                        <li><strong>Proveedores de Servicios:</strong> Procesadores de pago, proveedores de hosting</li>
+                        <li><strong>Artistas:</strong> Información básica necesaria para pagos (solo si compras su contenido)</li>
+                        <li><strong>Autoridades Legales:</strong> Cuando la ley lo requiere</li>
+                        <li><strong>Socios Comerciales:</strong> Con tu consentimiento explícito</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2>6. Seguridad de Datos</h2>
+                    <p>Implementamos medidas de seguridad técnicas y organizativas para proteger tus datos:</p>
+                    <ul>
+                        <li>Encriptación SSL/TLS en todas las conexiones</li>
+                        <li>Contraseñas hasheadas y saladas</li>
+                        <li>Firewalls y sistemas de detección de intrusiones</li>
+                        <li>Acceso restringido a información sensible</li>
+                        <li>Auditorías de seguridad regulares</li>
+                    </ul>
+                    <p>Sin embargo, no existe sistema 100% seguro. Utilizas OverSound bajo tu propio riesgo.</p>
+                </section>
+
+                <section class="legal-section">
+                    <h2>7. Retención de Datos</h2>
+                    <p>Retenemos tus datos personales solo mientras sea necesario:</p>
+                    <ul>
+                        <li>Datos de cuenta: Mientras mantengas tu cuenta activa</li>
+                        <li>Datos de pago: Según requisitos legales/fiscales (usualmente 6-7 años)</li>
+                        <li>Datos de uso: Hasta 2 años para análisis</li>
+                        <li>Datos de comunicación: Hasta 1 año para soporte al cliente</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2>8. Tus Derechos</h2>
+                    <p>Bajo RGPD, tienes derecho a:</p>
+                    <ul>
+                        <li><strong>Acceso:</strong> Solicitar copia de tus datos personales</li>
+                        <li><strong>Rectificación:</strong> Corregir información inexacta</li>
+                        <li><strong>Supresión:</strong> Solicitar eliminación de tus datos ("derecho al olvido")</li>
+                        <li><strong>Portabilidad:</strong> Recibir tus datos en formato transferible</li>
+                        <li><strong>Oposición:</strong> Oponerte al procesamiento de tus datos</li>
+                        <li><strong>Restricción:</strong> Limitar el procesamiento de tus datos</li>
+                    </ul>
+                    <p>Para ejercer estos derechos, contacta: <a href="mailto:privacy@oversound.com">privacy@oversound.com</a></p>
+                </section>
+
+                <section class="legal-section">
+                    <h2>9. Cookies</h2>
+                    <p>Utilizamos cookies para mejorar tu experiencia. Ver nuestra <a href="/cookies">Política de Cookies</a> para más detalles.</p>
+                </section>
+
+                <section class="legal-section">
+                    <h2>10. Cambios en esta Política</h2>
+                    <p>Podemos actualizar esta política ocasionalmente. Te notificaremos de cambios significativos. El uso continuado de OverSound constituye aceptación de cambios.</p>
+                </section>
+
+                <section class="legal-section contact-section">
+                    <h2>Contacta con Nosotros</h2>
+                    <p>Si tienes preguntas sobre tu privacidad:</p>
+                    <div class="contact-info">
+                        <p><strong>Email:</strong> <a href="mailto:privacy@oversound.com">privacy@oversound.com</a></p>
+                        <p><strong>Dirección:</strong> OverSound, Badajoz, España</p>
+                    </div>
+                </section>
+            </article>
+
+            <div class="legal-actions">
+                <a href="/" class="btn btn-primary">Volver a Inicio</a>
+                <a href="/terms" class="btn btn-secondary">Términos de Uso</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', path='js/legal.js') }}"></script>
+</body>
+</html>

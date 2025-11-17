@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Ayuda | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/help.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="help-main">
+        <div class="help-container">
+            <div class="help-header">
+                <h1>Centro de Ayuda</h1>
+                <p>¿Necesitas ayuda? Aquí encontrarás todo lo que necesitas saber sobre OverSound</p>
+            </div>
+
+            <div class="help-search">
+                <input type="text" id="helpSearch" placeholder="Buscar ayuda..." class="search-input">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="11" cy="11" r="8" stroke-width="2"></circle>
+                    <path d="m21 21-4.35-4.35" stroke-width="2"></path>
+                </svg>
+            </div>
+
+            <div class="help-categories">
+                <div class="help-category-card">
+                    <div class="category-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="8" r="5" stroke-width="2"></circle>
+                            <path d="M20 21a8 8 0 1 0-16 0" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h3>Cuenta y Perfil</h3>
+                    <p>Aprende a crear tu cuenta, editar tu perfil y gestionar tus preferencias</p>
+                    <a href="#account" class="learn-more">Leer más →</a>
+                </div>
+
+                <div class="help-category-card">
+                    <div class="category-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h3>Música y Contenido</h3>
+                    <p>Descubre cómo explorar, comprar y disfrutar de música</p>
+                    <a href="#music" class="learn-more">Leer más →</a>
+                </div>
+
+                <div class="help-category-card">
+                    <div class="category-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="1" y="4" width="22" height="16" rx="2" stroke-width="2"></rect>
+                            <path d="M1 10h22" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h3>Pagos y Facturación</h3>
+                    <p>Información sobre métodos de pago, facturas y reembolsos</p>
+                    <a href="#payments" class="learn-more">Leer más →</a>
+                </div>
+
+                <div class="help-category-card">
+                    <div class="category-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke-width="2"></path>
+                            <circle cx="12" cy="7" r="4" stroke-width="2"></circle>
+                        </svg>
+                    </div>
+                    <h3>Para Artistas</h3>
+                    <p>Guía para subir música, crear álbumes y gestionar tu studio</p>
+                    <a href="#artists" class="learn-more">Leer más →</a>
+                </div>
+
+                <div class="help-category-card">
+                    <div class="category-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                            <path d="M12 6v6l4 2" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h3>Problemas Técnicos</h3>
+                    <p>Resuelve problemas comunes y obtén soporte técnico</p>
+                    <a href="#technical" class="learn-more">Leer más →</a>
+                </div>
+
+                <div class="help-category-card">
+                    <div class="category-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M12 1v22M1 12h22" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h3>Privacidad y Seguridad</h3>
+                    <p>Entiende cómo protegemos tus datos y privacidad</p>
+                    <a href="#privacy" class="learn-more">Leer más →</a>
+                </div>
+
+                <div class="help-category-card">
+                    <div class="category-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h3>Contacto</h3>
+                    <p>Ponte en contacto directo con nuestro equipo de soporte</p>
+                    <a href="/contact" class="learn-more">Contactar →</a>
+                </div>
+            </div>
+
+            <div class="help-articles">
+                <h2>Artículos Populares</h2>
+                <div class="articles-grid">
+                    <article class="help-article">
+                        <h3>Cómo Registrarse en OverSound</h3>
+                        <p>Guía paso a paso para crear tu cuenta y comenzar a usar OverSound</p>
+                        <a href="#" class="read-article">Leer artículo →</a>
+                    </article>
+
+                    <article class="help-article">
+                        <h3>Cómo Subir tu Primera Canción</h3>
+                        <p>Todo lo que necesitas saber para publicar tu música en OverSound</p>
+                        <a href="#" class="read-article">Leer artículo →</a>
+                    </article>
+
+                    <article class="help-article">
+                        <h3>Métodos de Pago Disponibles</h3>
+                        <p>Descubre todos los métodos de pago seguros que ofrecemos</p>
+                        <a href="#" class="read-article">Leer artículo →</a>
+                    </article>
+
+                    <article class="help-article">
+                        <h3>Gestionar tu Perfil de Artista</h3>
+                        <p>Cómo editar información, foto de perfil y biografía artística</p>
+                        <a href="#" class="read-article">Leer artículo →</a>
+                    </article>
+
+                    <article class="help-article">
+                        <h3>Seguridad de tu Cuenta</h3>
+                        <p>Mejores prácticas para proteger tu cuenta de OverSound</p>
+                        <a href="#" class="read-article">Leer artículo →</a>
+                    </article>
+
+                    <article class="help-article">
+                        <h3>Solución de Problemas Comunes</h3>
+                        <p>Soluciona los problemas más frecuentes en OverSound</p>
+                        <a href="#" class="read-article">Leer artículo →</a>
+                    </article>
+                </div>
+            </div>
+
+            <div class="help-cta">
+                <div class="cta-card">
+                    <h2>¿Aún necesitas ayuda?</h2>
+                    <p>Nuestro equipo de soporte está disponible 24/7 para ayudarte</p>
+                    <div class="cta-buttons">
+                        <a href="/faq" class="btn btn-primary">Preguntas Frecuentes</a>
+                        <a href="/contact" class="btn btn-secondary">Contactar Soporte</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="legal-actions">
+                <a href="/" class="btn btn-secondary">Volver a Inicio</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', path='js/help.js') }}"></script>
+</body>
+</html>

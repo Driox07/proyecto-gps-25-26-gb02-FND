@@ -1,4 +1,4 @@
-/* Song Page Styles - Coherente con el resto del proyecto */
+/* Merch Page Styles - Coherente con song.css y album.css */
 * {
     margin: 0;
     padding: 0;
@@ -20,80 +20,20 @@ body {
     flex-direction: column;
 }
 
-/* Song Main Container */
-.song-main {
+/* Merch Main Container */
+.merch-main {
     flex: 1;
     padding-top: 80px;
 }
 
-/* Song Header Section */
-.song-header {
+/* Merch Header Section */
+.merch-header {
     padding: 60px 40px;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, transparent 100%);
     position: relative;
 }
 
-/* Original Album Badge */
-.original-album-badge {
-    position: absolute;
-    top: 20px;
-    right: 40px;
-    z-index: 10;
-}
-
-.original-album-badge a {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255, 255, 255, 0.95);
-    padding: 8px 12px;
-    border-radius: 8px;
-    text-decoration: none;
-    color: #333;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
-    max-width: 250px;
-}
-
-.original-album-badge a:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-    background: white;
-}
-
-.original-album-badge img {
-    width: 40px;
-    height: 40px;
-    border-radius: 4px;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.badge-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    overflow: hidden;
-}
-
-.badge-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    color: #667eea;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-}
-
-.badge-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #333;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.song-header-content {
+.merch-header-content {
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
@@ -101,29 +41,30 @@ body {
     align-items: flex-start;
 }
 
-/* Song Cover */
-.song-cover-container {
+/* Merch Image - Positioned on the right */
+.merch-image-container {
     position: relative;
-    width: 300px;
-    height: 300px;
+    width: 350px;
+    height: 350px;
     flex-shrink: 0;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     transition: transform 0.3s ease;
+    order: 2; /* Forces image to the right */
 }
 
-.song-cover-container:hover {
+.merch-image-container:hover {
     transform: scale(1.02);
 }
 
-.song-cover {
+.merch-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.cover-overlay {
+.image-overlay {
     position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
@@ -134,11 +75,11 @@ body {
     transition: opacity 0.3s ease;
 }
 
-.song-cover-container:hover .cover-overlay {
+.merch-image-container:hover .image-overlay {
     opacity: 1;
 }
 
-.play-button-large {
+.view-button-large {
     width: 80px;
     height: 80px;
     border-radius: 50%;
@@ -153,18 +94,22 @@ body {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-.play-button-large:hover {
+.view-button-large:hover {
     transform: scale(1.1);
     background: white;
 }
 
-/* Song Info */
-.song-info {
+/* Merch Info - Positioned on the left */
+.merch-info {
     flex: 1;
     color: white;
+    order: 1; /* Forces text to the left */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.song-label {
+.merch-label {
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 1.5px;
@@ -174,7 +119,7 @@ body {
     display: block;
 }
 
-.song-title {
+.merch-name {
     font-size: 48px;
     font-weight: 700;
     margin-bottom: 16px;
@@ -182,27 +127,51 @@ body {
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-.song-artist {
-    font-size: 24px;
-    margin-bottom: 24px;
+.merch-artist {
+    font-size: 20px;
+    margin-bottom: 20px;
 }
 
-.song-artist a {
+.merch-artist-prefix {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+    margin-right: 8px;
+}
+
+.merch-artist a {
     color: rgba(255, 255, 255, 0.95);
     text-decoration: none;
     transition: color 0.3s ease;
+    font-weight: 600;
 }
 
-.song-artist a:hover {
+.merch-artist a:hover {
     color: white;
     text-decoration: underline;
 }
 
-/* Song Meta */
-.song-meta {
+/* Description in header */
+.merch-description-header {
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 20px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border-left: 4px solid rgba(255, 255, 255, 0.5);
+}
+
+.merch-description-header.empty {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Merch Meta */
+.merch-meta {
     display: flex;
     gap: 24px;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
     flex-wrap: wrap;
 }
 
@@ -218,11 +187,57 @@ body {
     flex-shrink: 0;
 }
 
-/* Song Actions */
-.song-actions {
+/* Merch Stock */
+.merch-stock {
+    margin-bottom: 24px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.stock-label {
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.stock-value {
+    color: #fff;
+    font-weight: 700;
+}
+
+/* Price Display */
+.merch-price-large {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
     display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.price-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.price-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Merch Actions */
+.merch-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .btn {
@@ -234,6 +249,7 @@ body {
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
     cursor: pointer;
     border: 2px solid transparent;
@@ -262,6 +278,45 @@ body {
     transform: translateY(-2px);
 }
 
+/* Full-width button */
+.btn-full {
+    width: 100%;
+}
+
+/* Button group for horizontal layout */
+.btn-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Half-width button in groups */
+.btn-half {
+    flex: 1;
+}
+
+/* Square icon button */
+.btn-icon-square {
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.btn-icon-square:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: white;
+    transform: scale(1.05);
+}
+
+/* Legacy icon button (circular) */
 .btn-icon {
     width: 50px;
     height: 50px;
@@ -281,8 +336,8 @@ body {
     transform: scale(1.1);
 }
 
-/* Song Details Section */
-.song-details {
+/* Merch Details Section */
+.merch-details {
     padding: 40px;
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
@@ -308,143 +363,95 @@ body {
     margin-bottom: 20px;
 }
 
-.song-description {
+.merch-description {
     font-size: 16px;
     line-height: 1.8;
     color: #555;
 }
 
-/* Genres */
-.genres-container {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.genre-tag {
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    cursor: pointer;
-}
-
-.genre-tag:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-/* Collaborators */
-.collaborators-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-}
-
-.collaborator-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    color: #333;
-}
-
-.collaborator-card:hover {
-    background: #e9ecef;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.collaborator-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.collaborator-placeholder {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 18px;
-}
-
-.collaborator-name {
-    font-weight: 600;
-    font-size: 14px;
-}
-
-/* Album Card */
-.album-card {
-    display: flex;
-    gap: 20px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    text-decoration: none;
-    color: #333;
-}
-
-.album-card:hover {
-    background: #e9ecef;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.album-cover {
-    width: 120px;
-    height: 120px;
-    border-radius: 8px;
-    object-fit: cover;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.album-info {
-    flex: 1;
-}
-
-.album-title {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: #333;
-}
-
-.album-artist {
-    font-size: 16px;
-    color: #666;
-    margin-bottom: 4px;
-}
-
-.album-track-number {
-    font-size: 14px;
+.merch-description.empty {
+    font-style: italic;
     color: #999;
 }
 
-/* Linked Albums Section */
-.linked-albums-container {
+/* Specs Grid */
+.specs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+}
+
+.spec-item {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.spec-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #667eea;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.spec-value {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.spec-value-link {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.spec-value-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+.spec-value.price {
+    color: #d4565c;
+    font-size: 20px;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-disponible {
+    background: #d4f1d4;
+    color: #2d702d;
+}
+
+.badge-carrito {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* Related Merch Section */
+.related-merch-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 20px;
 }
 
-.linked-album-card {
+.related-merch-card {
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -457,13 +464,13 @@ body {
     color: #333;
 }
 
-.linked-album-card:hover {
+.related-merch-card:hover {
     background: #e9ecef;
     transform: translateY(-4px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
-.linked-album-cover {
+.related-merch-image {
     width: 100%;
     aspect-ratio: 1;
     border-radius: 8px;
@@ -471,13 +478,13 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.linked-album-info {
+.related-merch-info {
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
-.linked-album-title {
+.related-merch-name {
     font-size: 16px;
     font-weight: 700;
     color: #333;
@@ -486,12 +493,19 @@ body {
     white-space: nowrap;
 }
 
-.linked-album-artist {
+.related-merch-type {
+    font-size: 13px;
+    color: #667eea;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.related-merch-price {
     font-size: 14px;
-    color: #666;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    color: #d4565c;
+    font-weight: 700;
+    margin-top: 4px;
 }
 
 /* Loading States */
@@ -502,87 +516,85 @@ body {
     font-style: italic;
 }
 
-.song-description.empty {
-    font-style: italic;
-    color: #999;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
-    .original-album-badge {
-        position: static;
-        margin-bottom: 20px;
-    }
-
-    .original-album-badge a {
-        max-width: 100%;
-    }
-
-    .song-header-content {
+    .merch-header-content {
         flex-direction: column;
         align-items: center;
         text-align: center;
     }
 
-    .song-cover-container {
+    .merch-image-container,
+    .merch-info {
+        order: 0; /* Reset order on mobile */
+    }
+
+    .merch-image-container {
         width: 250px;
         height: 250px;
     }
 
-    .song-title {
+    .merch-name {
         font-size: 32px;
     }
 
-    .song-artist {
+    .merch-artist {
         font-size: 18px;
     }
 
-    .song-meta {
+    .merch-meta {
         justify-content: center;
     }
 
-    .song-actions {
-        justify-content: center;
+    .merch-actions {
+        width: 100%;
+    }
+
+    .btn-group {
+        flex-direction: column;
+    }
+
+    .btn-half {
+        width: 100%;
+    }
+
+    .btn-icon-square {
+        width: 100%;
+        height: 50px;
     }
 
     .details-section {
         padding: 24px;
     }
 
-    .collaborators-container {
+    .specs-grid {
         grid-template-columns: 1fr;
     }
 
-    .linked-albums-container {
+    .related-merch-container {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    }
-
-    .album-card {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
     }
 }
 
 @media (max-width: 480px) {
-    .song-header {
+    .merch-header {
         padding: 40px 20px;
     }
 
-    .song-details {
+    .merch-details {
         padding: 20px;
     }
 
-    .song-cover-container {
+    .merch-image-container {
         width: 200px;
         height: 200px;
     }
 
-    .song-title {
+    .merch-name {
         font-size: 24px;
     }
 
-    .song-actions {
+    .merch-actions {
         width: 100%;
     }
 
@@ -595,42 +607,17 @@ body {
         width: 100%;
         border-radius: 10px;
     }
-}
 
-/* Audio Player State Styles */
-.play-button-large {
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-.play-button-large.playing {
-    animation: pulse-playing 1.5s ease-in-out infinite;
-}
-
-.play-button-large.playing svg {
-    animation: rotate-playing 0.8s linear infinite;
-}
-
-@keyframes pulse-playing {
-    0%, 100% {
-        transform: scale(1);
+    .btn-icon-square {
+        width: 100%;
+        height: 50px;
     }
-    50% {
-        transform: scale(1.05);
-    }
-}
 
-@keyframes rotate-playing {
-    0% {
-        transform: rotate(0deg);
+    .specs-grid {
+        grid-template-columns: 1fr;
     }
-    100% {
-        transform: rotate(360deg);
-    }
-}
 
-/* Loading state for audio fetch */
-.play-button-large:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+    .price-value {
+        font-size: 24px;
+    }
 }

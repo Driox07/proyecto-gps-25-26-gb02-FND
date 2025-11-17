@@ -185,194 +185,112 @@ function applyFilters() {
     params.append('order', order);
     params.append('direction', direction);
 
-    // Guardar posición de scroll antes de recargar
-    saveScrollPosition();
-    
-    window.location.href = `/shop?${params.toString()}`;
+    // Botones de ver detalles
+    const viewButtons = document.querySelectorAll('.btn-view');
+    viewButtons.forEach(button => {
+        button.addEventListener('click', handleViewDetails);
+    });
 }
 
+/**
+ * Filtra los productos según los criterios especificados
+ */
+function filterProducts() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const selectedGenre = document.getElementById('genre-filter').value;
+    const selectedArtist = document.getElementById('artist-filter').value;
+    const selectedType = document.getElementById('type-filter').value;
+
+    const productCards = document.querySelectorAll('.product-card');
+    let visibleCount = 0;
+
+    productCards.forEach(card => {
+        const productName = card.querySelector('.product-name').textContent.toLowerCase();
+        const productArtist = card.querySelector('.product-artist').textContent.toLowerCase();
+        const productGenre = card.getAttribute('data-genre').toLowerCase();
+        const productType = card.getAttribute('data-type');
+
+        // Verificar búsqueda
+        const matchesSearch = productName.includes(searchTerm) || 
+                            productArtist.includes(searchTerm);
+
+        // Verificar género
+        const matchesGenre = !selectedGenre || productGenre === selectedGenre.toLowerCase();
+
+        // Verificar artista
+        const matchesArtist = !selectedArtist || productArtist === selectedArtist.toLowerCase();
+
+        // Verificar tipo
+        const matchesType = !selectedType || productType === selectedType;
+
+        // Mostrar u ocultar
+        if (matchesSearch && matchesGenre && matchesArtist && matchesType) {
+            card.style.display = '';
+            card.style.animation = 'scaleIn 0.5s ease-out';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    checkNoProducts();
+}
+
+/**
+ * Reinicia todos los filtros
+ */
 function resetFilters() {
-    saveScrollPosition();
-    window.location.href = '/shop';
-}
+    document.getElementById('search-input').value = '';
+    document.getElementById('genre-filter').value = '';
+    document.getElementById('artist-filter').value = '';
+    document.getElementById('type-filter').value = '';
 
-// ============ PAGINATION ============
-function initPagination() {
-    setupPaginationForSection('songs');
-    setupPaginationForSection('albums');
-    setupPaginationForSection('merch');
-}
-
-function setupPaginationForSection(sectionName) {
-    const grid = document.getElementById(`${sectionName}-grid`);
-    if (!grid) return;
-
-    const allCards = Array.from(grid.querySelectorAll('.product-card'));
-    const total = allCards.length;
-    const state = paginationState[sectionName];
-    
-    if (total === 0) return;
-
-    const totalPages = Math.ceil(total / state.itemsPerPage);
-    
-    // Mostrar primera página
-    showPage(sectionName, 1, allCards, totalPages);
-    
-    // Crear controles de paginación
-    createPaginationControls(sectionName, totalPages, allCards);
-}
-
-function showPage(sectionName, pageNumber, allCards, totalPages) {
-    const state = paginationState[sectionName];
-    state.currentPage = pageNumber;
-    
-    const startIndex = (pageNumber - 1) * state.itemsPerPage;
-    const endIndex = startIndex + state.itemsPerPage;
-    
-    // Ocultar todas las cards
-    allCards.forEach(card => card.classList.remove('visible'));
-    
-    // Mostrar solo las cards de la página actual
-    allCards.slice(startIndex, endIndex).forEach(card => {
-        card.classList.add('visible');
+    // Mostrar todos los productos
+    const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach(card => {
+        card.style.display = '';
     });
-    
-    // Actualizar info de página
-    const pageInfo = document.getElementById(`${sectionName}-page-info`);
-    if (pageInfo) {
-        const showing = Math.min(endIndex, allCards.length);
-        pageInfo.textContent = `Página ${pageNumber} de ${totalPages}`;
-    }
+
+    checkNoProducts();
 }
 
-function createPaginationControls(sectionName, totalPages, allCards) {
-    const paginationContainer = document.getElementById(`${sectionName}-pagination`);
-    if (!paginationContainer) return;
-    
-    paginationContainer.innerHTML = '';
-    
-    if (totalPages <= 1) return; // No mostrar controles si solo hay una página
-    
-    // Botón anterior
-    const prevButton = document.createElement('button');
-    prevButton.textContent = '‹ Anterior';
-    prevButton.disabled = paginationState[sectionName].currentPage === 1;
-    prevButton.addEventListener('click', () => {
-        const currentPage = paginationState[sectionName].currentPage;
-        if (currentPage > 1) {
-            showPage(sectionName, currentPage - 1, allCards, totalPages);
-            createPaginationControls(sectionName, totalPages, allCards);
-            scrollToSection(sectionName);
-        }
-    });
-    paginationContainer.appendChild(prevButton);
-    
-    // Botones de número de página
-    const maxButtons = 5;
-    let startPage = Math.max(1, paginationState[sectionName].currentPage - Math.floor(maxButtons / 2));
-    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-    
-    if (endPage - startPage < maxButtons - 1) {
-        startPage = Math.max(1, endPage - maxButtons + 1);
-    }
-    
-    if (startPage > 1) {
-        const firstButton = createPageButton(1, sectionName, allCards, totalPages);
-        paginationContainer.appendChild(firstButton);
-        
-        if (startPage > 2) {
-            const ellipsis = document.createElement('span');
-            ellipsis.textContent = '...';
-            ellipsis.className = 'page-info';
-            paginationContainer.appendChild(ellipsis);
-        }
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-        const pageButton = createPageButton(i, sectionName, allCards, totalPages);
-        paginationContainer.appendChild(pageButton);
-    }
-    
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-            const ellipsis = document.createElement('span');
-            ellipsis.textContent = '...';
-            ellipsis.className = 'page-info';
-            paginationContainer.appendChild(ellipsis);
-        }
-        
-        const lastButton = createPageButton(totalPages, sectionName, allCards, totalPages);
-        paginationContainer.appendChild(lastButton);
-    }
-    
-    // Botón siguiente
-    const nextButton = document.createElement('button');
-    nextButton.textContent = 'Siguiente ›';
-    nextButton.disabled = paginationState[sectionName].currentPage === totalPages;
-    nextButton.addEventListener('click', () => {
-        const currentPage = paginationState[sectionName].currentPage;
-        if (currentPage < totalPages) {
-            showPage(sectionName, currentPage + 1, allCards, totalPages);
-            createPaginationControls(sectionName, totalPages, allCards);
-            scrollToSection(sectionName);
-        }
-    });
-    paginationContainer.appendChild(nextButton);
-}
+/**
+ * Maneja la adición de productos al carrito
+ */
+function handleAddToCart(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    const productId = button.getAttribute('data-product-id');
+    const productType = button.getAttribute('data-product-type');
 
-function createPageButton(pageNumber, sectionName, allCards, totalPages) {
-    const button = document.createElement('button');
-    button.textContent = pageNumber;
-    button.className = paginationState[sectionName].currentPage === pageNumber ? 'active' : '';
-    button.addEventListener('click', () => {
-        showPage(sectionName, pageNumber, allCards, totalPages);
-        createPaginationControls(sectionName, totalPages, allCards);
-        scrollToSection(sectionName);
-    });
-    return button;
-}
+    // Obtener datos del producto
+    const card = button.closest('.product-card');
+    const productName = card.querySelector('.product-name').textContent;
+    const productPrice = card.querySelector('.product-price').textContent;
+    const productArtist = card.querySelector('.product-artist').textContent;
+    const productImage = card.querySelector('.product-image img').src;
 
-function scrollToSection(sectionName) {
-    const section = document.getElementById(`${sectionName}-section`);
-    if (section) {
-        const yOffset = -100; // Offset para el header
-        const y = section.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-}
+    // Crear objeto del carrito con más datos
+    const cartItem = {
+        id: productId,
+        type: productType,
+        name: productName,
+        price: productPrice,
+        artist: productArtist,
+        image: productImage,
+        quantity: 1,
+        timestamp: new Date().getTime()
+    };
 
-// ============ CART ============
-function initCart() {
-    const addToCartButtons = document.querySelectorAll('.btn-add-cart');
+    // Guardar en localStorage
+    let cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
     
-    addToCartButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.preventDefault();
-            const productId = button.dataset.productId;
-            const productType = button.dataset.productType;
-            
-            addToCart(productId, productType);
-        });
-    });
-}
-
-function addToCart(productId, productType) {
-    let cart = JSON.parse(localStorage.getItem('oversound_cart') || '[]');
-    
-    // Verificar si el producto ya está en el carrito
-    const existingItem = cart.find(item => 
-        item.id === productId && item.type === productType
-    );
-    
+    // Verificar si el producto ya existe en el carrito
+    const existingItem = cart.find(item => item.id === productId && item.type === productType);
     if (existingItem) {
         existingItem.quantity = (existingItem.quantity || 1) + 1;
     } else {
-        cart.push({
-            id: productId,
-            type: productType,
-            quantity: 1,
-            addedAt: new Date().toISOString()
-        });
+        cart.push(cartItem);
     }
     
     localStorage.setItem('oversound_cart', JSON.stringify(cart));

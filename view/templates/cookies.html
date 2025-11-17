@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Cookies | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/legal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="legal-main">
+        <div class="legal-container">
+            <div class="legal-header">
+                <h1>Política de Cookies</h1>
+                <p class="legal-date">Última actualización: {{ last_updated }}</p>
+            </div>
+
+            <article class="legal-content">
+                <section class="legal-section">
+                    <h2>1. ¿Qué son las Cookies?</h2>
+                    <p>Las cookies son pequeños archivos de texto que se almacenan en tu dispositivo cuando visitas un sitio web. Se utilizan para recordar información sobre ti, como tus preferencias y tu historial de navegación.</p>
+                </section>
+
+                <section class="legal-section">
+                    <h2>2. Tipos de Cookies que Utilizamos</h2>
+                    
+                    <h3>Cookies Esenciales</h3>
+                    <p>Necesarias para el funcionamiento básico de OverSound:</p>
+                    <ul>
+                        <li>Autenticación de usuario (session, oversound_auth)</li>
+                        <li>Preferencias de seguridad</li>
+                        <li>Prevención de fraude</li>
+                    </ul>
+
+                    <h3>Cookies de Rendimiento</h3>
+                    <p>Nos ayudan a analizar cómo usas OverSound:</p>
+                    <ul>
+                        <li>Páginas visitadas</li>
+                        <li>Errores encontrados</li>
+                        <li>Tiempo de carga</li>
+                        <li>Dispositivo utilizado</li>
+                    </ul>
+
+                    <h3>Cookies Funcionales</h3>
+                    <p>Mejoran tu experiencia de usuario:</p>
+                    <ul>
+                        <li>Recordar tus preferencias</li>
+                        <li>Idioma y tema seleccionado</li>
+                        <li>Historial de búsqueda</li>
+                        <li>Preferencias de privacidad</li>
+                    </ul>
+
+                    <h3>Cookies de Marketing</h3>
+                    <p>Utilizadas para mostrarte contenido relevante (requieren consentimiento):</p>
+                    <ul>
+                        <li>Anuncios personalizados</li>
+                        <li>Recomendaciones de contenido</li>
+                        <li>Seguimiento de campañas publicitarias</li>
+                    </ul>
+                </section>
+
+                <section class="legal-section">
+                    <h2>3. Cookies de Terceros</h2>
+                    <p>OverSound utiliza servicios de terceros que pueden colocar cookies:</p>
+                    <ul>
+                        <li><strong>Google Analytics:</strong> Análisis de uso del sitio</li>
+                        <li><strong>Procesadores de Pago:</strong> Seguridad en transacciones</li>
+                        <li><strong>Redes Sociales:</strong> Integración social (si aplica)</li>
+                    </ul>
+                    <p>Estos servicios tienen sus propias políticas de privacidad.</p>
+                </section>
+
+                <section class="legal-section">
+                    <h2>4. Tabla de Cookies</h2>
+                    <table class="cookies-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Duración</th>
+                                <th>Propósito</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>oversound_auth</td>
+                                <td>Esencial</td>
+                                <td>Sesión + 30 días</td>
+                                <td>Autenticación de usuario</td>
+                            </tr>
+                            <tr>
+                                <td>preferences</td>
+                                <td>Funcional</td>
+                                <td>1 año</td>
+                                <td>Preferencias de usuario</td>
+                            </tr>
+                            <tr>
+                                <td>_ga</td>
+                                <td>Rendimiento</td>
+                                <td>2 años</td>
+                                <td>Google Analytics</td>
+                            </tr>
+                            <tr>
+                                <td>_gid</td>
+                                <td>Rendimiento</td>
+                                <td>24 horas</td>
+                                <td>Google Analytics</td>
+                            </tr>
+                            <tr>
+                                <td>consent</td>
+                                <td>Funcional</td>
+                                <td>1 año</td>
+                                <td>Preferencias de cookies</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="legal-section">
+                    <h2>5. Cómo Controlar las Cookies</h2>
+                    <p>Puedes controlar las cookies de varias formas:</p>
+                    <ul>
+                        <li><strong>Configuración de Navegador:</strong> La mayoría de navegadores te permiten rechazar cookies o avisarte cuando se colocan</li>
+                        <li><strong>Nuestras Preferencias:</strong> Usa nuestro panel de preferencias de cookies (enlace en el pie de página)</li>
+                        <li><strong>Servicios de Terceros:</strong> Puedes optar por no participar en servicios como Google Analytics</li>
+                    </ul>
+                    <p><strong>Nota:</strong> Rechazar cookies esenciales puede afectar la funcionalidad de OverSound.</p>
+                </section>
+
+                <section class="legal-section">
+                    <h2>6. Do Not Track</h2>
+                    <p>Si tu navegador envía una señal "Do Not Track", respetaremos tu preferencia de privacidad limitando el uso de cookies de marketing y rendimiento.</p>
+                </section>
+
+                <section class="legal-section">
+                    <h2>7. Cambios en esta Política</h2>
+                    <p>Podemos actualizar esta política cuando introduzcamos nuevas cookies o cambios. Te notificaremos de cambios significativos.</p>
+                </section>
+
+                <section class="legal-section contact-section">
+                    <h2>Preguntas sobre Cookies</h2>
+                    <p>Si tienes preguntas sobre nuestra política de cookies:</p>
+                    <div class="contact-info">
+                        <p><strong>Email:</strong> <a href="mailto:privacy@oversound.com">privacy@oversound.com</a></p>
+                        <p><strong>Dirección:</strong> OverSound, Badajoz, España</p>
+                    </div>
+                </section>
+            </article>
+
+            <div class="legal-actions">
+                <a href="/" class="btn btn-primary">Volver a Inicio</a>
+                <a href="/privacy" class="btn btn-secondary">Política de Privacidad</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', path='js/legal.js') }}"></script>
+</body>
+</html>

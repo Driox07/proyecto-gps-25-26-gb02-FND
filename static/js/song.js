@@ -1,8 +1,101 @@
 // Song Page - Interactive Features
+// Configuration for the music microservice (defined in config.js)
+const MUSIC_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.musicService.url : 'http://localhost:8080';
+
+// Global audio player instance
+let audioPlayer = null;
+
 document.addEventListener('DOMContentLoaded', () => {
+    initializeAudioPlayer();
     setupButtonListeners();
     setupAnimations();
 });
+
+/**
+ * Initialize HTML5 audio player
+ */
+function initializeAudioPlayer() {
+    audioPlayer = new Audio();
+    audioPlayer.addEventListener('ended', () => {
+        console.log('Track finished');
+        const playButton = document.getElementById('play-button');
+        if (playButton) {
+            playButton.classList.remove('playing');
+        }
+    });
+    audioPlayer.addEventListener('error', (e) => {
+        console.error('Audio player error:', e);
+        alert('Error al reproducir la canción');
+    });
+    audioPlayer.addEventListener('play', () => {
+        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
+            console.log('Audio playback started');
+        }
+    });
+    audioPlayer.addEventListener('pause', () => {
+        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
+            console.log('Audio playback paused');
+        }
+    });
+}
+
+/**
+ * Get track ID from the button data attribute
+ */
+function getTrackId() {
+    const playButton = document.getElementById('play-button');
+    if (playButton) {
+        return playButton.getAttribute('data-track-id');
+    }
+    return null;
+}
+
+/**
+ * Fetch and play track from microservice
+ */
+async function playTrack(trackId) {
+    if (!trackId) {
+        alert('ID de canción no disponible');
+        return;
+    }
+
+    try {
+        const url = `${MUSIC_SERVICE_URL}/track/${trackId}`;
+        
+        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
+            console.log(`Fetching track from: ${url}`);
+        }
+
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'include', // Include cookies for authentication
+            headers: {
+                'Accept': 'audio/*'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Get audio blob
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
+            console.log(`Audio blob received, size: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+        }
+        
+        // Set audio source and play
+        audioPlayer.src = audioUrl;
+        audioPlayer.play();
+        console.log('Playing track:', trackId);
+
+    } catch (error) {
+        console.error('Error playing track:', error);
+        alert(`Error al reproducir: ${error.message}`);
+    }
+}
 
 /**
  * Setup button event listeners
@@ -13,9 +106,27 @@ function setupButtonListeners() {
     if (playButton) {
         playButton.addEventListener('click', () => {
             const songTitle = document.getElementById('song-title').textContent;
-            console.log('Playing song:', songTitle);
-            alert(`Reproduciendo: ${songTitle}\n(Funcionalidad de reproducción pendiente)`);
-            // TODO: Implement actual playback functionality
+            const trackId = getTrackId();
+            
+            if (!trackId) {
+                alert('ID de canción no disponible');
+                return;
+            }
+            
+            if (audioPlayer.paused) {
+                if (!audioPlayer.src) {
+                    // Start playing new track
+                    playTrack(trackId);
+                } else {
+                    // Resume paused track
+                    audioPlayer.play();
+                }
+                playButton.classList.add('playing');
+            } else {
+                // Pause track
+                audioPlayer.pause();
+                playButton.classList.remove('playing');
+            }
         });
     }
 

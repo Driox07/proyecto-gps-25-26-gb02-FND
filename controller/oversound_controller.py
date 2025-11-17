@@ -248,29 +248,68 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
         merch_filter_resp.raise_for_status()
         merch_ids = merch_filter_resp.json()
     except requests.RequestException as e:
-        print(f"Error filtrando merchandising: {e}")
-        merch_ids = []
+        return osv.get_error_view(request, userdata, f"No se pudo cargar el perfil del artista: {str(e)}")
 
-    # Obtener datos completos del merchandising
-    merch = []
-    if merch_ids:
-        try:
-            ids_str = ",".join(map(str, merch_ids))
-            merch_resp = requests.get(
-                f"{servers.TYA}/merch/list",
-                params={"ids": ids_str},
-                timeout=5,
-                headers={"Accept": "application/json"}
-            )
-            merch_resp.raise_for_status()
-            merch = merch_resp.json()
-        except requests.RequestException as e:
-            print(f"Error obteniendo merchandising: {e}")
-            merch = []
-    
-    # Renderizar vista con los datos
-    print(all_genres)
-    return osv.get_shop_view(request, userdata, songs, all_genres, all_artists, albums, merch)
+
+@app.get("/terms")
+def get_terms(request: Request):
+    """
+    Ruta para mostrar términos de uso
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_terms_view(request, userdata, servers.SYU)
+
+
+@app.get("/privacy")
+def get_privacy(request: Request):
+    """
+    Ruta para mostrar política de privacidad
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_privacy_view(request, userdata, servers.SYU)
+
+
+@app.get("/cookies")
+def get_cookies(request: Request):
+    """
+    Ruta para mostrar política de cookies
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_cookies_view(request, userdata, servers.SYU)
+
+
+@app.get("/faq")
+def get_faq(request: Request):
+    """
+    Ruta para mostrar preguntas frecuentes
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_faq_view(request, userdata, servers.SYU)
+
+
+@app.get("/contact")
+def get_contact(request: Request):
+    """
+    Ruta para mostrar formulario de contacto
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_contact_view(request, userdata, servers.SYU)
+
+
+@app.get("/help")
+def get_help(request: Request):
+    """
+    Ruta para mostrar centro de ayuda
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_help_view(request, userdata, servers.SYU)
+
 
 @app.get("/user/{nick}")
 def register(request: Request, nick: str):
@@ -381,7 +420,7 @@ def get_song(request: Request, songId: int):
         if userdata:
             tipoUsuario = 1  # TODO: Implementar lógica para distinguir artista
         
-        return osv.get_song_view(request, song_data, tipoUsuario, userdata, isLiked, inCarrito)
+        return osv.get_song_view(request, song_data, tipoUsuario, userdata, isLiked, inCarrito, servers.SYU)
         
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
@@ -409,7 +448,7 @@ def get_album(request: Request, albumId: int):
             artist_resp.raise_for_status()
             album_data['artist'] = artist_resp.json()
         except requests.RequestException:
-            album_data['artist'] = {"artistId": album_data['artistId'], "nombre": "Artista desconocido"}
+            album_data['artist'] = {"artistId": album_data['artistId'], "artisticName": "Artista desconocido"}
         
         # Resolver géneros
         genres = []
@@ -423,38 +462,45 @@ def get_album(request: Request, albumId: int):
                 pass
         album_data['genres_data'] = genres
         
-        # Resolver canciones del álbum
-        tracks = []
-        if album_data.get('tracks'):
-            for track_id in album_data['tracks']:
-                try:
-                    track_resp = requests.get(f"{servers.TYA}/song/{track_id}", timeout=2, headers={"Accept": "application/json"})
-                    track_resp.raise_for_status()
-                    track_data = track_resp.json()
-                    
-                    # Resolver artista de la canción
+        # Resolver canciones del álbum usando /song/list
+        songs = []
+        if album_data.get('songs'):
+            try:
+                # Obtener todas las canciones en una sola petición
+                song_ids = ','.join(str(sid) for sid in album_data['songs'])
+                songs_resp = requests.get(f"{servers.TYA}/song/list?ids={song_ids}", timeout=2, headers={"Accept": "application/json"})
+                songs_resp.raise_for_status()
+                songs_list = songs_resp.json()
+                
+                # Resolver artistas de las canciones
+                for song_data in songs_list:
                     try:
-                        track_artist_resp = requests.get(f"{servers.TYA}/artist/{track_data['artistId']}", timeout=2, headers={"Accept": "application/json"})
-                        track_artist_resp.raise_for_status()
-                        track_data['artist'] = track_artist_resp.json()
+                        song_artist_resp = requests.get(f"{servers.TYA}/artist/{song_data['artistId']}", timeout=2, headers={"Accept": "application/json"})
+                        song_artist_resp.raise_for_status()
+                        song_data['artist'] = song_artist_resp.json()
                     except requests.RequestException:
-                        track_data['artist'] = {"artistId": track_data['artistId'], "nombre": "Artista desconocido"}
-                    
-                    tracks.append(track_data)
-                except requests.RequestException:
-                    pass  # Ignorar canciones que no se puedan cargar
-        album_data['tracks'] = tracks
+                        song_data['artist'] = {"artistId": song_data['artistId'], "artisticName": "Artista desconocido"}
+                    songs.append(song_data)
+            except requests.RequestException:
+                pass  # Si no se pueden cargar, dejar vacío
         
-        # Resolver álbumes relacionados del mismo artista
+        # Ordenar canciones por albumOrder si existe
+        songs = sorted(songs, key=lambda x: x.get('albumOrder', 999))
+        album_data['songs_data'] = songs
+        
+        # Resolver álbumes relacionados del mismo artista usando el campo owner_albums del artista
         related_albums = []
-        try:
-            artist_albums_resp = requests.get(f"{servers.TYA}/artist/{album_data['artistId']}/albums", timeout=2, headers={"Accept": "application/json"})
-            artist_albums_resp.raise_for_status()
-            all_artist_albums = artist_albums_resp.json()
-            # Excluir el álbum actual de los relacionados
-            related_albums = [a for a in all_artist_albums if a.get('id') != albumId][:6]
-        except requests.RequestException:
-            pass  # Si no se pueden cargar, dejar vacío
+        if album_data.get('artist') and album_data['artist'].get('owner_albums'):
+            try:
+                # Excluir el álbum actual y tomar máximo 6
+                related_ids = [aid for aid in album_data['artist']['owner_albums'] if aid != albumId][:6]
+                if related_ids:
+                    related_ids_str = ','.join(str(aid) for aid in related_ids)
+                    related_resp = requests.get(f"{servers.TYA}/album/list?ids={related_ids_str}", timeout=2, headers={"Accept": "application/json"})
+                    related_resp.raise_for_status()
+                    related_albums = related_resp.json()
+            except requests.RequestException:
+                pass  # Si no se pueden cargar, dejar vacío
         album_data['related_albums'] = related_albums
         
         # Asegurarse de que el precio sea un número
@@ -465,9 +511,9 @@ def get_album(request: Request, albumId: int):
         
         # Calcular duración total del álbum
         total_duration = 0
-        for track in tracks:
-            if track.get('duration'):
-                total_duration += track['duration']
+        for song in songs:
+            if song.get('duration'):
+                total_duration += song['duration']
         
         # Formatear duración total
         minutes = total_duration // 60
@@ -483,7 +529,7 @@ def get_album(request: Request, albumId: int):
         if userdata:
             tipoUsuario = 1  # TODO: Implementar lógica para distinguir artista
         
-        return osv.get_album_view(request, album_data, tipoUsuario, isLiked, inCarrito, tiempo_formateado)
+        return osv.get_album_view(request, album_data, tipoUsuario, isLiked, inCarrito, tiempo_formateado, userdata, servers.SYU)
         
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
@@ -500,3 +546,556 @@ def unproc_content_error_handler(request: Request, exce: Exception):
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     return osv.get_error_view(request, userdata, "Te has columpiado")
+
+@app.get("/merch/{merchId}")
+def get_merch(request: Request, merchId: int):
+    """
+    Ruta para mostrar un producto de merchandising específico desde la tienda
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    try:
+        # Obtener información del merch
+        merch_resp = requests.get(f"{servers.TYA}/merch/{merchId}", timeout=2, headers={"Accept": "application/json"})
+        merch_resp.raise_for_status()
+        merch_data = merch_resp.json()
+        
+        # Resolver artista principal del merch
+        try:
+            artist_resp = requests.get(f"{servers.TYA}/artist/{merch_data['artistId']}", timeout=2, headers={"Accept": "application/json"})
+            artist_resp.raise_for_status()
+            merch_data['artist'] = artist_resp.json()
+        except requests.RequestException:
+            merch_data['artist'] = {"artistId": merch_data['artistId'], "artisticName": "Artista desconocido"}
+        
+        # Resolver merchandising relacionado del mismo artista usando owner_merch
+        related_merch = []
+        if merch_data.get('artist') and merch_data['artist'].get('owner_merch'):
+            try:
+                # Excluir el merch actual y tomar máximo 6
+                related_ids = [mid for mid in merch_data['artist']['owner_merch'] if mid != merchId][:6]
+                if related_ids:
+                    related_ids_str = ','.join(str(mid) for mid in related_ids)
+                    related_resp = requests.get(f"{servers.TYA}/merch/list?ids={related_ids_str}", timeout=2, headers={"Accept": "application/json"})
+                    related_resp.raise_for_status()
+                    related_merch = related_resp.json()
+            except requests.RequestException:
+                pass  # Si no se pueden cargar, dejar vacío
+        merch_data['related_merch'] = related_merch
+        
+        # Asegurarse de que el precio sea un número
+        try:
+            merch_data['price'] = float(merch_data.get('price', 0))
+        except ValueError:
+            merch_data['price'] = 0.0
+        
+        # Determinar si está en favoritos y carrito (por ahora False, implementar después)
+        isLiked = False
+        inCarrito = False
+        
+        # Determinar tipo de usuario (0: no autenticado, 1: usuario, 2: artista)
+        tipoUsuario = 0
+        if userdata:
+            tipoUsuario = 1  # TODO: Implementar lógica para distinguir artista
+        
+        
+        return osv.get_merch_view(request, merch_data, tipoUsuario, isLiked, inCarrito, userdata, servers.SYU)
+        
+    except requests.RequestException as e:
+        # En caso de error, mostrar página de error
+        print(e)
+        return osv.get_error_view(request, userdata, f"No se pudo cargar el producto de merchandising")
+
+
+@app.get("/label/{labelId}")
+def get_label(request: Request, labelId: int):
+    """
+    Ruta para mostrar el perfil de una discográfica
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    try:
+        # Obtener información de la discográfica
+        label_resp = requests.get(f"{servers.TYA}/label/{labelId}", timeout=2, headers={"Accept": "application/json"})
+        label_resp.raise_for_status()
+        label_data = label_resp.json()
+        
+        # Resolver artistas de la discográfica
+        artists = []
+        if label_data.get('artists'):
+            for artist_id in label_data['artists']:
+                try:
+                    artist_resp = requests.get(f"{servers.TYA}/artist/{artist_id}", timeout=2, headers={"Accept": "application/json"})
+                    artist_resp.raise_for_status()
+                    artists.append(artist_resp.json())
+                except requests.RequestException:
+                    pass
+        label_data['artists'] = artists
+        label_data['artists_count'] = len(artists)
+        
+        # Determinar si es propietario o miembro
+        is_owner = userdata and userdata.get('labelId') == labelId
+        is_member = userdata and artist_id in [a.get('artistId') for a in artists] if 'artist_id' in locals() else False
+        
+        return osv.get_label_view(request, label_data, is_owner, is_member, userdata, servers.SYU)
+        
+    except requests.RequestException as e:
+        print(e)
+        return osv.get_error_view(request, userdata, "No se pudo cargar la discográfica")
+
+
+@app.get("/label/create")
+def get_label_create(request: Request):
+    """
+    Ruta para la página de crear discográfica
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar si el usuario ya tiene una discográfica
+    try:
+        existing_label_resp = requests.get(f"{servers.TYA}/user/{userdata.get('userId')}/label", timeout=2, headers={"Accept": "application/json"})
+        if existing_label_resp.ok:
+            existing_label = existing_label_resp.json()
+            if existing_label:
+                return RedirectResponse(f"/label/{existing_label.get('id')}/edit")
+    except requests.RequestException:
+        pass
+    
+    return osv.get_label_create_view(request, None, userdata, servers.SYU)
+
+
+@app.get("/label/{labelId}/edit")
+def get_label_edit(request: Request, labelId: int):
+    """
+    Ruta para editar una discográfica existente
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    try:
+        # Obtener información de la discográfica
+        label_resp = requests.get(f"{servers.TYA}/label/{labelId}", timeout=2, headers={"Accept": "application/json"})
+        label_resp.raise_for_status()
+        label_data = label_resp.json()
+        
+        # Verificar que sea propietario
+        if label_data.get('ownerId') != userdata.get('userId'):
+            return osv.get_error_view(request, userdata, "No tienes permisos para editar esta discográfica")
+        
+        return osv.get_label_create_view(request, label_data, userdata, servers.SYU)
+        
+    except requests.RequestException as e:
+        print(e)
+        return osv.get_error_view(request, userdata, "No se pudo cargar la discográfica")
+
+
+@app.post("/label/create")
+async def create_label(request: Request):
+    """
+    Ruta para crear una nueva discográfica
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        body = await request.json()
+        
+        # Agregar datos del propietario
+        body['ownerId'] = userdata.get('userId')
+        
+        # Crear la discográfica en la API
+        label_resp = requests.post(
+            f"{servers.TYA}/label",
+            json=body,
+            timeout=2,
+            headers={"Accept": "application/json"}
+        )
+        
+        if label_resp.ok:
+            label_data = label_resp.json()
+            return JSONResponse(content={"labelId": label_data.get('id')})
+        else:
+            error_data = label_resp.json()
+            return JSONResponse(content=error_data, status_code=label_resp.status_code)
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al crear la discográfica"}, status_code=500)
+
+
+@app.put("/label/{labelId}/edit")
+async def update_label(request: Request, labelId: int):
+    """
+    Ruta para actualizar una discográfica
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Verificar que sea propietario
+        label_resp = requests.get(f"{servers.TYA}/label/{labelId}", timeout=2, headers={"Accept": "application/json"})
+        label_resp.raise_for_status()
+        label_data = label_resp.json()
+        
+        if label_data.get('ownerId') != userdata.get('userId'):
+            return JSONResponse(content={"error": "No tienes permisos"}, status_code=403)
+        
+        body = await request.json()
+        
+        # Actualizar la discográfica
+        update_resp = requests.put(
+            f"{servers.TYA}/label/{labelId}",
+            json=body,
+            timeout=2,
+            headers={"Accept": "application/json"}
+        )
+        
+        if update_resp.ok:
+            return JSONResponse(content={"message": "Discográfica actualizada"})
+        else:
+            error_data = update_resp.json()
+            return JSONResponse(content=error_data, status_code=update_resp.status_code)
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al actualizar la discográfica"}, status_code=500)
+
+
+@app.delete("/label/{labelId}")
+async def delete_label(request: Request, labelId: int):
+    """
+    Ruta para eliminar una discográfica
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Verificar que sea propietario
+        label_resp = requests.get(f"{servers.TYA}/label/{labelId}", timeout=2, headers={"Accept": "application/json"})
+        label_resp.raise_for_status()
+        label_data = label_resp.json()
+        
+        if label_data.get('ownerId') != userdata.get('userId'):
+            return JSONResponse(content={"error": "No tienes permisos"}, status_code=403)
+        
+        # Eliminar la discográfica
+        delete_resp = requests.delete(
+            f"{servers.TYA}/label/{labelId}",
+            timeout=2,
+            headers={"Accept": "application/json"}
+        )
+        
+        if delete_resp.ok:
+            return JSONResponse(content={"message": "Discográfica eliminada"})
+        else:
+            error_data = delete_resp.json() if delete_resp.text else {}
+            return JSONResponse(content=error_data, status_code=delete_resp.status_code)
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al eliminar la discográfica"}, status_code=500)
+
+
+@app.post("/label/{labelId}/join")
+async def join_label(request: Request, labelId: int):
+    """
+    Ruta para que un artista se una a una discográfica
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Unirse a la discográfica
+        join_resp = requests.post(
+            f"{servers.TYA}/label/{labelId}/artist/{userdata.get('artistId')}",
+            timeout=2,
+            headers={"Accept": "application/json"}
+        )
+        
+        if join_resp.ok:
+            return JSONResponse(content={"message": "Te has unido a la discográfica"})
+        else:
+            error_data = join_resp.json() if join_resp.text else {}
+            return JSONResponse(content=error_data, status_code=join_resp.status_code)
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al unirse"}, status_code=500)
+
+
+@app.post("/label/{labelId}/leave")
+async def leave_label(request: Request, labelId: int):
+    """
+    Ruta para que un artista salga de una discográfica
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Salir de la discográfica
+        leave_resp = requests.delete(
+            f"{servers.TYA}/label/{labelId}/artist/{userdata.get('artistId')}",
+            timeout=2,
+            headers={"Accept": "application/json"}
+        )
+        
+        if leave_resp.ok:
+            return JSONResponse(content={"message": "Has salido de la discográfica"})
+        else:
+            error_data = leave_resp.json() if leave_resp.text else {}
+            return JSONResponse(content=error_data, status_code=leave_resp.status_code)
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al salir"}, status_code=500)
+
+
+@app.delete("/label/{labelId}/artist/{artistId}")
+async def remove_artist_from_label(request: Request, labelId: int, artistId: int):
+    """
+    Ruta para que el propietario elimine un artista de la discográfica
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Verificar que sea propietario
+        label_resp = requests.get(f"{servers.TYA}/label/{labelId}", timeout=2, headers={"Accept": "application/json"})
+        label_resp.raise_for_status()
+        label_data = label_resp.json()
+        
+        if label_data.get('ownerId') != userdata.get('userId'):
+            return JSONResponse(content={"error": "No tienes permisos"}, status_code=403)
+        
+        # Eliminar artista
+        remove_resp = requests.delete(
+            f"{servers.TYA}/label/{labelId}/artist/{artistId}",
+            timeout=2,
+            headers={"Accept": "application/json"}
+        )
+        
+        if remove_resp.ok:
+            return JSONResponse(content={"message": "Artista eliminado"})
+        else:
+            error_data = remove_resp.json() if remove_resp.text else {}
+            return JSONResponse(content=error_data, status_code=remove_resp.status_code)
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al eliminar artista"}, status_code=500)
+
+
+@app.get("/api/user/label")
+def get_user_label(request: Request):
+    """
+    Ruta API para obtener la discográfica del usuario actual (si existe)
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Obtener la discográfica del usuario (por userId)
+        label_resp = requests.get(
+            f"{servers.TYA}/user/{userdata.get('userId')}/label",
+            timeout=2,
+            headers={"Accept": "application/json"}
+        )
+        
+        if label_resp.ok:
+            label_data = label_resp.json()
+            return JSONResponse(content={
+                "has_label": True,
+                "label": label_data
+            })
+        elif label_resp.status_code == 404:
+            return JSONResponse(content={"has_label": False}, status_code=200)
+        else:
+            return JSONResponse(
+                content={"error": "Error al obtener discográfica"},
+                status_code=label_resp.status_code
+            )
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al obtener discográfica"}, status_code=500)
+
+
+@app.get("/api/artist/{artistId}/label")
+def get_artist_label(request: Request, artistId: int):
+    """
+    Ruta API para obtener la discográfica de un artista específico
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    try:
+        # Obtener la discográfica del artista
+        label_resp = requests.get(
+            f"{servers.TYA}/artist/{artistId}/label",
+            timeout=2,
+            headers={"Accept": "application/json"}
+        )
+        
+        if label_resp.ok:
+            label_data = label_resp.json()
+            
+            # Determinar si el usuario actual es propietario
+            is_owner = False
+            if userdata:
+                is_owner = label_data.get('ownerId') == userdata.get('userId')
+            
+            return JSONResponse(content={
+                "label": label_data,
+                "is_owner": is_owner
+            })
+        elif label_resp.status_code == 404:
+            # Artista sin discográfica - determinar si es el propietario
+            is_owner = False
+            if userdata:
+                is_owner = userdata.get('artistId') == artistId
+            
+            return JSONResponse(content={
+                "label": None,
+                "is_owner": is_owner
+            })
+        else:
+            return JSONResponse(
+                content={"error": "Error al obtener discográfica"},
+                status_code=label_resp.status_code
+            )
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al obtener discográfica"}, status_code=500)
+
+
+# ==================== USER PROFILE ROUTES ====================
+
+@app.get("/profile")
+def get_profile(request: Request):
+    """
+    Ruta para mostrar el perfil del usuario autenticado
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    try:
+        # Obtener métodos de pago del usuario
+        payment_methods = []
+        try:
+            payment_resp = requests.get(
+                f"{servers.SYU}/user/{userdata.get('userId')}/payment-methods",
+                timeout=2,
+                headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+            )
+            if payment_resp.ok:
+                payment_methods = payment_resp.json()
+        except requests.RequestException:
+            payment_methods = []
+        
+        # Para simplificar, asumimos datos vacíos de biblioteca y listas
+        # En un caso real, se obtendrían del servidor
+        canciones_biblioteca = []
+        listas_completas = []
+        
+        return osv.get_perfil_view(
+            request, 
+            userdata, 
+            canciones_biblioteca, 
+            listas_completas,
+            is_own_profile=True,
+            payment_methods=payment_methods,
+            syu_server=servers.SYU,
+            tya_server=servers.TYA
+        )
+        
+    except Exception as e:
+        print(e)
+        return osv.get_error_view(request, userdata, "No se pudo cargar el perfil")
+
+
+@app.get("/profile/{nick}")
+def get_user_profile(request: Request, nick: str):
+    """
+    Ruta para mostrar el perfil público de otro usuario
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    try:
+        # Obtener información del usuario
+        user_resp = requests.get(
+            f"{servers.SYU}/user/{nick}",
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        user_resp.raise_for_status()
+        user_data = user_resp.json()
+        
+        # Determinar si es el perfil del usuario autenticado
+        is_own_profile = userdata and userdata.get('nick') == nick
+        
+        # Si es perfil propio, obtener métodos de pago
+        payment_methods = []
+        if is_own_profile:
+            try:
+                payment_resp = requests.get(
+                    f"{servers.SYU}/user/{userdata.get('userId')}/payment-methods",
+                    timeout=2,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                if payment_resp.ok:
+                    payment_methods = payment_resp.json()
+            except requests.RequestException:
+                payment_methods = []
+        
+        # Para simplificar, asumimos datos vacíos de biblioteca y listas
+        canciones_biblioteca = []
+        listas_completas = []
+        
+        return osv.get_perfil_view(
+            request,
+            user_data,
+            canciones_biblioteca,
+            listas_completas,
+            is_own_profile=is_own_profile,
+            payment_methods=payment_methods if is_own_profile else [],
+            syu_server=servers.SYU,
+            tya_server=servers.TYA
+        )
+        
+    except requests.RequestException as e:
+        return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del usuario")

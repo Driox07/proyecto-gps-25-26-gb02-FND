@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacto | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/help.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="help-main">
+        <div class="help-container">
+            <div class="help-header">
+                <h1>Ponte en Contacto</h1>
+                <p>Estamos aquí para ayudarte. No dudes en comunicarte con nosotros</p>
+            </div>
+
+            <div class="contact-grid">
+                <div class="contact-info-section">
+                    <div class="contact-method">
+                        <div class="contact-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M3 8l7.89 5.26a2 2 0 0 0 2.22 0L21 8M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" stroke-width="2"></path>
+                            </svg>
+                        </div>
+                        <h3>Email</h3>
+                        <p><a href="mailto:support@oversound.com">support@oversound.com</a></p>
+                        <p class="contact-desc">Respuesta dentro de 24 horas</p>
+                    </div>
+
+                    <div class="contact-method">
+                        <div class="contact-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" stroke-width="2"></path>
+                            </svg>
+                        </div>
+                        <h3>Teléfono</h3>
+                        <p><a href="tel:+34924123456">+34 924 123 456</a></p>
+                        <p class="contact-desc">Lunes-Viernes, 9am-6pm CET</p>
+                    </div>
+
+                    <div class="contact-method">
+                        <div class="contact-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"></path>
+                                <circle cx="12" cy="10" r="3" stroke-width="2"></circle>
+                            </svg>
+                        </div>
+                        <h3>Ubicación</h3>
+                        <p>Badajoz, España</p>
+                        <p class="contact-desc">Centro de operaciones de OverSound</p>
+                    </div>
+
+                    <div class="contact-method">
+                        <div class="contact-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="1" stroke-width="2"></circle>
+                                <path d="M12 1v6m0 6v6" stroke-width="2"></path>
+                                <path d="M4.22 4.22l4.24 4.24m0 5.08l-4.24 4.24M19.78 4.22l-4.24 4.24m0 5.08l4.24 4.24" stroke-width="2"></path>
+                            </svg>
+                        </div>
+                        <h3>Redes Sociales</h3>
+                        <div class="social-links">
+                            <a href="#" class="social-link">Twitter</a>
+                            <a href="#" class="social-link">Instagram</a>
+                            <a href="#" class="social-link">Facebook</a>
+                        </div>
+                    </div>
+                </div>
+
+                <form class="contact-form" id="contactForm">
+                    <h2>Envíanos un Mensaje</h2>
+
+                    <div class="form-group">
+                        <label for="name">Nombre *</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Asunto *</label>
+                        <select id="subject" name="subject" required>
+                            <option value="">Selecciona un tema</option>
+                            <option value="support">Soporte Técnico</option>
+                            <option value="billing">Problemas de Pago</option>
+                            <option value="artist">Consulta de Artista</option>
+                            <option value="copyright">Derechos de Autor</option>
+                            <option value="feedback">Comentarios y Sugerencias</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Mensaje *</label>
+                        <textarea id="message" name="message" rows="6" required placeholder="Cuéntanos cómo podemos ayudarte..."></textarea>
+                    </div>
+
+                    <div class="form-group checkbox">
+                        <input type="checkbox" id="privacy" name="privacy" required>
+                        <label for="privacy">Acepto la Política de Privacidad</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Enviar Mensaje</button>
+                    <p class="form-note">Responderemos a tu mensaje dentro de 24 horas</p>
+                </form>
+            </div>
+
+            <div class="legal-actions">
+                <a href="/" class="btn btn-secondary">Volver a Inicio</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', path='js/help.js') }}"></script>
+</body>
+</html>

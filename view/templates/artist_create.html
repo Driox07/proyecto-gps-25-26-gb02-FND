@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Perfil de Artista - OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/artist_create.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <div class="wizard-container">
+        <!-- Wizard Header -->
+        <div class="wizard-header">
+            <h1>Crear Perfil de Artista</h1>
+            <p>Completa estos pasos para configurar tu presencia en OverSound</p>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-step active" data-step="1">
+                <div class="step-circle">1</div>
+                <div class="step-label">Información Básica</div>
+            </div>
+            <div class="progress-step" data-step="2">
+                <div class="step-circle">2</div>
+                <div class="step-label">Biografía</div>
+            </div>
+            <div class="progress-step" data-step="3">
+                <div class="step-circle">3</div>
+                <div class="step-label">Imagen de Perfil</div>
+            </div>
+            <div class="progress-step" data-step="4">
+                <div class="step-circle">4</div>
+                <div class="step-label">Redes Sociales</div>
+            </div>
+        </div>
+
+        <!-- Wizard Content -->
+        <div class="wizard-content">
+            <form id="artist-form">
+                <!-- Step 1: Información Básica -->
+                <div class="wizard-step active" data-step="1">
+                    <h2 class="step-title">Información Básica</h2>
+                    <p class="step-description">Comencemos con tu nombre artístico y email de contacto</p>
+                    
+                    <div class="form-group">
+                        <label for="artisticName">Nombre Artístico <span class="required">*</span></label>
+                        <input 
+                            type="text" 
+                            id="artisticName" 
+                            name="artisticName"
+                            class="form-control"
+                            placeholder="Ej: DJ Shadow, The Weeknd, Billie Eilish" 
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="artisticEmail">Email Artístico <span class="required">*</span></label>
+                        <input 
+                            type="email" 
+                            id="artisticEmail" 
+                            name="artisticEmail"
+                            class="form-control"
+                            placeholder="contacto@tuartista.com" 
+                            required
+                        >
+                    </div>
+                </div>
+
+                <!-- Step 2: Biografía -->
+                <div class="wizard-step" data-step="2">
+                    <h2 class="step-title">Biografía Artística</h2>
+                    <p class="step-description">Cuéntanos sobre tu música y trayectoria</p>
+                    
+                    <div class="form-group">
+                        <label for="artisticBiography">Tu Historia</label>
+                        <textarea 
+                            id="artisticBiography" 
+                            name="artisticBiography"
+                            class="form-control"
+                            rows="8"
+                            placeholder="Escribe sobre tu música, influencias, logros y lo que te hace único como artista..."
+                        ></textarea>
+                    </div>
+                </div>
+
+                <!-- Step 3: Imagen de Perfil -->
+                <div class="wizard-step" data-step="3">
+                    <h2 class="step-title">Imagen de Perfil</h2>
+                    <p class="step-description">Añade una foto que represente tu identidad artística</p>
+                    
+                    <div class="form-group">
+                        <label for="artisticImage">Foto de Perfil</label>
+                        <div class="image-upload-container">
+                            <div class="image-preview" id="imagePreview">
+                                <div class="image-preview-placeholder">
+                                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5" stroke-width="2"></circle>
+                                        <polyline points="21 15 16 10 5 21" stroke-width="2"></polyline>
+                                    </svg>
+                                    <p>Vista previa de imagen</p>
+                                </div>
+                            </div>
+                            <input 
+                                type="file" 
+                                id="artisticImage" 
+                                name="artisticImage" 
+                                accept="image/*"
+                                onchange="handleImageUpload(event)"
+                            >
+                            <label for="artisticImage" class="image-upload-label">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-width="2"></path>
+                                    <polyline points="17 8 12 3 7 8" stroke-width="2"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15" stroke-width="2"></line>
+                                </svg>
+                                Seleccionar Imagen
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Redes Sociales -->
+                <div class="wizard-step" data-step="4">
+                    <h2 class="step-title">Redes Sociales</h2>
+                    <p class="step-description">Conecta tu perfil con tus redes sociales (opcional)</p>
+                    
+                    <div class="form-group">
+                        <label for="socialMediaUrl">URL de Redes Sociales</label>
+                        <input 
+                            type="url" 
+                            id="socialMediaUrl" 
+                            name="socialMediaUrl"
+                            class="form-control"
+                            placeholder="https://twitter.com/tuartista" 
+                        >
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="wizard-nav">
+            <div>
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/profile'">Cancelar</button>
+            </div>
+            <div>
+                <button type="button" class="btn btn-secondary" id="prevBtn" onclick="prevStep()" style="display: none;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polyline points="15 18 9 12 15 6" stroke-width="2"></polyline>
+                    </svg>
+                    Anterior
+                </button>
+                <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()">
+                    Siguiente
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polyline points="9 18 15 12 9 6" stroke-width="2"></polyline>
+                    </svg>
+                </button>
+                <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;" form="artist-form">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <polyline points="20 6 9 17 4 12" stroke-width="2"></polyline>
+                    </svg>
+                    Crear Perfil de Artista
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', path='js/ArtistCreate.js') }}"></script>
+</body>
+</html>

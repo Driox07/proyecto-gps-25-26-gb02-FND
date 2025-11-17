@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if label %}Editar{{ label.name }}{% else %}Crear Discográfica{% endif %} | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/label.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="label-form-main">
+        <section class="form-section">
+            <div class="form-container">
+                <div class="form-header">
+                    <h1>{% if label %}Editar Discográfica{% else %}Crear Nueva Discográfica{% endif %}</h1>
+                    <p class="form-subtitle">Completa los datos de tu discográfica</p>
+                </div>
+
+                <form id="label-form" class="label-form">
+                    <!-- Name Field -->
+                    <div class="form-group">
+                        <label for="label-name">Nombre de la Discográfica *</label>
+                        <input 
+                            type="text" 
+                            id="label-name" 
+                            name="name" 
+                            class="form-input" 
+                            value="{% if label %}{{ label.name }}{% endif %}"
+                            placeholder="Ej: Melodic Records"
+                            required
+                            maxlength="100"
+                        >
+                        <span class="form-help">El nombre debe ser único</span>
+                    </div>
+
+                    <!-- Description Field -->
+                    <div class="form-group">
+                        <label for="label-description">Descripción</label>
+                        <textarea 
+                            id="label-description" 
+                            name="description" 
+                            class="form-textarea" 
+                            placeholder="Cuéntanos sobre tu discográfica..."
+                            maxlength="500"
+                            rows="5"
+                        >{% if label %}{{ label.description }}{% endif %}</textarea>
+                        <span class="form-help">
+                            <span id="char-count">0</span>/500 caracteres
+                        </span>
+                    </div>
+
+                    <!-- Logo Field -->
+                    <div class="form-group">
+                        <label for="label-logo">Logo (URL)</label>
+                        <input 
+                            type="url" 
+                            id="label-logo" 
+                            name="logo" 
+                            class="form-input" 
+                            value="{% if label %}{{ label.logo }}{% endif %}"
+                            placeholder="https://ejemplo.com/logo.png"
+                        >
+                        {% if label and label.logo %}
+                            <div class="logo-preview">
+                                <img src="{{ label.logo }}" alt="Logo actual" id="logo-preview-img">
+                                <span>Logo actual</span>
+                            </div>
+                        {% endif %}
+                        <div class="logo-preview" id="new-logo-preview" style="display: none;">
+                            <img src="" alt="Nueva vista previa" id="new-preview-img">
+                            <span>Nueva vista previa</span>
+                        </div>
+                    </div>
+
+                    <!-- Country Field -->
+                    <div class="form-group">
+                        <label for="label-country">País</label>
+                        <input 
+                            type="text" 
+                            id="label-country" 
+                            name="country" 
+                            class="form-input" 
+                            value="{% if label %}{{ label.country }}{% endif %}"
+                            placeholder="Ej: España"
+                            maxlength="50"
+                        >
+                    </div>
+
+                    <!-- Foundation Date Field -->
+                    <div class="form-group">
+                        <label for="label-foundation-date">Fecha de Fundación</label>
+                        <input 
+                            type="date" 
+                            id="label-foundation-date" 
+                            name="foundationDate" 
+                            class="form-input" 
+                            value="{% if label %}{{ label.foundationDate[:10] if label.foundationDate else '' }}{% endif %}"
+                        >
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <a href="{% if label %}/label/{{ label.id }}{% else %}/{% endif %}" class="btn btn-secondary">
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            {% if label %}Guardar Cambios{% else %}Crear Discográfica{% endif %}
+                        </button>
+                    </div>
+
+                    <!-- Max Label Warning -->
+                    <div class="form-info">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12" stroke-width="2"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8" stroke-width="2"></line>
+                        </svg>
+                        <span>Puedes crear una sola discográfica. Si ya tienes una, edítala desde tu perfil.</span>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', path='js/label.js') }}"></script>
+</body>
+</html>
