@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         const payload = {
-            nick: form.nick.value.trim(),
-            contrasena: form.contrasena.value
+            username: form.username.value.trim(),
+            password: form.password.value
         };
 
         try {
