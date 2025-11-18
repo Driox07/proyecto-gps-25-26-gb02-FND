@@ -103,6 +103,36 @@ def register_page(request: Request):
         return RedirectResponse("/")
     return osv.get_register_view(request, userdata, servers.FND)
 
+
+@app.get("/forgot-password")
+def forgot_password_page(request: Request):
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    if userdata:
+        return RedirectResponse("/")
+    return osv.get_forgot_password_view(request, userdata, servers.FND)
+
+
+@app.post("/forgot-password")
+async def forgot_password(request: Request):
+    """
+    Ruta simulada que 'envía' un correo de recuperación (simulada).
+    Espera JSON: {"email": "user@example.com"} y devuelve mensaje de éxito.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        # Si no es JSON, intentar form data
+        form = await request.form()
+        body = dict(form)
+
+    email = body.get('email')
+    if not email:
+        return JSONResponse(content={"error": "Email requerido"}, status_code=400)
+
+    # Aquí podríamos integrar con un servicio de correo. Por ahora devolvemos simulación
+    return JSONResponse(content={"message": f"Se ha enviado un correo de recuperación a {email} (simulado)."}, status_code=200)
+
 @app.post("/register")
 async def register(request: Request):
     # Se obtienen los datos del formulario
