@@ -22,13 +22,6 @@ def obtain_user_data(token: str):
     except requests.RequestException:
         return None
 
-# Exception handler para errores de validación (422)
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    return osv.get_error_view(request, userdata, "Te has columpiado con la URL")
-
 # Configuración de CORS
 origins = [
     "http://localhost:8000",
@@ -1432,3 +1425,9 @@ async def remove_favorite(request: Request, content_type: str, content_id: int):
     except requests.RequestException as e:
         print(f"Error eliminando de favoritos: {e}")
         return JSONResponse(content={"error": "No se pudo eliminar de favoritos"}, status_code=500)
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_error_view(request, userdata, "Te has columpiado con la URL")
