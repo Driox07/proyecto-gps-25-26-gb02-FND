@@ -291,6 +291,14 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
             print(f"Error obteniendo merchandising: {e}")
             merch = []
 
+    print(f"Shop view: songs={len(songs)}, albums={len(albums)}, merch={len(merch)}, genres={len(all_genres)}, artists={len(all_artists)}")
+    if songs:
+        print(f"Primera canción: {songs[0]}")
+    if albums:
+        print(f"Primer álbum: {albums[0]}")
+    if merch:
+        print(f"Primer merch: {merch[0]}")
+
     # Renderizar la vista shop con todos los datos
     return osv.get_shop_view(request, userdata, songs, all_genres, all_artists, albums, merch)
 
@@ -1320,7 +1328,7 @@ async def process_purchase(request: Request):
 async def get_payment_methods(request: Request):
     """
     Obtiene los métodos de pago del usuario autenticado
-    Proxea la llamada a SYU GET /payment
+    Proxea la llamada a TPP GET /payment
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
@@ -1330,7 +1338,7 @@ async def get_payment_methods(request: Request):
     
     try:
         payment_resp = requests.get(
-            f"{servers.SYU}/payment",
+            f"{servers.TPP}/payment",
             timeout=2,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
@@ -1345,7 +1353,7 @@ async def get_payment_methods(request: Request):
 async def add_payment_method(request: Request):
     """
     Agrega un nuevo método de pago
-    Proxea la llamada a SYU POST /payment
+    Proxea la llamada a TPP POST /payment
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
@@ -1357,7 +1365,7 @@ async def add_payment_method(request: Request):
         body = await request.json()
         
         payment_resp = requests.post(
-            f"{servers.SYU}/payment",
+            f"{servers.TPP}/payment",
             json=body,
             timeout=2,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
@@ -1373,7 +1381,7 @@ async def add_payment_method(request: Request):
 async def delete_payment_method(request: Request, payment_method_id: int):
     """
     Elimina un método de pago existente
-    Proxea la llamada a SYU DELETE /payment/{paymentMethodId}
+    Proxea la llamada a TPP DELETE /payment/{paymentMethodId}
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
@@ -1383,7 +1391,7 @@ async def delete_payment_method(request: Request, payment_method_id: int):
     
     try:
         payment_resp = requests.delete(
-            f"{servers.SYU}/payment/{payment_method_id}",
+            f"{servers.TPP}/payment/{payment_method_id}",
             timeout=2,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )

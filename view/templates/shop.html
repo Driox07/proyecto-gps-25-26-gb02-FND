@@ -32,10 +32,10 @@
                                 </svg>
                             </div>
                             <div class="dropdown-content" id="genre-dropdown-content">
-                                {% if data and data.genres%}
+                                {% if data and data.genres %}
                                 {% for genre in data.genres %}
                                 <label class="dropdown-item">
-                                    <input type="checkbox" class="genre-checkbox" value="{{ genre.id }}" data-name="{{ genre.nombre }}">
+                                    <input type="checkbox" class="genre-checkbox" value="{{ genre.id }}" data-name="{{ genre.name }}">
                                     <span>{{ genre.name }}</span>
                                 </label>
                                 {% endfor %}
@@ -54,10 +54,10 @@
                                 </svg>
                             </div>
                             <div class="dropdown-content" id="artist-dropdown-content">
-                                {% if data %}
+                                {% if data and data.artistas %}
                                 {% for artista in data.artistas %}
                                 <label class="dropdown-item">
-                                    <input type="checkbox" class="artist-checkbox" value="{{ artista.id }}" data-name="{{ artista.nombre }}">
+                                    <input type="checkbox" class="artist-checkbox" value="{{ artista.id }}" data-name="{{ artista.artisticName }}">
                                     <span>{{ artista.artisticName }}</span>
                                 </label>
                                 {% endfor %}
@@ -94,7 +94,7 @@
         </div>
 
         <!-- Contenedor de Productos -->
-        <div class="products-section">
+        <div class="products-container">
             <div id="loading-indicator" class="loading-indicator" style="display: none;">
                 <div class="spinner"></div>
                 <p>Cargando productos...</p>
@@ -109,7 +109,7 @@
                     </div>
                 </div>
                 {% if data and data.songs %}
-                    <div class="products-grid" id="songs-grid" data-total="{{ songs|length }}">
+                    <div class="products-grid" id="songs-grid" data-total="{{ data.songs|length }}">
                         {% for song in data.songs %}
                             <div class="product-card" data-type="song" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
@@ -153,7 +153,7 @@
                     </div>
                 </div>
                 {% if data and data.albums %}
-                    <div class="products-grid" id="albums-grid" data-total="{{ albums|length }}">
+                    <div class="products-grid" id="albums-grid" data-total="{{ data.albums|length }}">
                         {% for album in data.albums %}
                             <div class="product-card" data-type="album" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
@@ -197,7 +197,7 @@
                     </div>
                 </div>
                 {% if data and data.merch %}
-                    <div class="products-grid" id="merch-grid" data-total="{{ merch|length }}">
+                    <div class="products-grid" id="merch-grid" data-total="{{ data.merch|length }}">
                         {% for item in data.merch %}
                             <div class="product-card" data-type="merch" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
