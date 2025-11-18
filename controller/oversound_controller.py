@@ -561,8 +561,8 @@ def get_album(request: Request, albumId: int):
             except requests.RequestException:
                 pass  # Si no se pueden cargar, dejar vacío
         
-        # Ordenar canciones por albumOrder si existe
-        songs = sorted(songs, key=lambda x: x.get('albumOrder', 999))
+        # Ordenar canciones por albumOrder si existe (None se trata como 999 para ordenar al final)
+        songs = sorted(songs, key=lambda x: x.get('albumOrder') if x.get('albumOrder') is not None else 999)
         album_data['songs_data'] = songs
         
         # Resolver álbumes relacionados del mismo artista usando el campo owner_albums del artista
@@ -590,7 +590,10 @@ def get_album(request: Request, albumId: int):
         total_duration = 0
         for song in songs:
             if song.get('duration'):
-                total_duration += song['duration']
+                try:
+                    total_duration += int(song['duration'])
+                except (ValueError, TypeError):
+                    pass  # Si no se puede convertir, ignorar
         
         # Formatear duración total
         minutes = total_duration // 60

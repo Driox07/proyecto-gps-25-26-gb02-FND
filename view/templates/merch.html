@@ -43,7 +43,7 @@
                     
                     <div class="merch-price-large">
                         <span class="price-label">Precio</span>
-                        <span class="price-value" id="merch-price">€{{ "%.2f"|format(data.merch.price) }}</span>
+                        <span class="price-value" id="merch-price">€{{ "%.2f"|format(data.merch.price|float) }}</span>
                     </div>
                     
                     <div class="merch-actions">
@@ -115,7 +115,7 @@
                         </div>
                         <div class="spec-item">
                             <span class="spec-label">Precio</span>
-                            <span class="spec-value price">€{{ "%.2f"|format(data.merch.price) }}</span>
+                            <span class="spec-value price">€{{ "%.2f"|format(data.merch.price|float) }}</span>
                         </div>
                         {% if tipoUsuario == 1 or tipoUsuario == 2 %}
                         <div class="spec-item">
@@ -142,7 +142,7 @@
                             <img src="{{ related_item.cover }}" alt="{{ related_item.title }}" class="related-merch-image">
                             <div class="related-merch-info">
                                 <h3 class="related-merch-name">{{ related_item.title }}</h3>
-                                <p class="related-merch-price">€{{ "%.2f"|format(related_item.price) }}</p>
+                                <p class="related-merch-price">€{{ "%.2f"|format(related_item.price|float) }}</p>
                             </div>
                         </a>
                         {% endfor %}
