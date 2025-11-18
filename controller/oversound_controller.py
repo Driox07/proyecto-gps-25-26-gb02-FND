@@ -251,6 +251,83 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
         return osv.get_error_view(request, userdata, f"No se pudo cargar el perfil del artista: {str(e)}")
 
 
+@app.get("/cart")
+def cart(request: Request):
+    """
+    Ruta del carrito - Renderiza la página del carrito
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    return osv.get_cart_view(request, userdata, servers.SYU)
+
+
+@app.get("/giftcard")
+def giftcard(request: Request):
+    """
+    Ruta para mostrar la página de compra de tarjetas regalo
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_giftcard_view(request, userdata, servers.SYU)
+
+
+@app.post("/giftcard")
+async def purchase_giftcard(request: Request):
+    """
+    Ruta para procesar la compra de una tarjeta regalo
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        body = await request.json()
+        
+        # Validar datos
+        amount = body.get('amount')
+        recipient_email = body.get('recipient_email')
+        message = body.get('message', '')
+        
+        if not amount or not isinstance(amount, (int, float)):
+            return JSONResponse(content={"error": "Monto inválido"}, status_code=400)
+        
+        if amount < 5 or amount > 500:
+            return JSONResponse(content={"error": "El monto debe estar entre €5 y €500"}, status_code=400)
+        
+        if not recipient_email or '@' not in recipient_email:
+            return JSONResponse(content={"error": "Email inválido"}, status_code=400)
+        
+        if len(message) > 200:
+            return JSONResponse(content={"error": "El mensaje es demasiado largo"}, status_code=400)
+        
+        # Generar código único de tarjeta regalo
+        import uuid
+        giftcard_code = str(uuid.uuid4()).upper()[:16]
+        # Formatear como XXXX-XXXX-XXXX-XXXX
+        giftcard_code = '-'.join([giftcard_code[i:i+4] for i in range(0, len(giftcard_code), 4)])
+        
+        # Aquí se podría guardar en la base de datos la tarjeta regalo
+        # Por ahora, simplemente retornar el código generado
+        # En producción, esto debería:
+        # 1. Procesar el pago
+        # 2. Guardar la tarjeta en la base de datos
+        # 3. Enviar email al destinatario
+        
+        return JSONResponse(content={
+            "message": "Tarjeta regalo comprada exitosamente",
+            "code": giftcard_code,
+            "amount": amount,
+            "recipient_email": recipient_email
+        }, status_code=200)
+    
+    except Exception as e:
+        print(e)
+        return JSONResponse(content={"error": "Error al procesar la compra"}, status_code=500)
+
+
 @app.get("/terms")
 def get_terms(request: Request):
     """
@@ -912,10 +989,10 @@ async def remove_artist_from_label(request: Request, labelId: int, artistId: int
         return JSONResponse(content={"error": "Error al eliminar artista"}, status_code=500)
 
 
-@app.get("/api/user/label")
+@app.get("/user/label")
 def get_user_label(request: Request):
     """
-    Ruta API para obtener la discográfica del usuario actual (si existe)
+    Ruta para obtener la discográfica del usuario actual (si existe)
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
@@ -950,10 +1027,10 @@ def get_user_label(request: Request):
         return JSONResponse(content={"error": "Error al obtener discográfica"}, status_code=500)
 
 
-@app.get("/api/artist/{artistId}/label")
+@app.get("/artist/{artistId}/label")
 def get_artist_label(request: Request, artistId: int):
     """
-    Ruta API para obtener la discográfica de un artista específico
+    Ruta para obtener la discográfica de un artista específico
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
@@ -1099,3 +1176,229 @@ def get_user_profile(request: Request, nick: str):
         
     except requests.RequestException as e:
         return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del usuario")
+
+
+# ===================== CART ENDPOINTS =====================
+@app.post("/cart")
+async def add_to_cart(request: Request):
+    """
+    Agrega un producto al carrito del usuario autenticado
+    Proxea la llamada a TPP /cart
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        body = await request.json()
+        # Agregar ID de usuario al body
+        body['userId'] = userdata.get('userId')
+        
+        # Enviar a TPP
+        cart_resp = requests.post(
+            f"{servers.TPP}/cart",
+            json=body,
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        cart_resp.raise_for_status()
+        return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error añadiendo al carrito: {e}")
+        return JSONResponse(content={"error": "No se pudo añadir al carrito"}, status_code=500)
+
+
+@app.delete("/cart/{product_id}")
+async def remove_from_cart(request: Request, product_id: int):
+    """
+    Elimina un producto del carrito del usuario autenticado
+    Proxea la llamada a TPP DELETE /cart/{productId}
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Enviar a TPP
+        cart_resp = requests.delete(
+            f"{servers.TPP}/cart/{product_id}",
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        cart_resp.raise_for_status()
+        return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error eliminando del carrito: {e}")
+        return JSONResponse(content={"error": "No se pudo eliminar del carrito"}, status_code=500)
+
+
+@app.post("/purchase")
+async def process_purchase(request: Request):
+    """
+    Procesa una compra
+    Proxea la llamada a TPP POST /purchase
+    Body esperado: {cartId, paymentMethodId, shippingAddress}
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        body = await request.json()
+        # Agregar ID de usuario al body
+        body['userId'] = userdata.get('userId')
+        
+        # Enviar a TPP
+        purchase_resp = requests.post(
+            f"{servers.TPP}/purchase",
+            json=body,
+            timeout=5,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        purchase_resp.raise_for_status()
+        return JSONResponse(content=purchase_resp.json(), status_code=purchase_resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error procesando compra: {e}")
+        return JSONResponse(content={"error": "No se pudo procesar la compra"}, status_code=500)
+
+
+# ===================== PAYMENT METHODS ENDPOINTS =====================
+@app.get("/payment")
+async def get_payment_methods(request: Request):
+    """
+    Obtiene los métodos de pago del usuario autenticado
+    Proxea la llamada a SYU GET /payment
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        payment_resp = requests.get(
+            f"{servers.SYU}/payment",
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        payment_resp.raise_for_status()
+        return JSONResponse(content=payment_resp.json(), status_code=payment_resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error obteniendo métodos de pago: {e}")
+        return JSONResponse(content={"error": "No se pudo obtener métodos de pago"}, status_code=500)
+
+
+@app.post("/payment")
+async def add_payment_method(request: Request):
+    """
+    Agrega un nuevo método de pago
+    Proxea la llamada a SYU POST /payment
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        body = await request.json()
+        
+        payment_resp = requests.post(
+            f"{servers.SYU}/payment",
+            json=body,
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        payment_resp.raise_for_status()
+        return JSONResponse(content=payment_resp.json(), status_code=payment_resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error añadiendo método de pago: {e}")
+        return JSONResponse(content={"error": "No se pudo añadir el método de pago"}, status_code=500)
+
+
+@app.delete("/payment/{payment_method_id}")
+async def delete_payment_method(request: Request, payment_method_id: int):
+    """
+    Elimina un método de pago existente
+    Proxea la llamada a SYU DELETE /payment/{paymentMethodId}
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        payment_resp = requests.delete(
+            f"{servers.SYU}/payment/{payment_method_id}",
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        payment_resp.raise_for_status()
+        return JSONResponse(content=payment_resp.json(), status_code=payment_resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error eliminando método de pago: {e}")
+        return JSONResponse(content={"error": "No se pudo eliminar el método de pago"}, status_code=500)
+
+
+# ===================== FAVORITES ENDPOINTS =====================
+@app.post("/favs/{content_type}/{content_id}")
+async def add_favorite(request: Request, content_type: str, content_id: int):
+    """
+    Agrega un elemento a favoritos (song, album, artist)
+    Proxea la llamada a SYU POST /favs/{contentType}/{contentId}
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if content_type not in ["songs", "albums", "artists"]:
+        return JSONResponse(content={"error": "Tipo de contenido inválido"}, status_code=400)
+    
+    try:
+        fav_resp = requests.post(
+            f"{servers.SYU}/favs/{content_type}/{content_id}",
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        fav_resp.raise_for_status()
+        return JSONResponse(content=fav_resp.json(), status_code=fav_resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error añadiendo a favoritos: {e}")
+        return JSONResponse(content={"error": "No se pudo añadir a favoritos"}, status_code=500)
+
+
+@app.delete("/favs/{content_type}/{content_id}")
+async def remove_favorite(request: Request, content_type: str, content_id: int):
+    """
+    Elimina un elemento de favoritos
+    Proxea la llamada a SYU DELETE /favs/{contentType}/{contentId}
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if content_type not in ["songs", "albums", "artists"]:
+        return JSONResponse(content={"error": "Tipo de contenido inválido"}, status_code=400)
+    
+    try:
+        fav_resp = requests.delete(
+            f"{servers.SYU}/favs/{content_type}/{content_id}",
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        fav_resp.raise_for_status()
+        return JSONResponse(content=fav_resp.json(), status_code=fav_resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error eliminando de favoritos: {e}")
+        return JSONResponse(content={"error": "No se pudo eliminar de favoritos"}, status_code=500)

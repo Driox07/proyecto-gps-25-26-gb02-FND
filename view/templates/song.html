@@ -31,7 +31,7 @@
                 <div class="song-cover-container">
                     <img id="song-cover" src="{{ data.song.cover }}" alt="Portada de {{ data.song.title }}" class="song-cover">
                     <div class="cover-overlay">
-                        <button class="play-button-large" id="play-button" data-track-id="{{ data.song.songId }}">
+                        <button class="play-button-large" id="play-button" data-track-id="{{ data.song.trackId }}">
                             <svg width="50" height="50" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M8 5v14l11-7z"/>
                             </svg>
@@ -43,7 +43,7 @@
                     <span class="song-label">CANCIÓN</span>
                     <h1 class="song-title" id="song-title">{{ data.song.title }}</h1>
                     <div class="song-artist" id="song-artist">
-                        <a href="/artist/{{ data.song.artist.artistId }}" id="artist-link">{{ data.song.artist.nombre }}</a>
+                        <a href="/artist/{{ data.song.artist.artistId }}" id="artist-link">{{ data.song.artist.artisticName }}</a>
                     </div>
                     
                     <div class="song-meta">
@@ -128,14 +128,14 @@
                     <div class="collaborators-container" id="collaborators-container">
                         {% for collaborator in data.song.collaborators_data %}
                         <a href="/artist/{{ collaborator.artistId }}" class="collaborator-card">
-                            {% if collaborator.imagen %}
-                                <img class="collaborator-avatar" src="{{ collaborator.imagen }}" alt="{{ collaborator.nombre }}">
+                            {% if collaborator.artisticImage %}
+                                <img class="collaborator-avatar" src="{{ collaborator.artisticImage }}" alt="{{ collaborator.artisticName }}">
                             {% else %}
                                 <div class="collaborator-placeholder">
-                                    {{ collaborator.nombre[0]|upper }}
+                                    {{ collaborator.artisticName[0]|upper }}
                                 </div>
                             {% endif %}
-                            <div class="collaborator-name">{{ collaborator.nombre }}</div>
+                            <div class="collaborator-name">{{ collaborator.artisticName }}</div>
                         </a>
                         {% endfor %}
                     </div>
@@ -152,7 +152,7 @@
                             <img class="linked-album-cover" src="{{ linked_album.cover }}" alt="Portada de {{ linked_album.title }}">
                             <div class="linked-album-info">
                                 <h3 class="linked-album-title">{{ linked_album.title }}</h3>
-                                <p class="linked-album-artist">{{ linked_album.artist.nombre }}</p>
+                                <p class="linked-album-artist">{{ linked_album.artist.artisticName }}</p>
                             </div>
                         </a>
                         {% endfor %}
@@ -166,6 +166,7 @@
     </main>
 
     <script src="{{ url_for('static', path='js/config.js') }}"></script>
+    <script src="{{ url_for('static', path='js/favorites.js') }}"></script>
     <script src="{{ url_for('static', path='js/song.js') }}"></script>
 </body>
 </html>

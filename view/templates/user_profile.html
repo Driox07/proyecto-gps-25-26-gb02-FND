@@ -17,17 +17,17 @@
             <div class="profile-header-content">
                 <div class="profile-image-container">
                     {% if user.imagen %}
-                        <img src="{{ user.imagen }}" alt="{{ user.nick }}" class="profile-image">
+                        <img src="{{ user.imagen }}" alt="{{ user.username }}" class="profile-image">
                     {% else %}
                         <div class="profile-image-placeholder">
-                            {{ user.nick[0].upper() }}
+                            {{ user.username[0].upper() }}
                         </div>
                     {% endif %}
                 </div>
                 
                 <div class="profile-info">
-                    <h1 class="profile-nickname">{{ user.nick }}</h1>
-                    <h2 class="profile-fullname">{{ user.nombre }} {{ user.apellido1 }} {{ user.apellido2 }}</h2>
+                    <h1 class="profile-nickname">{{ user.username }}</h1>
+                    <h2 class="profile-fullname">{{ user.firstName }} {{ user.lastName }}</h2>
                     
                     {% if user.biografia %}
                         <p class="profile-bio">{{ user.biografia }}</p>
@@ -43,7 +43,7 @@
                                 <line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line>
                                 <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line>
                             </svg>
-                            <span>Miembro desde {{ user.fecha_registro }}</span>
+                            <span>Miembro desde {{ user.joinDate[:10] }}</span>
                         </div>
                     </div>
                     
@@ -190,8 +190,8 @@
                             {% for cancion in canciones_favoritas %}
                                 <div class="favorite-card">
                                     <div class="card-image">
-                                        {% if cancion.imagen %}
-                                            <img src="{{ cancion.imagen }}" alt="{{ cancion.nombre }}">
+                                        {% if cancion.cover %}
+                                            <img src="{{ cancion.cover }}" alt="{{ cancion.title }}">
                                         {% else %}
                                             <div class="card-image-placeholder">
                                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -208,8 +208,8 @@
                                         </div>
                                     </div>
                                     <div class="card-content">
-                                        <h3 class="card-title">{{ cancion.nombre }}</h3>
-                                        <p class="card-subtitle">{{ cancion.artista if cancion.artista else 'Artista Desconocido' }}</p>
+                                        <h3 class="card-title">{{ cancion.title }}</h3>
+                                        <p class="card-subtitle">{{ cancion.artist.artisticName if cancion.artist else 'Artista Desconocido' }}</p>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -242,8 +242,8 @@
                             {% for album in albumes_favoritos %}
                                 <div class="favorite-card">
                                     <div class="card-image">
-                                        {% if album.imagen %}
-                                            <img src="{{ album.imagen }}" alt="{{ album.nombre }}">
+                                        {% if album.cover %}
+                                            <img src="{{ album.cover }}" alt="{{ album.title }}">
                                         {% else %}
                                             <div class="card-image-placeholder">
                                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -261,8 +261,8 @@
                                         </div>
                                     </div>
                                     <div class="card-content">
-                                        <h3 class="card-title">{{ album.nombre }}</h3>
-                                        <p class="card-subtitle">{{ album.artista if album.artista else 'Artista Desconocido' }}</p>
+                                        <h3 class="card-title">{{ album.title }}</h3>
+                                        <p class="card-subtitle">{{ album.artist.artisticName if album.artist else 'Artista Desconocido' }}</p>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -296,8 +296,8 @@
                             {% for artista in artistas_favoritos %}
                                 <div class="favorite-card artist-card">
                                     <div class="card-image artist-image">
-                                        {% if artista.imagen %}
-                                            <img src="{{ artista.imagen }}" alt="{{ artista.nombre }}">
+                                        {% if artista.artisticImage %}
+                                            <img src="{{ artista.artisticImage }}" alt="{{ artista.artisticName }}">
                                         {% else %}
                                             <div class="card-image-placeholder">
                                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -308,7 +308,7 @@
                                         {% endif %}
                                     </div>
                                     <div class="card-content">
-                                        <h3 class="card-title">{{ artista.nombre }}</h3>
+                                        <h3 class="card-title">{{ artista.artisticName }}</h3>
                                         <p class="card-subtitle">Artista</p>
                                     </div>
                                 </div>

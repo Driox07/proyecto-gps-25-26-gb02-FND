@@ -79,6 +79,72 @@ function loadCart() {
 }
 
 /**
+ * Sincroniza un producto con el backend (POST /cart)
+ */
+async function syncAddToBackend(product) {
+    try {
+        const response = await fetch('/cart', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                productId: product.id,
+                productType: product.type,
+                quantity: product.quantity || 1,
+                price: product.price
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.warn('Error sincronizando con backend:', errorData);
+            // Continuar con localStorage como fallback
+            return false;
+        }
+
+        console.log('Producto sincronizado con backend');
+        return true;
+
+    } catch (error) {
+        console.warn('No se pudo sincronizar con backend, usando localStorage:', error);
+        // Fallback a localStorage solamente
+        return false;
+    }
+}
+
+/**
+ * Sincroniza la eliminación de un producto con el backend (DELETE /cart/{productId})
+ */
+async function syncRemoveFromBackend(productId) {
+    try {
+        const response = await fetch(`/cart/${productId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.warn('Error eliminando del backend:', errorData);
+            return false;
+        }
+
+        console.log('Producto eliminado del backend');
+        return true;
+
+    } catch (error) {
+        console.warn('No se pudo eliminar del backend, usando localStorage:', error);
+        return false;
+    }
+}
+
+/**
  * Actualiza la visualización del carrito
  */
 function updateCartDisplay() {
@@ -244,7 +310,14 @@ function closeDeleteModal() {
 function confirmDeleteProduct() {
     const index = window.deleteItemIndex;
     if (index !== null && window.currentCart[index]) {
-        const productName = window.currentCart[index].name;
+        const product = window.currentCart[index];
+        const productName = product.name;
+        const productId = product.id;
+        
+        // Eliminar del backend
+        syncRemoveFromBackend(productId);
+        
+        // Eliminar del carrito local
         window.currentCart.splice(index, 1);
         saveCart();
         updateCartDisplay();
@@ -318,34 +391,57 @@ async function handleCheckout() {
 }
 
 /**
- * Procesa el pago (simulado, puede integrarse con una pasarela de pago real)
+ * Procesa el pago enviando la compra al backend
  */
 async function processPay() {
     try {
-        // Simular procesamiento de pago
         showNotification('Procesando pago...');
 
-        // Aquí se puede hacer una llamada a la API para procesar el pago
-        // const response = await fetch('/api/checkout', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({
-        //         cart: window.currentCart,
-        //         shipping: JSON.parse(localStorage.getItem('oversound_shipping'))
-        //     })
-        // });
+        // Obtener método de pago seleccionado
+        const paymentMethodId = document.getElementById('payment-method-select')?.value;
+        if (!paymentMethodId) {
+            showNotification('Por favor selecciona un método de pago');
+            return;
+        }
 
-        // Simular éxito
+        const shippingInfo = JSON.parse(localStorage.getItem('oversound_shipping'));
+        
+        // Realizar la compra mediante POST /purchase
+        const response = await fetch('/purchase', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                cartItems: window.currentCart,
+                paymentMethodId: paymentMethodId,
+                shippingAddress: shippingInfo
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al procesar la compra');
+        }
+
+        const purchaseData = await response.json();
+        
+        // Limpiar localStorage después de compra exitosa
+        localStorage.removeItem('oversound_cart');
+        localStorage.removeItem('oversound_shipping');
+        
+        showNotification('¡Compra realizada con éxito!');
+        
+        // Redirigir a la página principal después de 2 segundos
         setTimeout(() => {
-            localStorage.removeItem('oversound_cart');
-            localStorage.removeItem('oversound_shipping');
             window.location.href = '/';
-            showNotification('¡Compra realizada con éxito!');
         }, 2000);
 
     } catch (error) {
         console.error('Error en el pago:', error);
-        showNotification('Error al procesar el pago');
+        showNotification(`Error: ${error.message}`);
     }
 }
 
@@ -389,7 +485,7 @@ function saveCart() {
  */
 async function checkAuthenticationStatus() {
     try {
-        const response = await fetch('/api/user/payment-methods', {
+        const response = await fetch('/payment', {
             method: 'GET',
             credentials: 'include',
             headers: {

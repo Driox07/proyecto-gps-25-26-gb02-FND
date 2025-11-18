@@ -145,31 +145,83 @@ function setupButtonListeners() {
     // Add to cart button
     const addToCartButton = document.getElementById('add-to-cart-button');
     if (addToCartButton) {
-        addToCartButton.addEventListener('click', () => {
+        addToCartButton.addEventListener('click', async () => {
+            const songId = getTrackId();
             const songTitle = document.getElementById('song-title').textContent;
-            console.log('Adding to cart:', songTitle);
-            alert(`Añadido al carrito: ${songTitle}`);
-            // TODO: Implement add to cart functionality
+            const songPrice = document.getElementById('song-price').textContent;
+            const artistName = document.querySelector('.artist-link')?.textContent || 'Artista desconocido';
+            const songCover = document.querySelector('.song-cover')?.src || 'https://via.placeholder.com/120?text=Sin+Imagen';
+            
+            if (!songId) {
+                alert('ID de canción no disponible');
+                return;
+            }
+
+            try {
+                // Agregar a carrito local
+                const cartItem = {
+                    id: songId,
+                    name: songTitle,
+                    artist: artistName,
+                    price: songPrice,
+                    type: 'cancion',
+                    image: songCover,
+                    quantity: 1
+                };
+
+                let cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
+                const existingItem = cart.find(item => item.id === songId);
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push(cartItem);
+                }
+
+                localStorage.setItem('oversound_cart', JSON.stringify(cart));
+                
+                // Intentar sincronizar con backend si el usuario está autenticado
+                try {
+                    await fetch('/cart', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            productId: songId,
+                            productType: 'cancion',
+                            quantity: 1,
+                            price: songPrice
+                        })
+                    });
+                } catch (error) {
+                    console.warn('No se pudo sincronizar con backend, usando localStorage:', error);
+                }
+
+                // Emitir evento para actualizar el header
+                window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
+                
+                alert(`${songTitle} añadido al carrito`);
+                
+            } catch (error) {
+                console.error('Error al añadir al carrito:', error);
+                alert('Error al añadir el producto al carrito');
+            }
         });
     }
 
     // Favorite button
     const favoriteButton = document.getElementById('favorite-button');
     if (favoriteButton) {
-        let isFavorite = false;
         favoriteButton.addEventListener('click', () => {
-            const songTitle = document.getElementById('song-title').textContent;
-            isFavorite = !isFavorite;
-            const path = favoriteButton.querySelector('path');
-            
-            if (isFavorite) {
-                path.setAttribute('fill', 'currentColor');
-                alert(`${songTitle} añadido a favoritos`);
-            } else {
-                path.setAttribute('fill', 'none');
-                alert(`${songTitle} eliminado de favoritos`);
+            const songId = getTrackId();
+            if (!songId) {
+                alert('ID de canción no disponible');
+                return;
             }
-            // TODO: Implement favorite functionality with backend
+            toggleFavoriteSong(songId, favoriteButton);
         });
     }
 }
