@@ -291,6 +291,14 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
             print(f"Error obteniendo merchandising: {e}")
             merch = []
 
+    print(f"Shop view: songs={len(songs)}, albums={len(albums)}, merch={len(merch)}, genres={len(all_genres)}, artists={len(all_artists)}")
+    if songs:
+        print(f"Primera canción: {songs[0]}")
+    if albums:
+        print(f"Primer álbum: {albums[0]}")
+    if merch:
+        print(f"Primer merch: {merch[0]}")
+
     # Renderizar la vista shop con todos los datos
     return osv.get_shop_view(request, userdata, songs, all_genres, all_artists, albums, merch)
 

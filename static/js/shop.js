@@ -16,6 +16,86 @@ document.addEventListener('DOMContentLoaded', () => {
     restoreScrollPosition();
 });
 
+// ============ PAGINATION ============
+function initPagination() {
+    // Inicializar paginación para cada sección
+    ['songs', 'albums', 'merch'].forEach(section => {
+        updatePagination(section);
+    });
+}
+
+function updatePagination(section) {
+    const grid = document.getElementById(`${section}-grid`);
+    if (!grid) return;
+
+    const cards = Array.from(grid.querySelectorAll('.product-card'));
+    const state = paginationState[section];
+    const totalPages = Math.ceil(cards.length / state.itemsPerPage);
+
+    // Ocultar todas las cards primero
+    cards.forEach(card => card.classList.remove('visible'));
+
+    // Mostrar solo las cards de la página actual
+    const start = (state.currentPage - 1) * state.itemsPerPage;
+    const end = start + state.itemsPerPage;
+    cards.slice(start, end).forEach(card => card.classList.add('visible'));
+
+    // Actualizar info de página
+    const pageInfo = document.getElementById(`${section}-page-info`);
+    if (pageInfo && cards.length > 0) {
+        pageInfo.textContent = `Página ${state.currentPage} de ${totalPages}`;
+    }
+
+    // Crear botones de paginación
+    const paginationContainer = document.getElementById(`${section}-pagination`);
+    if (paginationContainer && totalPages > 1) {
+        paginationContainer.innerHTML = '';
+        
+        // Botón anterior
+        if (state.currentPage > 1) {
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'pagination-btn';
+            prevBtn.textContent = '← Anterior';
+            prevBtn.onclick = () => {
+                state.currentPage--;
+                updatePagination(section);
+            };
+            paginationContainer.appendChild(prevBtn);
+        }
+
+        // Botones de página
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= state.currentPage - 1 && i <= state.currentPage + 1)) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `pagination-btn ${i === state.currentPage ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => {
+                    state.currentPage = i;
+                    updatePagination(section);
+                };
+                paginationContainer.appendChild(pageBtn);
+            } else if (i === state.currentPage - 2 || i === state.currentPage + 2) {
+                const dots = document.createElement('span');
+                dots.className = 'pagination-dots';
+                dots.textContent = '...';
+                paginationContainer.appendChild(dots);
+            }
+        }
+
+        // Botón siguiente
+        if (state.currentPage < totalPages) {
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'pagination-btn';
+            nextBtn.textContent = 'Siguiente →';
+            nextBtn.onclick = () => {
+                state.currentPage++;
+                updatePagination(section);
+            };
+            paginationContainer.appendChild(nextBtn);
+        }
+    }
+}
+
 // ============ CUSTOM DROPDOWNS ============
 function initCustomDropdowns() {
     // Dropdown de géneros
