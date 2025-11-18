@@ -165,7 +165,7 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
 
     # Obtener géneros disponibles
     try:
-        genres_resp = requests.get(f"{servers.TYA}/genres", timeout=5, headers={"Accept": "application/json"})
+        genres_resp = requests.get(f"{servers.TYA}/genres", timeout=15, headers={"Accept": "application/json"})
         genres_resp.raise_for_status()
         all_genres = genres_resp.json()
     except requests.RequestException as e:
@@ -174,7 +174,7 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
     
     # Obtener los artistas (ID's)
     try:
-        artist_ids_resp = requests.get(f"{servers.TYA}/artist/filter", timeout=5, headers={"Accept": "application/json"})
+        artist_ids_resp = requests.get(f"{servers.TYA}/artist/filter", timeout=15, headers={"Accept": "application/json"})
         artist_ids_resp.raise_for_status()
         artist_ids = artist_ids_resp.json()
     except requests.RequestException as e:
@@ -189,7 +189,7 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
             artists_resp = requests.get(
                 f"{servers.TYA}/artist/list",
                 params={"ids": ids_str},
-                timeout=5,
+                timeout=15,
                 headers={"Accept": "application/json"}
             )
             artists_resp.raise_for_status()
@@ -203,7 +203,7 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
         song_filter_resp = requests.get(
             f"{servers.TYA}/song/filter",
             params=filter_params,
-            timeout=5,
+            timeout=15,
             headers={"Accept": "application/json"}
         )
         song_filter_resp.raise_for_status()
@@ -220,7 +220,7 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
             songs_resp = requests.get(
                 f"{servers.TYA}/song/list",
                 params={"ids": ids_str},
-                timeout=5,
+                timeout=15,
                 headers={"Accept": "application/json"}
             )
             songs_resp.raise_for_status()
@@ -234,7 +234,7 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
         album_filter_resp = requests.get(
             f"{servers.TYA}/album/filter",
             params=filter_params,
-            timeout=5,
+            timeout=15,
             headers={"Accept": "application/json"}
         )
         album_filter_resp.raise_for_status()
@@ -251,7 +251,7 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
             albums_resp = requests.get(
                 f"{servers.TYA}/album/list",
                 params={"ids": ids_str},
-                timeout=5,
+                timeout=15,
                 headers={"Accept": "application/json"}
             )
             albums_resp.raise_for_status()
@@ -265,13 +265,34 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
         merch_filter_resp = requests.get(
             f"{servers.TYA}/merch/filter",
             params=filter_params,
-            timeout=5,
+            timeout=15,
             headers={"Accept": "application/json"}
         )
         merch_filter_resp.raise_for_status()
         merch_ids = merch_filter_resp.json()
     except requests.RequestException as e:
-        return osv.get_error_view(request, userdata, f"No se pudo cargar el perfil del artista: {str(e)}")
+        print(f"Error filtrando merchandising: {e}")
+        merch_ids = []
+
+    # Resolver ID's del merchandising
+    merch = []
+    if merch_ids:
+        try:
+            ids_str = ",".join(map(str, merch_ids))
+            merch_resp = requests.get(
+                f"{servers.TYA}/merch/list",
+                params={"ids": ids_str},
+                timeout=15,
+                headers={"Accept": "application/json"}
+            )
+            merch_resp.raise_for_status()
+            merch = merch_resp.json()
+        except requests.RequestException as e:
+            print(f"Error obteniendo merchandising: {e}")
+            merch = []
+
+    # Renderizar la vista shop con todos los datos
+    return osv.get_shop_view(request, userdata, songs, all_genres, all_artists, albums, merch)
 
 
 @app.get("/cart")

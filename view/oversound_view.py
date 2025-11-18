@@ -40,19 +40,6 @@ class View():
         data = {"userdata": userdata, "songs": songs, "genres": genres, "artistas": artistas, "albums": albums, "merch": merch}
         return templates.TemplateResponse("shop.html", {"request": request, "data": data})
 
-
-
-
-
-
-
-
-
-
-    # Esta función se va a usar para renderizar la template shop.html
-    def get_shop_view(self, request: Request, songs, genres, artistas, albums, tipoUsuario: bool, userdata: dict = None, syu_server: str = None): 
-        data = {"userdata": userdata, "syu_server": syu_server}
-        return templates.TemplateResponse("shop.html", {"request" :request, "data": data, "songs" : songs, "genres": genres, "artistas": artistas, "albums": albums, "tipoUsuario": tipoUsuario})
     # Esta función se va a usar para renderizar la template songs.html
     def get_upload_song_view(self, request: Request):
         return templates.TemplateResponse("music/upload-song.html", {"request": request})
