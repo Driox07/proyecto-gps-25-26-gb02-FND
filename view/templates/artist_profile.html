@@ -147,9 +147,20 @@
                 <div class="tab-content active" id="canciones-tab">
                     <div class="content-header">
                         <h2>Canciones</h2>
-                        {% if artist.owner_songs %}
-                            <span class="content-count">{{ artist.owner_songs|length }}</span>
-                        {% endif %}
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            {% if artist.owner_songs %}
+                                <span class="content-count">{{ artist.owner_songs|length }}</span>
+                            {% endif %}
+                            {% if is_own_profile %}
+                                <a href="/upload-song" class="btn-upload">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <line x1="12" y1="5" x2="12" y2="19" stroke-width="2"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12" stroke-width="2"></line>
+                                    </svg>
+                                    Subir Canción
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
                     
                     <div class="songs-grid">
@@ -207,9 +218,20 @@
                 <div class="tab-content" id="albumes-tab">
                     <div class="content-header">
                         <h2>Álbumes</h2>
-                        {% if artist.owner_albums %}
-                            <span class="content-count">{{ artist.owner_albums|length }}</span>
-                        {% endif %}
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            {% if artist.owner_albums %}
+                                <span class="content-count">{{ artist.owner_albums|length }}</span>
+                            {% endif %}
+                            {% if is_own_profile %}
+                                <a href="/upload-album" class="btn-upload">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <line x1="12" y1="5" x2="12" y2="19" stroke-width="2"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12" stroke-width="2"></line>
+                                    </svg>
+                                    Crear Álbum
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
                     
                     <div class="albums-grid">
@@ -269,9 +291,20 @@
                 <div class="tab-content" id="merchandise-tab">
                     <div class="content-header">
                         <h2>Merchandise</h2>
-                        {% if artist.owner_merch %}
-                            <span class="content-count">{{ artist.owner_merch|length }}</span>
-                        {% endif %}
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            {% if artist.owner_merch %}
+                                <span class="content-count">{{ artist.owner_merch|length }}</span>
+                            {% endif %}
+                            {% if is_own_profile %}
+                                <a href="/upload-merch" class="btn-upload">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <line x1="12" y1="5" x2="12" y2="19" stroke-width="2"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12" stroke-width="2"></line>
+                                    </svg>
+                                    Subir Merch
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
                     
                     <div class="merch-grid">

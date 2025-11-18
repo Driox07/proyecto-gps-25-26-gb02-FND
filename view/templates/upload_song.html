@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Canción - OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/upload_song.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="main-content">
+        <div class="container">
+            <div class="upload-header">
+                <h2>Subir Nueva Canción</h2>
+                <p>Comparte tu música con el mundo</p>
+            </div>
+
+            <div id="message" class="message" style="display:none;"></div>
+
+            <form id="upload-song-form" enctype="multipart/form-data">
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="title">Título de la canción *</label>
+                        <input type="text" id="title" name="title" required placeholder="Ej: Mi Nueva Canción">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="duration">Duración (segundos) *</label>
+                        <input type="number" id="duration" name="duration" required min="1" placeholder="180">
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Precio (€) *</label>
+                        <input type="number" id="price" name="price" step="0.01" required min="0" placeholder="0.99">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="description">Descripción</label>
+                        <textarea id="description" name="description" rows="4" placeholder="Describe tu canción..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="genres">Géneros</label>
+                        <input type="text" id="genres" name="genres" placeholder="Ej: 1,2,3 (IDs de géneros separados por comas)">
+                        <small>Puedes consultar los IDs de géneros en la tienda</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="collaborators">Colaboradores</label>
+                        <input type="text" id="collaborators" name="collaborators" placeholder="Ej: 5,12,8 (IDs de artistas separados por comas)">
+                        <small>IDs de otros artistas que colaboraron en esta canción</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cover">Portada (URL)</label>
+                        <input type="url" id="cover" name="cover" placeholder="https://ejemplo.com/cover.jpg">
+                    </div>
+                    <div class="form-group">
+                        <label for="audioUrl">URL del Audio *</label>
+                        <input type="url" id="audioUrl" name="audioUrl" required placeholder="https://ejemplo.com/audio.mp3">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="releaseDate">Fecha de lanzamiento</label>
+                        <input type="date" id="releaseDate" name="releaseDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="albumId">Álbum (opcional)</label>
+                        <input type="number" id="albumId" name="albumId" placeholder="ID del álbum">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="/artist/studio" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" id="upload-btn" class="btn btn-primary">Subir Canción</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', path='js/upload_song.js') }}"></script>
+</body>
+</html>

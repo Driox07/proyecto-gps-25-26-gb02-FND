@@ -30,6 +30,21 @@ class View():
         data = {"userdata": userdata, "fnd_server": fnd_server}
         return templates.TemplateResponse("forgot_password.html", {"request": request, "data": data})
     
+    # Renderizar la template de subir canción
+    def get_upload_song_view(self, request: Request, userdata: dict):
+        data = {"userdata": userdata}
+        return templates.TemplateResponse("upload_song.html", {"request": request, "data": data})
+    
+    # Renderizar la template de subir álbum
+    def get_upload_album_view(self, request: Request, userdata: dict):
+        data = {"userdata": userdata}
+        return templates.TemplateResponse("upload_album.html", {"request": request, "data": data})
+    
+    # Renderizar la template de subir merchandising
+    def get_upload_merch_view(self, request: Request, userdata: dict):
+        data = {"userdata": userdata}
+        return templates.TemplateResponse("upload_merch.html", {"request": request, "data": data})
+    
     # Renderizar la template de error
     def get_error_view(self, request: Request, userdata: dict, error_message: str):
         data = {"userdata": userdata, "error_message": error_message}

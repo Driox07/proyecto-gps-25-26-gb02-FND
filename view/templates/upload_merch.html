@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Merchandising - OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/upload_merch.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="main-content">
+        <div class="container">
+            <div class="upload-header">
+                <h2>Subir Merchandising</h2>
+                <p>Ofrece productos exclusivos a tus fans</p>
+            </div>
+
+            <div id="message" class="message" style="display:none;"></div>
+
+            <form id="upload-merch-form" enctype="multipart/form-data">
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="title">Título del producto *</label>
+                        <input type="text" id="title" name="title" required placeholder="Ej: Camiseta Tour 2024">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="price">Precio (€) *</label>
+                        <input type="number" id="price" name="price" step="0.01" required min="0.01" placeholder="29.99">
+                    </div>
+                    <div class="form-group">
+                        <label for="releaseDate">Fecha de lanzamiento</label>
+                        <input type="date" id="releaseDate" name="releaseDate">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="description">Descripción *</label>
+                        <textarea id="description" name="description" rows="4" required placeholder="Describe el producto..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="cover">Imagen del producto (URL) *</label>
+                        <input type="url" id="cover" name="cover" required placeholder="https://ejemplo.com/producto.jpg">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="collaborators">Colaboradores</label>
+                        <input type="text" id="collaborators" name="collaborators" placeholder="Ej: 5,12,8 (IDs de artistas separados por comas)">
+                        <small>IDs de otros artistas que colaboraron en este merchandising</small>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="/artist/studio" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" id="upload-btn" class="btn btn-primary">Subir Merchandising</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', path='js/upload_merch.js') }}"></script>
+</body>
+</html>
