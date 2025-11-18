@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Si el login es exitoso, redirigir a la página principal
             if (res.ok) {
-                alert('¡Inicio de sesión exitoso!');
                 window.location.href = '/';
             } else {
                 // Mostrar error si el login falla

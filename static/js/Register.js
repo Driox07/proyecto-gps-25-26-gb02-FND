@@ -23,8 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const json = await res.json();
-            console.log('Respuesta del servidor:', json);
-            alert('Respuesta del servidor: ' + JSON.stringify(json));
+            if(res.ok()){
+                window.location.href = '/';
+            }else{
+                alert('Error durante el registro: ' + json.message)
+            }
         } catch (err) {
             console.error('Error enviando datos:', err);
             alert('Error al enviar datos: ' + (err.message || err));
