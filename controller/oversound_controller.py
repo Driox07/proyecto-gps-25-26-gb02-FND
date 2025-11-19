@@ -667,18 +667,6 @@ def get_album(request: Request, albumId: int):
         # En caso de error, mostrar página de error
         return osv.get_error_view(request, userdata, f"No se pudo cargar el álbum")
 
-@app.exception_handler(500)
-def internal_server_error_handler(request: Request, exc: Exception):
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    return osv.get_error_view(request, userdata, "Algo ha salido mal")
-
-@app.exception_handler(422)
-def unproc_content_error_handler(request: Request, exce: Exception):
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    return osv.get_error_view(request, userdata, "Te has columpiado")
-
 @app.get("/merch/{merchId}")
 def get_merch(request: Request, merchId: int):
     """
@@ -1717,8 +1705,22 @@ async def upload_merch(request: Request):
         return JSONResponse(content={"error": "Error al subir el merchandising"}, status_code=500)
 
 
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     return osv.get_error_view(request, userdata, "Te has columpiado con la URL")
+
+@app.exception_handler(500)
+def internal_server_error_handler(request: Request, exc: Exception):
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_error_view(request, userdata, "Algo ha salido mal")
+
+@app.exception_handler(422)
+def unproc_content_error_handler(request: Request, exce: Exception):
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    return osv.get_error_view(request, userdata, "Te has columpiado")

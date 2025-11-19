@@ -4,12 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         const payload = {
-            nick: form.nick.value.trim(),
-            nombre: form.nombre.value.trim(),
-            apellido1: form.apellido1.value.trim(),
-            apellido2: form.apellido2.value.trim(),
+            username: form.username.value.trim(),
+            name: form.name.value.trim(),
+            firstLastName: form.firstLastName.value.trim(),
+            secondLastName: form.secondLastName.value.trim(),
             email: form.email.value.trim(),
-            contrasena: form.contrasena.value
+            password: form.password.value
         };
 
         try {
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const json = await res.json();
-            if(res.ok()){
+            if(res.ok){
                 window.location.href = '/';
             }else{
                 alert('Error durante el registro: ' + json.message)
