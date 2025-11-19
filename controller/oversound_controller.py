@@ -440,10 +440,10 @@ def get_help(request: Request):
     return osv.get_help_view(request, userdata, servers.SYU)
 
 
-@app.get("/user/{nick}")
-def register(request: Request, nick: str):
+@app.get("/user/{username}")
+def register(request: Request, username: str):
     token = request.cookies.get("session")
-    userdata = requests.get(f"{servers.SYU}/user/{nick}", timeout=2, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+    userdata = requests.get(f"{servers.SYU}/user/{username}", timeout=2, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
     userdata.raise_for_status()
     return userdata.json()
 
@@ -1167,8 +1167,8 @@ def get_profile(request: Request):
         return osv.get_error_view(request, userdata, "No se pudo cargar el perfil")
 
 
-@app.get("/profile/{nick}")
-def get_user_profile(request: Request, nick: str):
+@app.get("/profile/{username}")
+def get_user_profile(request: Request, username: str):
     """
     Ruta para mostrar el perfil público de otro usuario
     """
@@ -1178,7 +1178,7 @@ def get_user_profile(request: Request, nick: str):
     try:
         # Obtener información del usuario
         user_resp = requests.get(
-            f"{servers.SYU}/user/{nick}",
+            f"{servers.SYU}/user/{username}",
             timeout=2,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
@@ -1186,7 +1186,7 @@ def get_user_profile(request: Request, nick: str):
         user_data = user_resp.json()
         
         # Determinar si es el perfil del usuario autenticado
-        is_own_profile = userdata and userdata.get('nick') == nick
+        is_own_profile = userdata and userdata.get('username') == username
         
         # Si es perfil propio, obtener métodos de pago
         payment_methods = []
