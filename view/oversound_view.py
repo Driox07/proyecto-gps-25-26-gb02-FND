@@ -62,9 +62,9 @@ class View():
     def get_songs_view(self, request: Request, songs):
         return templates.TemplateResponse("main/index.html", {"request" :request, "songs" : songs})
     
-    def get_song_view(self, request: Request, song_info : dict, tipoUsuario: int, user, isLiked: bool, inCarrito: bool, syu_server: str = None):
+    def get_song_view(self, request: Request, song_info : dict, tipoUsuario: int, user : dict, isLiked: bool, inCarrito: bool, syu_server: str = None):
         data = {"userdata": user, "syu_server": syu_server, "song": song_info}
-        return templates.TemplateResponse("song.html", {"request": request, "data": data, "tipoUsuario": tipoUsuario, "isLiked": isLiked, "inCarrito": inCarrito})
+        return templates.TemplateResponse("song.html", {"request": request, "data": data, "tipoUsuario": tipoUsuario, "user": user, "isLiked": isLiked, "inCarrito": inCarrito})
 
     def get_edit_song_view(self, request: Request, song_info):
         return templates.TemplateResponse("music/song-edit.html", {"request": request, "song": song_info})    
