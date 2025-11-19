@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ user.nick }} - Perfil | OverSound</title>
+    <title>{{ user.username }} - Perfil | OverSound</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles/user_profile.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
 </head>
@@ -27,7 +27,7 @@
                 
                 <div class="profile-info">
                     <h1 class="profile-nickname">{{ user.username }}</h1>
-                    <h2 class="profile-fullname">{{ user.firstName }} {{ user.lastName }}</h2>
+                    <h2 class="profile-fullname">{{ user.name }} {{ user.firstLastName }} {{ user.secondLastName }}</h2>
                     
                     {% if user.biografia %}
                         <p class="profile-bio">{{ user.biografia }}</p>
