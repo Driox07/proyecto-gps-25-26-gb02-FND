@@ -1449,9 +1449,27 @@ async def create_artist(request: Request):
         
         if artist_resp.ok:
             artist_data = artist_resp.json()
+            artist_id = artist_data.get('artistId')
+            
+            # Actualizar el usuario en SYU con el relatedArtist
+            try:
+                user_update_resp = requests.patch(
+                    f"{servers.SYU}/user/{userdata.get('username')}",
+                    json={"relatedArtist": artist_id},
+                    timeout=5,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                
+                if not user_update_resp.ok:
+                    print(f"Advertencia: No se pudo actualizar el usuario con relatedArtist. Status: {user_update_resp.status_code}")
+                    # No fallar la operación, el artista ya fue creado
+            except requests.RequestException as e:
+                print(f"Advertencia: Error al actualizar usuario con relatedArtist: {e}")
+                # No fallar la operación, el artista ya fue creado
+            
             return JSONResponse(content={
                 "message": "Perfil de artista creado exitosamente",
-                "artistId": artist_data.get('artistId')
+                "artistId": artist_id
             })
         else:
             error_data = artist_resp.json() if artist_resp.text else {"error": "Error desconocido"}
