@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ user.nick }} - Perfil | OverSound</title>
+    <title>{{ user.username }} - Perfil | OverSound</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles/user_profile.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
 </head>
@@ -27,7 +27,7 @@
                 
                 <div class="profile-info">
                     <h1 class="profile-nickname">{{ user.username }}</h1>
-                    <h2 class="profile-fullname">{{ user.firstName }} {{ user.lastName }}</h2>
+                    <h2 class="profile-fullname">{{ user.name }} {{ user.firstLastName }} {{ user.secondLastName }}</h2>
                     
                     {% if user.biografia %}
                         <p class="profile-bio">{{ user.biografia }}</p>
@@ -43,7 +43,7 @@
                                 <line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line>
                                 <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line>
                             </svg>
-                            <span>Miembro desde {{ user.joinDate[:10] }}</span>
+                            <span>Miembro desde {{ user.regDate }}</span>
                         </div>
                     </div>
                     
@@ -160,10 +160,15 @@
                 </div>
                 
                 <div class="label-content" id="label-content">
-                    <!-- Contenido cargado dinámicamente -->
-                    <div class="loading-spinner">
-                        <div class="spinner"></div>
-                        <p>Cargando información...</p>
+                    <div class="no-label">
+                        <div class="empty-state">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke-width="2"></rect>
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" stroke-width="2"></path>
+                            </svg>
+                            <h3>Aún no tienes una discográfica</h3>
+                            <p>La funcionalidad de discográficas no está disponible actualmente.</p>
+                        </div>
                     </div>
                 </div>
             </div>

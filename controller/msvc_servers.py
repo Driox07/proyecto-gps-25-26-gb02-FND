@@ -6,9 +6,9 @@ TAMBIÉN ES IMPORTANTE ACCEDER A CADA SERVICIO DESDE LA MISMA IP QUE AQUÍ FIGUR
 PARA ASEGURAR EL CORRECTO FUNCIONAMIENTO DE LAS COOKIES DEL SITIO.
 """
 
-FND = 'http://10.1.1.4:8000'
-SYU = 'http://10.1.1.4:8080'
-TYA = 'http://10.1.1.4:8081'
-TPP = 'http://10.1.1.4:8082'
-PT  = 'http://10.1.1.2:8083'
-RYE = 'http://10.1.1.2:8084'
+FND = 'http://localhost:8000'
+SYU = 'http://localhost:8080'
+TYA = 'http://localhost:8081'
+TPP = 'http://localhost:8082'
+PT  = 'http://localhost:8083'
+RYE = 'http://localhost:8084'

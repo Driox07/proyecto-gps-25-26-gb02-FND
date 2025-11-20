@@ -440,10 +440,10 @@ def get_help(request: Request):
     return osv.get_help_view(request, userdata, servers.SYU)
 
 
-@app.get("/user/{nick}")
-def register(request: Request, nick: str):
+@app.get("/user/{username}")
+def register(request: Request, username: str):
     token = request.cookies.get("session")
-    userdata = requests.get(f"{servers.SYU}/user/{nick}", timeout=2, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+    userdata = requests.get(f"{servers.SYU}/user/{username}", timeout=2, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
     userdata.raise_for_status()
     return userdata.json()
 
@@ -1036,6 +1036,8 @@ async def remove_artist_from_label(request: Request, labelId: int, artistId: int
 def get_user_label(request: Request):
     """
     Ruta para obtener la discográfica del usuario actual (si existe)
+    DEPRECADO: La funcionalidad de discográficas está en proceso de descontinuación.
+    Siempre devuelve que no hay discográfica sin consultar el backend.
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
@@ -1043,80 +1045,30 @@ def get_user_label(request: Request):
     if not userdata:
         return JSONResponse(content={"error": "No autenticado"}, status_code=401)
     
-    try:
-        # Obtener la discográfica del usuario (por userId)
-        label_resp = requests.get(
-            f"{servers.TYA}/user/{userdata.get('userId')}/label",
-            timeout=2,
-            headers={"Accept": "application/json"}
-        )
-        
-        if label_resp.ok:
-            label_data = label_resp.json()
-            return JSONResponse(content={
-                "has_label": True,
-                "label": label_data
-            })
-        elif label_resp.status_code == 404:
-            return JSONResponse(content={"has_label": False}, status_code=200)
-        else:
-            return JSONResponse(
-                content={"error": "Error al obtener discográfica"},
-                status_code=label_resp.status_code
-            )
-    
-    except Exception as e:
-        print(e)
-        return JSONResponse(content={"error": "Error al obtener discográfica"}, status_code=500)
+    # Siempre devolver que no hay discográfica (funcionalidad descontinuada)
+    return JSONResponse(content={"has_label": False}, status_code=200)
 
 
 @app.get("/artist/{artistId}/label")
 def get_artist_label(request: Request, artistId: int):
     """
     Ruta para obtener la discográfica de un artista específico
+    DEPRECADO: La funcionalidad de discográficas está en proceso de descontinuación.
+    Siempre devuelve que no hay discográfica sin consultar el backend.
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     
-    try:
-        # Obtener la discográfica del artista
-        label_resp = requests.get(
-            f"{servers.TYA}/artist/{artistId}/label",
-            timeout=2,
-            headers={"Accept": "application/json"}
-        )
-        
-        if label_resp.ok:
-            label_data = label_resp.json()
-            
-            # Determinar si el usuario actual es propietario
-            is_owner = False
-            if userdata:
-                is_owner = label_data.get('ownerId') == userdata.get('userId')
-            
-            return JSONResponse(content={
-                "label": label_data,
-                "is_owner": is_owner
-            })
-        elif label_resp.status_code == 404:
-            # Artista sin discográfica - determinar si es el propietario
-            is_owner = False
-            if userdata:
-                is_owner = userdata.get('artistId') == artistId
-            
-            return JSONResponse(content={
-                "label": None,
-                "is_owner": is_owner
-            })
-        else:
-            return JSONResponse(
-                content={"error": "Error al obtener discográfica"},
-                status_code=label_resp.status_code
-            )
+    # Determinar si es el propietario (para mantener compatibilidad)
+    is_owner = False
+    if userdata:
+        is_owner = userdata.get('artistId') == artistId
     
-    except Exception as e:
-        print(e)
-        return JSONResponse(content={"error": "Error al obtener discográfica"}, status_code=500)
+    # Siempre devolver que no hay discográfica (funcionalidad descontinuada)
+    return JSONResponse(content={
+        "label": None,
+        "is_owner": is_owner
+    })
 
 
 # ==================== USER PROFILE ROUTES ====================
@@ -1167,8 +1119,8 @@ def get_profile(request: Request):
         return osv.get_error_view(request, userdata, "No se pudo cargar el perfil")
 
 
-@app.get("/profile/{nick}")
-def get_user_profile(request: Request, nick: str):
+@app.get("/profile/{username}")
+def get_user_profile(request: Request, username: str):
     """
     Ruta para mostrar el perfil público de otro usuario
     """
@@ -1178,7 +1130,7 @@ def get_user_profile(request: Request, nick: str):
     try:
         # Obtener información del usuario
         user_resp = requests.get(
-            f"{servers.SYU}/user/{nick}",
+            f"{servers.SYU}/user/{username}",
             timeout=2,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
@@ -1186,7 +1138,7 @@ def get_user_profile(request: Request, nick: str):
         user_data = user_resp.json()
         
         # Determinar si es el perfil del usuario autenticado
-        is_own_profile = userdata and userdata.get('nick') == nick
+        is_own_profile = userdata and userdata.get('username') == username
         
         # Si es perfil propio, obtener métodos de pago
         payment_methods = []
