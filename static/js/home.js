@@ -1,3 +1,4 @@
+const STATS_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.statsService.url : 'http://10.1.1.2:8084'; 
 // Home page interactivity
 document.addEventListener('DOMContentLoaded', () => {
     // Smooth scroll for anchor links
@@ -96,4 +97,98 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Log page load for analytics (optional)
     console.log('OverSound Home Page loaded successfully');
+
+    // ------------------------------
+    loadTop10();
+    loadRecommendations();
+    // ------------------------------
 });
+
+//---
+async function loadTop10() {
+    try {
+        const songsRes = await fetch(`${STATS_SERVICE_URL}/statistics/top-10-songs`, {
+            credentials: "include"
+        });
+        const artistsRes = await fetch(`${STATS_SERVICE_URL}/statistics/top-10-artists`, {
+            credentials: "include"
+        });
+
+        const songs = await songsRes.json();
+        const artists = await artistsRes.json();
+
+        renderTopSongs(songs);
+        renderTopArtists(artists);
+
+    } catch (err) {
+        console.error("Error loading top lists:", err);
+    }
+}
+
+function renderTopSongs(songs) {
+    const container = document.getElementById("top-songs");
+    container.innerHTML = songs.map(s => `
+        <div class="top-card">
+            <img src="${s.image || '/static/default-cover.png'}" />
+            <p>${s.name}</p>
+            <span>${s.genre}</span>
+        </div>
+    `).join('');
+}
+
+function renderTopArtists(artists) {
+    const container = document.getElementById("top-artists");
+    container.innerHTML = artists.map(a => `
+        <div class="top-card">
+            <img src="${a.image || '/static/default-artist.png'}" />
+            <p>${a.name}</p>
+        </div>
+    `).join('');
+}
+//..
+async function loadRecommendations() {
+    try {
+        const [songsRes, artistsRes] = await Promise.all([
+            fetch(`${STATS_SERVICE_URL}/recommendations/song`, { credentials: 'include' }),
+            fetch(`${STATS_SERVICE_URL}/recommendations/artist`, { credentials: 'include' })
+        ]);
+
+        const songs = await songsRes.json();
+        const artists = await artistsRes.json();
+
+        renderRecommendedSongs(songs);
+        renderRecommendedArtists(artists);
+
+    } catch (err) {
+        console.error("Error loading recommendations:", err);
+    }
+}
+
+function renderRecommendedSongs(songs) {
+    const container = document.getElementById("recommended-songs");
+    if (!songs || !songs.length) {
+        container.innerHTML = "<p>No hay recomendaciones disponibles.</p>";
+        return;
+    }
+    container.innerHTML = songs.map(s => `
+        <div class="top-card">
+            <img src="${s.image || '/static/default-cover.png'}" />
+            <p>${s.name}</p>
+            <span>${s.genre}</span>
+        </div>
+    `).join('');
+}
+
+function renderRecommendedArtists(artists) {
+    const container = document.getElementById("recommended-artists");
+    if (!artists || !artists.length) {
+        container.innerHTML = "<p>No hay recomendaciones disponibles.</p>";
+        return;
+    }
+    container.innerHTML = artists.map(a => `
+        <div class="top-card">
+            <img src="${a.image || '/static/default-artist.png'}" />
+            <p>${a.name}</p>
+        </div>
+    `).join('');
+}
