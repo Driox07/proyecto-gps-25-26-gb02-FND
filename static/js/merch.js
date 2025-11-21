@@ -109,6 +109,41 @@ function setupButtonListeners() {
             }
         });
     }
+
+    // Delete button
+    const deleteButton = document.getElementById('delete-merch-button');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', async () => {
+            const merchId = deleteButton.getAttribute('data-merch-id');
+            if (!merchId) {
+                alert('ID de producto no disponible');
+                return;
+            }
+            
+            if (confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.')) {
+                try {
+                    const response = await fetch(`/merch/${merchId}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        alert('Producto eliminado exitosamente');
+                        window.location.href = '/shop';
+                    } else {
+                        const error = await response.json();
+                        alert(`Error al eliminar el producto: ${error.message || 'Error desconocido'}`);
+                    }
+                } catch (error) {
+                    console.error('Error eliminando producto:', error);
+                    alert('Error al eliminar el producto');
+                }
+            }
+        });
+    }
 }
 
 /**

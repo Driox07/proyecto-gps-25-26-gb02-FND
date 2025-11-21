@@ -224,6 +224,41 @@ function setupButtonListeners() {
             toggleFavoriteSong(songId, favoriteButton);
         });
     }
+
+    // Delete button
+    const deleteButton = document.getElementById('delete-song-button');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', async () => {
+            const songId = deleteButton.getAttribute('data-song-id');
+            if (!songId) {
+                alert('ID de canción no disponible');
+                return;
+            }
+            
+            if (confirm('¿Estás seguro de que deseas eliminar esta canción? Esta acción no se puede deshacer.')) {
+                try {
+                    const response = await fetch(`/song/${songId}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        alert('Canción eliminada exitosamente');
+                        window.location.href = '/shop';
+                    } else {
+                        const error = await response.json();
+                        alert(`Error al eliminar la canción: ${error.message || 'Error desconocido'}`);
+                    }
+                } catch (error) {
+                    console.error('Error eliminando canción:', error);
+                    alert('Error al eliminar la canción');
+                }
+            }
+        });
+    }
 }
 
 /**
