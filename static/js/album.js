@@ -123,46 +123,52 @@ function handleBuyAlbum(event) {
 /**
  * Maneja la adición del álbum al carrito
  */
-function handleAddAlbumToCart(event) {
+async function handleAddAlbumToCart(event) {
     event.preventDefault();
     
+    const albumId = getAlbumIdFromUrl();
     const albumTitle = document.querySelector('.album-title').textContent;
-    const albumArtist = document.querySelector('.album-artist a').textContent;
-    const albumPrice = document.getElementById('album-price').textContent;
-    const albumCover = document.querySelector('.album-cover').src;
     
-    // Crear objeto del carrito para el álbum
-    const cartItem = {
-        id: getAlbumIdFromUrl(),
-        type: 'album',
-        name: albumTitle,
-        artist: albumArtist,
-        price: parseFloat(albumPrice.replace('€', '')),
-        image: albumCover,
-        timestamp: new Date().getTime()
-    };
-
-    // Guardar en localStorage
-    let cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
-    
-    // Verificar si el álbum ya está en el carrito
-    const itemExists = cart.some(item => item.id === cartItem.id && item.type === 'album');
-    
-    if (itemExists) {
-        showNotification('Este álbum ya está en tu carrito', 'warning');
+    if (!albumId || albumId === 'unknown') {
+        showNotification('ID de álbum no disponible', 'error');
         return;
     }
 
-    cart.push(cartItem);
-    localStorage.setItem('oversound_cart', JSON.stringify(cart));
+    try {
+        const response = await fetch('/cart', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                songId: null,
+                albumId: parseInt(albumId),
+                merchId: null,
+                unidades: null
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Error del servidor al añadir al carrito:', errorData);
+            showNotification(`Error: ${errorData.error || 'No se pudo añadir al carrito'}`, 'error');
+            return;
+        }
 
-    showNotification(`${albumTitle} añadido al carrito`, 'success');
-    
-    // Animar el botón
-    animateButton(event.currentTarget);
+        showNotification(`${albumTitle} añadido al carrito`, 'success');
+        
+        // Animar el botón
+        animateButton(event.currentTarget);
 
-    // Emitir evento para actualizar el header
-    window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
+        // Emitir evento para actualizar el header
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+        
+    } catch (error) {
+        console.error('Error al añadir al carrito:', error);
+        showNotification('Error al añadir al carrito', 'error');
+    }
 }
 
 /**
