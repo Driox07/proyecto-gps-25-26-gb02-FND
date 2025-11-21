@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Perfil | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/user_profile_edit.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="edit-profile-main">
+        <div class="edit-container">
+            <div class="edit-header">
+                <a href="/profile" class="back-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="19" y1="12" x2="5" y2="12" stroke-width="2"></line>
+                        <polyline points="12 19 5 12 12 5" stroke-width="2"></polyline>
+                    </svg>
+                    Volver al perfil
+                </a>
+                <h1>Editar Perfil</h1>
+                <p class="edit-subtitle">Actualiza tu información personal</p>
+            </div>
+
+            <form id="edit-profile-form" class="edit-form">
+                <!-- Imagen de Perfil -->
+                <div class="form-section">
+                    <h2 class="section-title">Imagen de Perfil</h2>
+                    <div class="image-upload-container">
+                        <div class="image-preview">
+                            {% if data.userdata.imagen %}
+                                <img src="{{ data.userdata.imagen }}" alt="Imagen de perfil" id="image-preview">
+                            {% else %}
+                                <div class="image-placeholder" id="image-placeholder">
+                                    {{ data.userdata.username[0].upper() if data.userdata.username else 'U' }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="image-upload-controls">
+                            <label for="profile-image" class="btn btn-secondary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5" stroke-width="2"></circle>
+                                    <polyline points="21 15 16 10 5 21" stroke-width="2"></polyline>
+                                </svg>
+                                Seleccionar Imagen
+                            </label>
+                            <input type="file" id="profile-image" name="imagen" accept="image/*" style="display: none;">
+                            <p class="upload-hint">JPG, PNG o GIF (máx. 5MB)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información Personal -->
+                <div class="form-section">
+                    <h2 class="section-title">Información Personal</h2>
+                    
+                    <div class="form-group">
+                        <label for="username">
+                            Nombre de Usuario
+                            <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            value="{{ data.userdata.username if data.userdata.username else '' }}"
+                            required
+                            pattern="[a-zA-Z0-9_-]{3,20}"
+                            title="Entre 3-20 caracteres, solo letras, números, guiones y guiones bajos"
+                        >
+                        <span class="field-hint">Este será tu identificador único en la plataforma</span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">
+                                Nombre
+                                <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="name" 
+                                name="name" 
+                                value="{{ data.userdata.name if data.userdata.name else '' }}"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="firstLastName">
+                                Primer Apellido
+                                <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="firstLastName" 
+                                name="firstLastName" 
+                                value="{{ data.userdata.firstLastName if data.userdata.firstLastName else '' }}"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="secondLastName">Segundo Apellido</label>
+                        <input 
+                            type="text" 
+                            id="secondLastName" 
+                            name="secondLastName" 
+                            value="{{ data.userdata.secondLastName if data.userdata.secondLastName else '' }}"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">
+                            Correo Electrónico
+                            <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            value="{{ data.userdata.email if data.userdata.email else '' }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="biografia">Biografía</label>
+                        <textarea 
+                            id="biografia" 
+                            name="biografia" 
+                            rows="5"
+                            placeholder="Cuéntanos algo sobre ti..."
+                            maxlength="500"
+                        >{{ data.userdata.biografia if data.userdata.biografia else '' }}</textarea>
+                        <span class="field-hint character-count">
+                            <span id="char-count">{{ data.userdata.biografia|length if data.userdata.biografia else 0 }}</span>/500 caracteres
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-button">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="save-button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke-width="2"></path>
+                            <polyline points="17 21 17 13 7 13 7 21" stroke-width="2"></polyline>
+                            <polyline points="7 3 7 8 15 8" stroke-width="2"></polyline>
+                        </svg>
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        // Pass user data to JavaScript
+        window.userData = {
+            username: "{{ user.username if user.username else '' }}",
+            name: "{{ user.name if user.name else '' }}",
+            firstLastName: "{{ user.firstLastName if user.firstLastName else '' }}",
+            secondLastName: "{{ user.secondLastName if user.secondLastName else '' }}",
+            email: "{{ user.email if user.email else '' }}",
+            biografia: "{{ user.biografia if user.biografia else '' }}",
+            imagen: "{{ user.imagen if user.imagen else '' }}"
+        };
+    </script>
+    <script src="{{ url_for('static', path='js/UserProfileEdit.js') }}"></script>
+</body>
+</html>

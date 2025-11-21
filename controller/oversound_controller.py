@@ -1290,6 +1290,83 @@ def get_user_profile(request: Request, username: str):
         return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del usuario", str(e))
 
 
+@app.get("/profile/edit")
+def get_profile_edit_page(request: Request):
+    """
+    Ruta para mostrar la página de edición de perfil de usuario
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    return osv.get_user_profile_edit_view(request, userdata, servers.SYU)
+
+
+@app.patch("/profile/edit")
+async def update_profile(request: Request):
+    """
+    Ruta para actualizar el perfil de usuario
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Obtener los datos del formulario
+        form_data = await request.form()
+        
+        # Preparar los datos para enviar al microservicio
+        update_data = {}
+        
+        # Campos de texto
+        if form_data.get('username'):
+            update_data['username'] = form_data.get('username')
+        if form_data.get('name'):
+            update_data['name'] = form_data.get('name')
+        if form_data.get('firstLastName'):
+            update_data['firstLastName'] = form_data.get('firstLastName')
+        if form_data.get('secondLastName'):
+            update_data['secondLastName'] = form_data.get('secondLastName')
+        if form_data.get('email'):
+            update_data['email'] = form_data.get('email')
+        if form_data.get('biografia'):
+            update_data['biografia'] = form_data.get('biografia')
+        
+        # Manejar imagen si se proporciona
+        imagen_file = form_data.get('imagen')
+        if imagen_file and hasattr(imagen_file, 'filename') and imagen_file.filename:
+            # Aquí deberías subir la imagen a un servicio de almacenamiento
+            # Por ahora, asumimos que el microservicio maneja la subida
+            files = {'imagen': (imagen_file.filename, imagen_file.file, imagen_file.content_type)}
+        else:
+            files = None
+        
+        # Hacer PATCH al microservicio SYU
+        username = userdata.get('username')
+        resp = requests.patch(
+            f"{servers.SYU}/user/{username}",
+            data=update_data,
+            files=files,
+            timeout=5,
+            headers={"Cookie": f"oversound_auth={token}"}
+        )
+        resp.raise_for_status()
+        
+        return JSONResponse(content={"message": "Perfil actualizado correctamente"}, status_code=200)
+        
+    except requests.RequestException as e:
+        error_msg = str(e)
+        try:
+            error_msg = e.response.json().get('message', str(e))
+        except:
+            pass
+        return JSONResponse(content={"message": error_msg}, status_code=500)
+
+
 # ===================== CART ENDPOINTS =====================
 @app.post("/cart")
 async def add_to_cart(request: Request):
@@ -1670,6 +1747,102 @@ def get_artist_profile(request: Request, artistId: int):
         print(f"Error obteniendo perfil del artista: {e}")
         return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del artista", str(e))
 
+
+@app.get("/artist/edit")
+def get_artist_edit_page(request: Request):
+    """
+    Ruta para mostrar la página de edición de perfil de artista
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario tenga un perfil de artista
+    if not userdata.get('artistId'):
+        return RedirectResponse("/artist/create")
+    
+    try:
+        # Obtener datos actuales del artista
+        artist_resp = requests.get(
+            f"{servers.TYA}/artist/{userdata.get('artistId')}",
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        artist_resp.raise_for_status()
+        artist_data = artist_resp.json()
+        
+        return osv.get_artist_profile_edit_view(request, userdata, artist_data, servers.TYA)
+        
+    except requests.RequestException as e:
+        print(f"Error obteniendo datos del artista: {e}")
+        return osv.get_error_view(request, userdata, "No se pudo cargar los datos del artista", str(e))
+
+
+@app.patch("/artist/edit")
+async def update_artist_profile(request: Request):
+    """
+    Ruta para actualizar el perfil de artista
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if not userdata.get('artistId'):
+        return JSONResponse(content={"error": "No tienes un perfil de artista"}, status_code=403)
+    
+    try:
+        # Obtener los datos del formulario
+        form_data = await request.form()
+        
+        # Preparar los datos para enviar al microservicio
+        update_data = {}
+        
+        # Campos de texto
+        if form_data.get('artisticName'):
+            update_data['artisticName'] = form_data.get('artisticName')
+        if form_data.get('artisticEmail'):
+            update_data['artisticEmail'] = form_data.get('artisticEmail')
+        if form_data.get('artisticBiography'):
+            update_data['artisticBiography'] = form_data.get('artisticBiography')
+        if form_data.get('socialMediaUrl'):
+            update_data['socialMediaUrl'] = form_data.get('socialMediaUrl')
+        
+        # Manejar imagen si se proporciona
+        imagen_file = form_data.get('artisticImage')
+        if imagen_file and hasattr(imagen_file, 'filename') and imagen_file.filename:
+            # Aquí deberías subir la imagen a un servicio de almacenamiento
+            # Por ahora, asumimos que el microservicio maneja la subida
+            files = {'artisticImage': (imagen_file.filename, imagen_file.file, imagen_file.content_type)}
+        else:
+            files = None
+        
+        # Hacer PATCH al microservicio TYA
+        artist_id = userdata.get('artistId')
+        resp = requests.patch(
+            f"{servers.TYA}/artist/{artist_id}",
+            data=update_data,
+            files=files,
+            timeout=5,
+            headers={"Cookie": f"oversound_auth={token}"}
+        )
+        resp.raise_for_status()
+        
+        return JSONResponse(content={
+            "message": "Perfil de artista actualizado correctamente",
+            "artistId": artist_id
+        }, status_code=200)
+        
+    except requests.RequestException as e:
+        error_msg = str(e)
+        try:
+            error_msg = e.response.json().get('message', str(e))
+        except:
+            pass
+        return JSONResponse(content={"message": error_msg}, status_code=500)
 
 
 # ===================== UPLOAD ROUTES =====================
