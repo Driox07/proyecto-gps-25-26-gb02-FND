@@ -215,7 +215,8 @@ def shop(request: Request,
 
     return osv.get_shop_view(
         request, userdata, 
-        songs, all_genres, all_artists, albums, merch
+        songs, all_genres, all_artists, albums, merch,
+        artists_map, genres_map
     )
 
 @app.get("/cart")
