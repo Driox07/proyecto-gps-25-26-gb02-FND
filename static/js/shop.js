@@ -59,6 +59,7 @@ function updatePagination(section) {
             prevBtn.onclick = () => {
                 state.currentPage--;
                 updatePagination(section);
+                scrollToSection(section);
             };
             paginationContainer.appendChild(prevBtn);
         }
@@ -72,6 +73,7 @@ function updatePagination(section) {
                 pageBtn.onclick = () => {
                     state.currentPage = i;
                     updatePagination(section);
+                    scrollToSection(section);
                 };
                 paginationContainer.appendChild(pageBtn);
             } else if (i === state.currentPage - 2 || i === state.currentPage + 2) {
@@ -90,9 +92,17 @@ function updatePagination(section) {
             nextBtn.onclick = () => {
                 state.currentPage++;
                 updatePagination(section);
+                scrollToSection(section);
             };
             paginationContainer.appendChild(nextBtn);
         }
+    }
+}
+
+function scrollToSection(section) {
+    const sectionElement = document.getElementById(`${section}-section`);
+    if (sectionElement) {
+        sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 }
 
@@ -113,7 +123,7 @@ function initCustomDropdowns() {
             // Cerrar el otro dropdown si está abierto
             const artistHeader = document.getElementById('artist-dropdown-header');
             const artistContent = document.getElementById('artist-dropdown-content');
-            if (artistHeader.classList.contains('active')) {
+            if (artistHeader && artistHeader.classList.contains('active')) {
                 artistHeader.classList.remove('active');
                 artistContent.classList.remove('show');
             }
@@ -139,7 +149,7 @@ function initCustomDropdowns() {
             artistContent.classList.toggle('show');
             
             // Cerrar el otro dropdown si está abierto
-            if (genreHeader.classList.contains('active')) {
+            if (genreHeader && genreHeader.classList.contains('active')) {
                 genreHeader.classList.remove('active');
                 genreContent.classList.remove('show');
             }
@@ -154,11 +164,13 @@ function initCustomDropdowns() {
 
     // Cerrar dropdowns al hacer click fuera
     document.addEventListener('click', (e) => {
-        if (genreHeader && !genreHeader.contains(e.target) && !genreContent.contains(e.target)) {
+        if (genreHeader && genreContent && 
+            !genreHeader.contains(e.target) && !genreContent.contains(e.target)) {
             genreHeader.classList.remove('active');
             genreContent.classList.remove('show');
         }
-        if (artistHeader && !artistHeader.contains(e.target) && !artistContent.contains(e.target)) {
+        if (artistHeader && artistContent && 
+            !artistHeader.contains(e.target) && !artistContent.contains(e.target)) {
             artistHeader.classList.remove('active');
             artistContent.classList.remove('show');
         }
@@ -196,7 +208,9 @@ function preselectFiltersFromURL() {
         
         const genreCheckboxes = document.querySelectorAll('.genre-checkbox');
         const genreSelectedText = document.getElementById('genre-selected-text');
-        updateDropdownText('genre', genreCheckboxes, genreSelectedText);
+        if (genreCheckboxes.length && genreSelectedText) {
+            updateDropdownText('genre', genreCheckboxes, genreSelectedText);
+        }
     }
     
     // Preseleccionar artistas
@@ -210,7 +224,9 @@ function preselectFiltersFromURL() {
         
         const artistCheckboxes = document.querySelectorAll('.artist-checkbox');
         const artistSelectedText = document.getElementById('artist-selected-text');
-        updateDropdownText('artist', artistCheckboxes, artistSelectedText);
+        if (artistCheckboxes.length && artistSelectedText) {
+            updateDropdownText('artist', artistCheckboxes, artistSelectedText);
+        }
     }
     
     // Preseleccionar orden
@@ -230,12 +246,24 @@ function preselectFiltersFromURL() {
 
 // ============ FILTERS ============
 function initFilters() {
-    const applyButton = document.getElementById('apply-filters');
     const resetButton = document.getElementById('reset-filters');
 
-    if (applyButton) {
-        applyButton.addEventListener('click', applyFilters);
+    // Los filtros de orden se aplican automáticamente
+    const orderSelect = document.getElementById('order-filter');
+    const directionSelect = document.getElementById('direction-filter');
+    
+    if (orderSelect) {
+        orderSelect.addEventListener('change', applyFilters);
     }
+    
+    if (directionSelect) {
+        directionSelect.addEventListener('change', applyFilters);
+    }
+
+    // Aplicar filtros cuando se cambian los checkboxes
+    document.querySelectorAll('.genre-checkbox, .artist-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', applyFilters);
+    });
 
     if (resetButton) {
         resetButton.addEventListener('click', resetFilters);
@@ -265,117 +293,99 @@ function applyFilters() {
     params.append('order', order);
     params.append('direction', direction);
 
-    // Botones de ver detalles
-    const viewButtons = document.querySelectorAll('.btn-view');
-    viewButtons.forEach(button => {
-        button.addEventListener('click', handleViewDetails);
-    });
+    // Guardar posición del scroll antes de recargar
+    saveScrollPosition();
+
+    // Recargar la página con los nuevos parámetros
+    window.location.href = `/shop?${params.toString()}`;
 }
 
-/**
- * Filtra los productos según los criterios especificados
- */
-function filterProducts() {
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    const selectedGenre = document.getElementById('genre-filter').value;
-    const selectedArtist = document.getElementById('artist-filter').value;
-    const selectedType = document.getElementById('type-filter').value;
-
-    const productCards = document.querySelectorAll('.product-card');
-    let visibleCount = 0;
-
-    productCards.forEach(card => {
-        const productName = card.querySelector('.product-name').textContent.toLowerCase();
-        const productArtist = card.querySelector('.product-artist').textContent.toLowerCase();
-        const productGenre = card.getAttribute('data-genre').toLowerCase();
-        const productType = card.getAttribute('data-type');
-
-        // Verificar búsqueda
-        const matchesSearch = productName.includes(searchTerm) || 
-                            productArtist.includes(searchTerm);
-
-        // Verificar género
-        const matchesGenre = !selectedGenre || productGenre === selectedGenre.toLowerCase();
-
-        // Verificar artista
-        const matchesArtist = !selectedArtist || productArtist === selectedArtist.toLowerCase();
-
-        // Verificar tipo
-        const matchesType = !selectedType || productType === selectedType;
-
-        // Mostrar u ocultar
-        if (matchesSearch && matchesGenre && matchesArtist && matchesType) {
-            card.style.display = '';
-            card.style.animation = 'scaleIn 0.5s ease-out';
-            visibleCount++;
-        } else {
-            card.style.display = 'none';
-        }
-    });
-
-    checkNoProducts();
-}
-
-/**
- * Reinicia todos los filtros
- */
 function resetFilters() {
-    document.getElementById('search-input').value = '';
-    document.getElementById('genre-filter').value = '';
-    document.getElementById('artist-filter').value = '';
-    document.getElementById('type-filter').value = '';
-
-    // Mostrar todos los productos
-    const productCards = document.querySelectorAll('.product-card');
-    productCards.forEach(card => {
-        card.style.display = '';
+    // Desmarcar todos los checkboxes
+    document.querySelectorAll('.genre-checkbox, .artist-checkbox').forEach(cb => {
+        cb.checked = false;
     });
 
-    checkNoProducts();
+    // Resetear selects
+    const orderSelect = document.getElementById('order-filter');
+    const directionSelect = document.getElementById('direction-filter');
+    
+    if (orderSelect) orderSelect.value = 'date';
+    if (directionSelect) directionSelect.value = 'desc';
+
+    // Actualizar textos de dropdowns
+    const genreSelectedText = document.getElementById('genre-selected-text');
+    const artistSelectedText = document.getElementById('artist-selected-text');
+    
+    if (genreSelectedText) genreSelectedText.textContent = 'Seleccionar géneros';
+    if (artistSelectedText) artistSelectedText.textContent = 'Seleccionar artistas';
+
+    // Recargar sin parámetros
+    window.location.href = '/shop';
 }
 
-/**
- * Maneja la adición de productos al carrito
- */
-function handleAddToCart(event) {
+// ============ CART ============
+function initCart() {
+    const addToCartButtons = document.querySelectorAll('.btn-add-cart');
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', handleAddToCart);
+    });
+}
+
+async function handleAddToCart(event) {
     event.preventDefault();
     const button = event.currentTarget;
     const productId = button.getAttribute('data-product-id');
     const productType = button.getAttribute('data-product-type');
 
-    // Obtener datos del producto
-    const card = button.closest('.product-card');
-    const productName = card.querySelector('.product-name').textContent;
-    const productPrice = card.querySelector('.product-price').textContent;
-    const productArtist = card.querySelector('.product-artist').textContent;
-    const productImage = card.querySelector('.product-image img').src;
-
-    // Crear objeto del carrito con más datos
-    const cartItem = {
-        id: productId,
-        type: productType,
-        name: productName,
-        price: productPrice,
-        artist: productArtist,
-        image: productImage,
-        quantity: 1,
-        timestamp: new Date().getTime()
-    };
-
-    // Guardar en localStorage
-    let cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
+    // Crear objeto para enviar al backend
+    const cartItem = {};
     
-    // Verificar si el producto ya existe en el carrito
-    const existingItem = cart.find(item => item.id === productId && item.type === productType);
-    if (existingItem) {
-        existingItem.quantity = (existingItem.quantity || 1) + 1;
-    } else {
-        cart.push(cartItem);
+    if (productType === 'song') {
+        cartItem.songId = parseInt(productId);
+    } else if (productType === 'album') {
+        cartItem.albumId = parseInt(productId);
+    } else if (productType === 'merch') {
+        cartItem.merchId = parseInt(productId);
+        cartItem.unidades = 1;  // Por defecto 1 unidad para merch
     }
-    
-    localStorage.setItem('oversound_cart', JSON.stringify(cart));
-    
-    showNotification(`Producto añadido al carrito (${cart.length} items)`);
+
+    try {
+        const response = await fetch('/cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(cartItem)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            showNotification('✅ Producto añadido al carrito');
+            
+            // Deshabilitar botón temporalmente para evitar doble click
+            button.disabled = true;
+            button.style.opacity = '0.6';
+            setTimeout(() => {
+                button.disabled = false;
+                button.style.opacity = '1';
+            }, 1000);
+        } else if (response.status === 401) {
+            showNotification('❌ Debes iniciar sesión para añadir productos al carrito');
+            setTimeout(() => {
+                window.location.href = '/login?redirect=/shop';
+            }, 2000);
+        } else if (response.status === 400) {
+            const error = await response.json();
+            showNotification(`⚠️ ${error.message || 'El producto ya está en el carrito'}`);
+        } else {
+            showNotification('❌ Error al añadir al carrito');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('❌ Error de conexión');
+    }
 }
 
 function showNotification(message) {
@@ -400,8 +410,10 @@ function saveScrollPosition() {
 function restoreScrollPosition() {
     const scrollPosition = sessionStorage.getItem('shopScrollPosition');
     if (scrollPosition) {
-        window.scrollTo(0, parseInt(scrollPosition));
-        sessionStorage.removeItem('shopScrollPosition');
+        setTimeout(() => {
+            window.scrollTo(0, parseInt(scrollPosition));
+            sessionStorage.removeItem('shopScrollPosition');
+        }, 100);
     }
 }
 
@@ -420,11 +432,12 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Observar todas las cards visibles
-document.querySelectorAll('.product-card.visible').forEach(card => {
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(20px)';
-    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-    observer.observe(card);
-});
-
+// Observar todas las cards visibles después de que se cargue la página
+setTimeout(() => {
+    document.querySelectorAll('.product-card.visible').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
+}, 100);
