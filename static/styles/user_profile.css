@@ -987,3 +987,13 @@ body {
         font-size: 14px;
     }
 }
+
+/* ...existing code... */
+.meta-item .meta-line {
+    margin: 0;             /* eliminar margen por defecto */
+    padding: 2px 0;        /* espacio vertical pequeño entre líneas */
+    display: block;        /* asegurar salto de línea */
+    color: var(--muted-color, #666);
+    font-size: 0.95rem;
+}
+/* ...existing code... */

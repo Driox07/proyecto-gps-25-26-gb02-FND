@@ -1,4 +1,4 @@
-const STATS_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.statsService.url : 'http://10.1.1.2:8084'; 
+const STATS_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.statsService.url : 'http://10.1.1.9:8084'; 
 // Home page interactivity
 document.addEventListener('DOMContentLoaded', () => {
     // Smooth scroll for anchor links
