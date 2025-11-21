@@ -55,6 +55,12 @@ function setupAlbumEventListeners() {
             }
         });
     });
+    
+    // Botón de eliminar álbum
+    const deleteAlbumButton = document.getElementById('delete-album-button');
+    if (deleteAlbumButton) {
+        deleteAlbumButton.addEventListener('click', handleDeleteAlbum);
+    }
 }
 
 /**
@@ -152,6 +158,45 @@ function handleToggleFavorite(event) {
     }
 
     animateButton(button);
+}
+
+/**
+ * Maneja la eliminación del álbum
+ */
+async function handleDeleteAlbum(event) {
+    event.preventDefault();
+    const button = document.getElementById('delete-album-button');
+    const albumId = button.getAttribute('data-album-id');
+    
+    if (!albumId) {
+        showNotification('ID de álbum no disponible', 'error');
+        return;
+    }
+    
+    if (confirm('¿Estás seguro de que deseas eliminar este álbum? Esta acción no se puede deshacer.')) {
+        try {
+            const response = await fetch(`/album/${albumId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                showNotification('Álbum eliminado exitosamente', 'success');
+                setTimeout(() => {
+                    window.location.href = '/shop';
+                }, 1500);
+            } else {
+                const error = await response.json();
+                showNotification(`Error: ${error.message || 'Error desconocido'}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error eliminando álbum:', error);
+            showNotification('Error al eliminar el álbum', 'error');
+        }
+    }
 }
 
 /**
