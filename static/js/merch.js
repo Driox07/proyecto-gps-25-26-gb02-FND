@@ -32,56 +32,40 @@ function setupButtonListeners() {
     if (addToCartButton) {
         addToCartButton.addEventListener('click', async () => {
             const merchName = document.getElementById('merch-name').textContent;
-            const merchPrice = document.getElementById('merch-price').textContent;
-            const merchImage = document.querySelector('.merch-image')?.src || 'https://via.placeholder.com/120?text=Sin+Imagen';
             
             // Obtener ID de merch desde el URL
             const merchId = window.location.pathname.split('/').pop();
             
+            if (!merchId || isNaN(parseInt(merchId))) {
+                alert('ID de producto no disponible');
+                return;
+            }
+            
             try {
-                // Agregar a carrito local
-                const cartItem = {
-                    id: parseInt(merchId),
-                    name: merchName,
-                    price: merchPrice,
-                    type: 'merch',
-                    image: merchImage,
-                    quantity: 1
-                };
-
-                let cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
-                const existingItem = cart.find(item => item.id === parseInt(merchId));
+                const response = await fetch('/cart', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        songId: null,
+                        albumId: null,
+                        merchId: parseInt(merchId),
+                        unidades: 1
+                    })
+                });
                 
-                if (existingItem) {
-                    existingItem.quantity += 1;
-                } else {
-                    cart.push(cartItem);
-                }
-
-                localStorage.setItem('oversound_cart', JSON.stringify(cart));
-                
-                // Intentar sincronizar con backend si el usuario está autenticado
-                try {
-                    await fetch('/cart', {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            productId: parseInt(merchId),
-                            productType: 'merch',
-                            quantity: 1,
-                            price: merchPrice
-                        })
-                    });
-                } catch (error) {
-                    console.warn('No se pudo sincronizar con backend, usando localStorage:', error);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Error del servidor al añadir al carrito:', errorData);
+                    alert(`Error al añadir al carrito: ${errorData.error || 'Error desconocido'}`);
+                    return;
                 }
 
                 // Emitir evento para actualizar el header
-                window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
+                window.dispatchEvent(new CustomEvent('cartUpdated'));
                 
                 alert(`${merchName} añadido al carrito`);
                 

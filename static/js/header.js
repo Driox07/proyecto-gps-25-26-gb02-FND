@@ -100,28 +100,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Listen for cart updates
     window.addEventListener('cartUpdated', updateCartBadge);
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'oversound_cart') {
-            updateCartBadge();
-        }
-    });
 });
 
 /**
  * Actualiza el badge del carrito en el header
  */
-function updateCartBadge() {
+async function updateCartBadge() {
     const cartBadge = document.getElementById('cart-badge');
-    const cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
     
     if (!cartBadge) return;
 
-    const totalItems = cart.length;
+    try {
+        const response = await fetch('/cart', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
 
-    if (totalItems > 0) {
-        cartBadge.textContent = totalItems;
-        cartBadge.style.display = 'flex';
-    } else {
+        if (response.ok) {
+            const cart = await response.json();
+            const totalItems = cart.length;
+
+            if (totalItems > 0) {
+                cartBadge.textContent = totalItems;
+                cartBadge.style.display = 'flex';
+            } else {
+                cartBadge.style.display = 'none';
+            }
+        } else {
+            // Si no está autenticado o hay error, ocultar badge
+            cartBadge.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error actualizando badge del carrito:', error);
         cartBadge.style.display = 'none';
     }
 }

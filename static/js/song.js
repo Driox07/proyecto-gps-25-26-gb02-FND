@@ -52,6 +52,15 @@ function getTrackId() {
 }
 
 /**
+ * Get song ID from the URL path
+ */
+function getSongIdFromUrl() {
+    const path = window.location.pathname;
+    const match = path.match(/\/song\/(\d+)/);
+    return match ? match[1] : null;
+}
+
+/**
  * Fetch and play track from microservice
  */
 async function playTrack(trackId) {
@@ -147,11 +156,9 @@ function setupButtonListeners() {
     const addToCartButton = document.getElementById('add-to-cart-button');
     if (addToCartButton) {
         addToCartButton.addEventListener('click', async () => {
-            const songId = getTrackId();
+            // Obtener songId desde la URL en lugar de trackId
+            const songId = getSongIdFromUrl();
             const songTitle = document.getElementById('song-title').textContent;
-            const songPrice = document.getElementById('song-price').textContent;
-            const artistName = document.querySelector('.artist-link')?.textContent || 'Artista desconocido';
-            const songCover = document.querySelector('.song-cover')?.src || 'https://via.placeholder.com/120?text=Sin+Imagen';
             
             if (!songId) {
                 alert('ID de canción no disponible');
@@ -159,50 +166,30 @@ function setupButtonListeners() {
             }
 
             try {
-                // Agregar a carrito local
-                const cartItem = {
-                    id: songId,
-                    name: songTitle,
-                    artist: artistName,
-                    price: songPrice,
-                    type: 'cancion',
-                    image: songCover,
-                    quantity: 1
-                };
-
-                let cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
-                const existingItem = cart.find(item => item.id === songId);
+                const response = await fetch('/cart', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        songId: parseInt(songId),
+                        albumId: null,
+                        merchId: null,
+                        unidades: null
+                    })
+                });
                 
-                if (existingItem) {
-                    existingItem.quantity += 1;
-                } else {
-                    cart.push(cartItem);
-                }
-
-                localStorage.setItem('oversound_cart', JSON.stringify(cart));
-                
-                // Intentar sincronizar con backend si el usuario está autenticado
-                try {
-                    await fetch('/cart', {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            productId: songId,
-                            productType: 'cancion',
-                            quantity: 1,
-                            price: songPrice
-                        })
-                    });
-                } catch (error) {
-                    console.warn('No se pudo sincronizar con backend, usando localStorage:', error);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Error del servidor al añadir al carrito:', errorData);
+                    alert(`Error al añadir al carrito: ${errorData.error || 'Error desconocido'}`);
+                    return;
                 }
 
                 // Emitir evento para actualizar el header
-                window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
+                window.dispatchEvent(new CustomEvent('cartUpdated'));
                 
                 alert(`${songTitle} añadido al carrito`);
                 
