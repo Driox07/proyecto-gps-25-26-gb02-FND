@@ -294,6 +294,32 @@ async function getFavoriteArtists() {
 }
 
 /**
+ * Obtiene la lista de mercancía favorita del usuario
+ * @returns {Promise<Array>} Array de mercancía favorita
+ */
+async function getFavoriteMerch() {
+    try {
+        const response = await fetch('/favs/merch', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al obtener favoritos');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error al obtener mercancía favorita:', error);
+        return [];
+    }
+}
+
+/**
  * Verifica si una canción es favorita del usuario actual
  * @param {number} songId - ID de la canción
  * @returns {Promise<boolean>} True si es favorita
@@ -305,6 +331,54 @@ async function isSongFavorited(songId) {
     } catch (error) {
         console.error('Error verificando si es favorito:', error);
         return false;
+    }
+}
+
+/**
+ * Verifica si un álbum es favorito del usuario actual
+ * @param {number} albumId - ID del álbum
+ * @returns {Promise<boolean>} True si es favorito
+ */
+async function isAlbumFavorited(albumId) {
+    try {
+        const favorites = await getFavoriteAlbums();
+        return favorites.some(album => album.id === albumId);
+    } catch (error) {
+        console.error('Error verificando si es favorito:', error);
+        return false;
+    }
+}
+
+/**
+ * Verifica si una mercancía es favorita del usuario actual
+ * @param {number} merchId - ID de la mercancía
+ * @returns {Promise<boolean>} True si es favorita
+ */
+async function isMerchFavorited(merchId) {
+    try {
+        const favorites = await getFavoriteMerch();
+        return favorites.some(merch => merch.id === merchId);
+    } catch (error) {
+        console.error('Error verificando si es favorito:', error);
+        return false;
+    }
+}
+
+/**
+ * Actualiza el estado visual de un botón de favorito
+ * @param {HTMLElement} button - Botón a actualizar
+ * @param {boolean} isFavorited - Si el elemento está en favoritos
+ */
+function updateFavoriteButtonState(button, isFavorited) {
+    if (!button) return;
+    
+    const path = button.querySelector('path');
+    if (path) {
+        if (isFavorited) {
+            path.setAttribute('fill', 'currentColor');
+        } else {
+            path.setAttribute('fill', 'none');
+        }
     }
 }
 

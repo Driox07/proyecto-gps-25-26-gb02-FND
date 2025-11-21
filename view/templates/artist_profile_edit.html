@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Perfil de Artista | OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/artist_profile_edit.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="edit-artist-main">
+        <div class="edit-container">
+            <div class="edit-header">
+                <a href="/artist/{{ artist.artistId }}" class="back-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="19" y1="12" x2="5" y2="12" stroke-width="2"></line>
+                        <polyline points="12 19 5 12 12 5" stroke-width="2"></polyline>
+                    </svg>
+                    Volver al perfil
+                </a>
+                <h1>Editar Perfil de Artista</h1>
+                <p class="edit-subtitle">Actualiza tu información artística</p>
+            </div>
+
+            <form id="edit-artist-form" class="edit-form" data-artist-id="{{ data.artist.artistId if data.artist.artistId else '' }}">
+                <!-- Imagen de Artista -->
+                <div class="form-section">
+                    <h2 class="section-title">Imagen de Artista</h2>
+                    <div class="image-upload-container">
+                        <div class="image-preview artist-image">
+                            {% if data.artist.artisticImage %}
+                                <img src="{{ data.artist.artisticImage }}" alt="Imagen de artista" id="image-preview">
+                            {% else %}
+                                <div class="image-placeholder" id="image-placeholder">
+                                    {{ data.artist.artisticName[0].upper() if data.artist.artisticName else 'A' }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="image-upload-controls">
+                            <label for="artist-image" class="btn btn-secondary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5" stroke-width="2"></circle>
+                                    <polyline points="21 15 16 10 5 21" stroke-width="2"></polyline>
+                                </svg>
+                                Seleccionar Imagen
+                            </label>
+                            <input type="file" id="artist-image" name="artisticImage" accept="image/*" style="display: none;">
+                            <p class="upload-hint">JPG, PNG o GIF (máx. 5MB)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información del Artista -->
+                <div class="form-section">
+                    <h2 class="section-title">Información del Artista</h2>
+                    
+                    <div class="form-group">
+                        <label for="artisticName">
+                            Nombre Artístico
+                            <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="artisticName" 
+                            name="artisticName" 
+                            value="{{ data.artist.artisticName if data.artist.artisticName else '' }}"
+                            required
+                            minlength="2"
+                            maxlength="100"
+                        >
+                        <span class="field-hint">Este es el nombre que verán tus fans</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="artisticEmail">
+                            Email de Contacto Artístico
+                            <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="email" 
+                            id="artisticEmail" 
+                            name="artisticEmail" 
+                            value="{{ data.artist.artisticEmail if data.artist.artisticEmail else '' }}"
+                            required
+                        >
+                        <span class="field-hint">Email para colaboraciones y contactos profesionales</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="artisticBiography">
+                            Biografía Artística
+                            <span class="required">*</span>
+                        </label>
+                        <textarea 
+                            id="artisticBiography" 
+                            name="artisticBiography" 
+                            rows="6"
+                            placeholder="Cuéntale al mundo sobre tu trayectoria musical..."
+                            maxlength="1000"
+                            required
+                        >{{ data.artist.artisticBiography if data.artist.artisticBiography else '' }}</textarea>
+                        <span class="field-hint character-count">
+                            <span id="char-count">{{ data.artist.artisticBiography|length if data.artist.artisticBiography else 0 }}</span>/1000 caracteres
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="socialMediaUrl">
+                            URL de Redes Sociales
+                        </label>
+                        <input 
+                            type="url" 
+                            id="socialMediaUrl" 
+                            name="socialMediaUrl" 
+                            value="{{ data.artist.socialMediaUrl if data.artist.socialMediaUrl else '' }}"
+                            placeholder="https://ejemplo.com/tu-perfil"
+                        >
+                        <span class="field-hint">Enlace a tu perfil principal de redes sociales</span>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-button">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="save-button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke-width="2"></path>
+                            <polyline points="17 21 17 13 7 13 7 21" stroke-width="2"></polyline>
+                            <polyline points="7 3 7 8 15 8" stroke-width="2"></polyline>
+                        </svg>
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', path='js/ArtistProfileEdit.js') }}"></script>
+</body>
+</html>

@@ -268,3 +268,13 @@ class View():
     def get_artist_create_view(self, request: Request, userdata: dict = None, syu_server: str = None):
         data = {"userdata": userdata, "syu_server": syu_server}
         return templates.TemplateResponse("artist_create.html", {"request": request, "data": data})
+    
+    # Renderizar la template user_profile_edit.html
+    def get_user_profile_edit_view(self, request: Request, userdata: dict = None, syu_server: str = None):
+        data = {"userdata": userdata, "syu_server": syu_server}
+        return templates.TemplateResponse("user_profile_edit.html", {"request": request, "data": data})
+    
+    # Renderizar la template artist_profile_edit.html
+    def get_artist_profile_edit_view(self, request: Request, userdata: dict = None, artist_data: dict = None, tya_server: str = None):
+        data = {"userdata": userdata, "artist": artist_data, "tya_server": tya_server}
+        return templates.TemplateResponse("artist_profile_edit.html", {"request": request, "data": data})
