@@ -1,9 +1,7 @@
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
-from API_KEYS import API_CREDENTIALS
 
 templates = Jinja2Templates(directory="view/templates") # Esta ruta es la que se va a usar para renderizar las plantillas
-apicreds = API_CREDENTIALS() # Cargamos las credenciales de la API de Firebase
 
 class View():
 
@@ -71,7 +69,7 @@ class View():
 
     # Renderizar la template logut.html
     def get_logout_view(self, request: Request):
-        return templates.TemplateResponse("auth/logout.html", {"request": request, "API_CREDENTIALS" : apicreds })
+        return templates.TemplateResponse("auth/logout.html", {"request": request})
 
     # Renderizar la template profile.html
     # Necesita un user_info completo, no se contempla otro caso.
@@ -89,7 +87,6 @@ class View():
             "payment_methods": payment_methods,
             "syu_server": syu_server,
             "tya_server": tya_server,
-            "API_CREDENTIALS" : apicreds
         })
     
     # Renderizar la template faqs.html
