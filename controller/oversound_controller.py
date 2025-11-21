@@ -887,8 +887,8 @@ def get_label(request: Request, labelId: int):
         label_data['artists_count'] = len(artists)
         
         # Determinar si es propietario o miembro
-        is_owner = userdata and userdata.get('labelId') == labelId
-        is_member = userdata and artist_id in [a.get('artistId') for a in artists] if 'artist_id' in locals() else False
+        is_owner = userdata and userdata.get('userId') == label_data.get('ownerId')
+        is_member = userdata and userdata.get('artistId') in [a.get('artistId') for a in artists]
         
         return osv.get_label_view(request, label_data, is_owner, is_member, userdata, servers.SYU)
         
@@ -1551,6 +1551,34 @@ async def delete_payment_method(request: Request, payment_method_id: int):
 
 
 # ===================== FAVORITES ENDPOINTS =====================
+@app.get("/favs/{content_type}")
+async def get_favorites(request: Request, content_type: str):
+    """
+    Obtiene la lista de favoritos del usuario por tipo de contenido
+    Proxea la llamada a SYU GET /favs/{contentType}
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if content_type not in ["songs", "albums", "artists", "merch"]:
+        return JSONResponse(content={"error": "Tipo de contenido inválido"}, status_code=400)
+    
+    try:
+        fav_resp = requests.get(
+            f"{servers.SYU}/favs/{content_type}",
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        fav_resp.raise_for_status()
+        return JSONResponse(content=fav_resp.json(), status_code=fav_resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error obteniendo favoritos: {e}")
+        return JSONResponse(content={"error": "No se pudieron obtener los favoritos"}, status_code=500)
+
+
 @app.post("/favs/{content_type}/{content_id}")
 async def add_favorite(request: Request, content_type: str, content_id: int):
     """
@@ -1563,7 +1591,7 @@ async def add_favorite(request: Request, content_type: str, content_id: int):
     if not userdata:
         return JSONResponse(content={"error": "No autenticado"}, status_code=401)
     
-    if content_type not in ["songs", "albums", "artists"]:
+    if content_type not in ["songs", "albums", "artists", "merch"]:
         return JSONResponse(content={"error": "Tipo de contenido inválido"}, status_code=400)
     
     try:
@@ -1591,7 +1619,7 @@ async def remove_favorite(request: Request, content_type: str, content_id: int):
     if not userdata:
         return JSONResponse(content={"error": "No autenticado"}, status_code=401)
     
-    if content_type not in ["songs", "albums", "artists"]:
+    if content_type not in ["songs", "albums", "artists", "merch"]:
         return JSONResponse(content={"error": "Tipo de contenido inválido"}, status_code=400)
     
     try:

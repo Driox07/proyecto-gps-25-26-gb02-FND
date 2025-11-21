@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initPagination();
     initCart();
     restoreScrollPosition();
+    checkAllProductsFavoriteStatus();
 });
 
 // ============ PAGINATION ============
@@ -427,4 +428,58 @@ document.querySelectorAll('.product-card.visible').forEach(card => {
     card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
     observer.observe(card);
 });
+
+/**
+ * Check favorite status for all products in the shop
+ */
+async function checkAllProductsFavoriteStatus() {
+    try {
+        // Fetch all favorites in parallel
+        const [favSongs, favAlbums, favMerch] = await Promise.all([
+            typeof getFavoriteSongs === 'function' ? getFavoriteSongs() : Promise.resolve([]),
+            typeof getFavoriteAlbums === 'function' ? getFavoriteAlbums() : Promise.resolve([]),
+            typeof getFavoriteMerch === 'function' ? getFavoriteMerch() : Promise.resolve([])
+        ]);
+
+        // Create sets of favorited IDs for quick lookup
+        const favoriteSongIds = new Set(favSongs.map(s => s.id));
+        const favoriteAlbumIds = new Set(favAlbums.map(a => a.id));
+        const favoriteMerchIds = new Set(favMerch.map(m => m.id));
+
+        // Update song cards
+        document.querySelectorAll('.product-card[data-type="song"]').forEach(card => {
+            const button = card.querySelector('[data-fav-song]');
+            if (button) {
+                const songId = parseInt(button.dataset.favSong);
+                if (typeof updateFavoriteButtonState === 'function') {
+                    updateFavoriteButtonState(button, favoriteSongIds.has(songId));
+                }
+            }
+        });
+
+        // Update album cards
+        document.querySelectorAll('.product-card[data-type="album"]').forEach(card => {
+            const button = card.querySelector('[data-fav-album]');
+            if (button) {
+                const albumId = parseInt(button.dataset.favAlbum);
+                if (typeof updateFavoriteButtonState === 'function') {
+                    updateFavoriteButtonState(button, favoriteAlbumIds.has(albumId));
+                }
+            }
+        });
+
+        // Update merch cards
+        document.querySelectorAll('.product-card[data-type="merch"]').forEach(card => {
+            const button = card.querySelector('[data-fav-merch]');
+            if (button) {
+                const merchId = parseInt(button.dataset.favMerch);
+                if (typeof updateFavoriteButtonState === 'function') {
+                    updateFavoriteButtonState(button, favoriteMerchIds.has(merchId));
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error checking products favorite status:', error);
+    }
+}
 

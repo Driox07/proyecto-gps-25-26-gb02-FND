@@ -2,6 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     setupButtonListeners();
     setupAnimations();
+    checkMerchFavoriteStatus();
 });
 
 /**
@@ -100,8 +101,6 @@ function setupButtonListeners() {
                 alert('ID de mercancía no disponible');
                 return;
             }
-            // Nota: Si la API soporta favoritos de merch, usar toggleFavoriteMerch
-            // Por ahora comentado ya que podría no estar implementado
             if (typeof toggleFavoriteMerch === 'function') {
                 toggleFavoriteMerch(parseInt(merchId), favoriteButton);
             } else {
@@ -234,6 +233,28 @@ function setupAnimations() {
         imageContainer.addEventListener('mouseleave', () => {
             imageContainer.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
         });
+    }
+}
+
+/**
+ * Check if the current merch is in favorites and update button state
+ */
+async function checkMerchFavoriteStatus() {
+    const favoriteButton = document.getElementById('favorite-button');
+    if (!favoriteButton) return;
+    
+    const merchId = window.location.pathname.split('/').pop();
+    if (!merchId || isNaN(merchId)) return;
+    
+    try {
+        if (typeof isMerchFavorited === 'function') {
+            const isFavorited = await isMerchFavorited(parseInt(merchId));
+            if (typeof updateFavoriteButtonState === 'function') {
+                updateFavoriteButtonState(favoriteButton, isFavorited);
+            }
+        }
+    } catch (error) {
+        console.error('Error checking merch favorite status:', error);
     }
 }
 

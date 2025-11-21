@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeAudioPlayer();
     setupButtonListeners();
     setupAnimations();
+    checkSongFavoriteStatus();
 });
 
 /**
@@ -349,6 +350,26 @@ function setupAnimations() {
         coverContainer.addEventListener('mouseleave', () => {
             coverContainer.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
         });
+    }
+}
+
+/**
+ * Check if the current song is in favorites and update button state
+ */
+async function checkSongFavoriteStatus() {
+    const favoriteButton = document.getElementById('favorite-button');
+    if (!favoriteButton) return;
+    
+    const songId = getTrackId();
+    if (!songId) return;
+    
+    try {
+        const isFavorited = await isSongFavorited(parseInt(songId));
+        if (typeof updateFavoriteButtonState === 'function') {
+            updateFavoriteButtonState(favoriteButton, isFavorited);
+        }
+    } catch (error) {
+        console.error('Error checking favorite status:', error);
     }
 }
 

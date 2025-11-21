@@ -10,6 +10,7 @@ let albumTracks = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeAlbumPage();
+    checkAlbumFavoriteStatus();
 });
 
 /**
@@ -170,19 +171,29 @@ function handleAddAlbumToCart(event) {
 function handleToggleFavorite(event) {
     event.preventDefault();
     const button = event.currentTarget;
-    const isFavorited = button.classList.toggle('favorited');
-
-    if (isFavorited) {
-        showNotification('Álbum añadido a favoritos', 'success');
-        button.style.fill = '#ff6b6b';
-        button.style.color = '#ff6b6b';
-    } else {
-        showNotification('Álbum eliminado de favoritos', 'info');
-        button.style.fill = 'none';
-        button.style.color = 'white';
+    const albumId = getAlbumIdFromUrl();
+    
+    if (!albumId || albumId === 'unknown') {
+        showNotification('ID de álbum no disponible', 'error');
+        return;
     }
-
-    animateButton(button);
+    
+    if (typeof toggleFavoriteAlbum === 'function') {
+        toggleFavoriteAlbum(parseInt(albumId), button);
+    } else {
+        // Fallback to old behavior
+        const isFavorited = button.classList.toggle('favorited');
+        if (isFavorited) {
+            showNotification('Álbum añadido a favoritos', 'success');
+            button.style.fill = '#ff6b6b';
+            button.style.color = '#ff6b6b';
+        } else {
+            showNotification('Álbum eliminado de favoritos', 'info');
+            button.style.fill = 'none';
+            button.style.color = 'white';
+        }
+        animateButton(button);
+    }
 }
 
 /**
@@ -404,6 +415,28 @@ trackItems.forEach(item => {
         this.style.background = 'white';
     });
 });
+
+/**
+ * Check if the current album is in favorites and update button state
+ */
+async function checkAlbumFavoriteStatus() {
+    const favoriteButton = document.getElementById('favorite-album-button');
+    if (!favoriteButton) return;
+    
+    const albumId = getAlbumIdFromUrl();
+    if (!albumId || albumId === 'unknown') return;
+    
+    try {
+        if (typeof isAlbumFavorited === 'function') {
+            const isFavorited = await isAlbumFavorited(parseInt(albumId));
+            if (typeof updateFavoriteButtonState === 'function') {
+                updateFavoriteButtonState(favoriteButton, isFavorited);
+            }
+        }
+    } catch (error) {
+        console.error('Error checking album favorite status:', error);
+    }
+}
 
 // Agregar estilos para animaciones dinámicas
 const style = document.createElement('style');
