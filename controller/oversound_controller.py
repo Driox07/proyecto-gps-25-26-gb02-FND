@@ -304,14 +304,28 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
 
 
 @app.get("/cart")
-def cart(request: Request):
+async def get_cart(request: Request):
     """
-    Ruta del carrito - Renderiza la página del carrito
+    Obtiene los productos del carrito del usuario autenticado
+    Proxea la llamada a TPP GET /cart
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     
-    return osv.get_cart_view(request, userdata, servers.SYU)
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        cart_resp = requests.get(
+            f"{servers.TPP}/cart",
+            timeout=5,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        cart_resp.raise_for_status()
+        return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error obteniendo carrito: {e}")
+        return JSONResponse(content={"error": "No se pudo obtener el carrito"}, status_code=500)
 
 
 @app.get("/giftcard")
@@ -448,6 +462,45 @@ def register(request: Request, username: str):
     return userdata.json()
 
 
+@app.delete("/song/{songId}")
+async def delete_song(request: Request, songId: int):
+    """
+    Ruta para eliminar una canción
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Primero obtener los datos de la canción para verificar la propiedad
+        song_resp = requests.get(f"{servers.TYA}/song/{songId}", timeout=2, headers={"Accept": "application/json"})
+        song_resp.raise_for_status()
+        song_data = song_resp.json()
+        
+        # Verificar que el usuario sea el artista propietario
+        if userdata.get('artistId') != song_data.get('artistId'):
+            return JSONResponse(content={"error": "No tienes permisos para eliminar esta canción"}, status_code=403)
+        
+        # Eliminar la canción
+        delete_resp = requests.delete(
+            f"{servers.TYA}/song/{songId}",
+            timeout=5,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        
+        if delete_resp.ok:
+            return JSONResponse(content={"message": "Canción eliminada exitosamente"})
+        else:
+            error_data = delete_resp.json() if delete_resp.text else {"error": "Error desconocido"}
+            return JSONResponse(content=error_data, status_code=delete_resp.status_code)
+    
+    except requests.RequestException as e:
+        print(f"Error eliminando canción: {e}")
+        return JSONResponse(content={"error": "Error al eliminar la canción"}, status_code=500)
+
+
 @app.get("/song/{songId}")
 def get_song(request: Request, songId: int):
     token = request.cookies.get("oversound_auth")
@@ -555,6 +608,45 @@ def get_song(request: Request, songId: int):
         # En caso de error, mostrar página de error
         print(e)
         return osv.get_error_view(request, userdata, f"No se pudo cargar la canción", str(e))
+
+
+@app.delete("/album/{albumId}")
+async def delete_album(request: Request, albumId: int):
+    """
+    Ruta para eliminar un álbum
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Primero obtener los datos del álbum para verificar la propiedad
+        album_resp = requests.get(f"{servers.TYA}/album/{albumId}", timeout=2, headers={"Accept": "application/json"})
+        album_resp.raise_for_status()
+        album_data = album_resp.json()
+        
+        # Verificar que el usuario sea el artista propietario
+        if userdata.get('artistId') != album_data.get('artistId'):
+            return JSONResponse(content={"error": "No tienes permisos para eliminar este álbum"}, status_code=403)
+        
+        # Eliminar el álbum
+        delete_resp = requests.delete(
+            f"{servers.TYA}/album/{albumId}",
+            timeout=5,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        
+        if delete_resp.ok:
+            return JSONResponse(content={"message": "Álbum eliminado exitosamente"})
+        else:
+            error_data = delete_resp.json() if delete_resp.text else {"error": "Error desconocido"}
+            return JSONResponse(content=error_data, status_code=delete_resp.status_code)
+    
+    except requests.RequestException as e:
+        print(f"Error eliminando álbum: {e}")
+        return JSONResponse(content={"error": "Error al eliminar el álbum"}, status_code=500)
 
 
 @app.get("/album/{albumId}")
@@ -666,6 +758,45 @@ def get_album(request: Request, albumId: int):
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
         return osv.get_error_view(request, userdata, f"No se pudo cargar el álbum", str(e))
+
+@app.delete("/merch/{merchId}")
+async def delete_merch(request: Request, merchId: int):
+    """
+    Ruta para eliminar un producto de merchandising
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Primero obtener los datos del merch para verificar la propiedad
+        merch_resp = requests.get(f"{servers.TYA}/merch/{merchId}", timeout=2, headers={"Accept": "application/json"})
+        merch_resp.raise_for_status()
+        merch_data = merch_resp.json()
+        
+        # Verificar que el usuario sea el artista propietario
+        if userdata.get('artistId') != merch_data.get('artistId'):
+            return JSONResponse(content={"error": "No tienes permisos para eliminar este producto"}, status_code=403)
+        
+        # Eliminar el merchandising
+        delete_resp = requests.delete(
+            f"{servers.TYA}/merch/{merchId}",
+            timeout=5,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        
+        if delete_resp.ok:
+            return JSONResponse(content={"message": "Producto eliminado exitosamente"})
+        else:
+            error_data = delete_resp.json() if delete_resp.text else {"error": "Error desconocido"}
+            return JSONResponse(content=error_data, status_code=delete_resp.status_code)
+    
+    except requests.RequestException as e:
+        print(f"Error eliminando merchandising: {e}")
+        return JSONResponse(content={"error": "Error al eliminar el producto"}, status_code=500)
+
 
 @app.get("/merch/{merchId}")
 def get_merch(request: Request, merchId: int):
@@ -1738,6 +1869,64 @@ async def upload_merch(request: Request):
     except Exception as e:
         print(f"Error subiendo merchandising: {e}")
         return JSONResponse(content={"error": "Error al subir el merchandising"}, status_code=500)
+
+
+# ===================== TRACK PROVIDER ROUTES =====================
+@app.get("/track/{trackId}")
+async def get_track(request: Request, trackId: int):
+    """
+    Ruta proxy para obtener el audio de una canción desde el Proveedor de Tracks (PT)
+    Obtiene el track en base64 desde PT y lo devuelve como audio
+    """
+    token = request.cookies.get("oversound_auth")
+    
+    try:
+        # Obtener el track desde el microservicio PT
+        track_resp = requests.get(
+            f"{servers.PT}/track/{trackId}",
+            timeout=10,
+            headers={
+                "Accept": "application/json",
+                "Cookie": f"oversound_auth={token}"
+            }
+        )
+        track_resp.raise_for_status()
+        
+        # La respuesta contiene {"idtrack": int, "track": "base64string"}
+        track_data = track_resp.json()
+        
+        if not track_data.get('track'):
+            return JSONResponse(content={"error": "Track no encontrado"}, status_code=404)
+        
+        # Decodificar el base64
+        import base64
+        audio_bytes = base64.b64decode(track_data['track'])
+        
+        # Devolver el audio como respuesta binaria
+        # El tipo de contenido se determina por las primeras cabeceras del archivo
+        # Por defecto usamos audio/mpeg (MP3)
+        return Response(
+            content=audio_bytes,
+            media_type="audio/mpeg",
+            headers={
+                "Content-Disposition": f"inline; filename=track_{trackId}.mp3",
+                "Accept-Ranges": "bytes",
+                "Cache-Control": "public, max-age=3600"
+            }
+        )
+        
+    except requests.RequestException as e:
+        print(f"Error obteniendo track desde PT: {e}")
+        return JSONResponse(
+            content={"error": f"No se pudo obtener el track: {str(e)}"},
+            status_code=500
+        )
+    except Exception as e:
+        print(f"Error procesando track: {e}")
+        return JSONResponse(
+            content={"error": f"Error al procesar el track: {str(e)}"},
+            status_code=500
+        )
 
 
 
