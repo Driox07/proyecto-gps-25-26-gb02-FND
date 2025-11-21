@@ -1740,6 +1740,64 @@ async def upload_merch(request: Request):
         return JSONResponse(content={"error": "Error al subir el merchandising"}, status_code=500)
 
 
+# ===================== TRACK PROVIDER ROUTES =====================
+@app.get("/track/{trackId}")
+async def get_track(request: Request, trackId: int):
+    """
+    Ruta proxy para obtener el audio de una canción desde el Proveedor de Tracks (PT)
+    Obtiene el track en base64 desde PT y lo devuelve como audio
+    """
+    token = request.cookies.get("oversound_auth")
+    
+    try:
+        # Obtener el track desde el microservicio PT
+        track_resp = requests.get(
+            f"{servers.PT}/track/{trackId}",
+            timeout=10,
+            headers={
+                "Accept": "application/json",
+                "Cookie": f"oversound_auth={token}"
+            }
+        )
+        track_resp.raise_for_status()
+        
+        # La respuesta contiene {"idtrack": int, "track": "base64string"}
+        track_data = track_resp.json()
+        
+        if not track_data.get('track'):
+            return JSONResponse(content={"error": "Track no encontrado"}, status_code=404)
+        
+        # Decodificar el base64
+        import base64
+        audio_bytes = base64.b64decode(track_data['track'])
+        
+        # Devolver el audio como respuesta binaria
+        # El tipo de contenido se determina por las primeras cabeceras del archivo
+        # Por defecto usamos audio/mpeg (MP3)
+        return Response(
+            content=audio_bytes,
+            media_type="audio/mpeg",
+            headers={
+                "Content-Disposition": f"inline; filename=track_{trackId}.mp3",
+                "Accept-Ranges": "bytes",
+                "Cache-Control": "public, max-age=3600"
+            }
+        )
+        
+    except requests.RequestException as e:
+        print(f"Error obteniendo track desde PT: {e}")
+        return JSONResponse(
+            content={"error": f"No se pudo obtener el track: {str(e)}"},
+            status_code=500
+        )
+    except Exception as e:
+        print(f"Error procesando track: {e}")
+        return JSONResponse(
+            content={"error": f"Error al procesar el track: {str(e)}"},
+            status_code=500
+        )
+
+
 
 
 @app.exception_handler(RequestValidationError)

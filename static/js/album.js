@@ -1,5 +1,13 @@
 // Album Page Functionality
 
+// Configuration for the music microservice (defined in config.js)
+const MUSIC_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.musicService.url : 'http://localhost:8000';
+
+// Global audio player instance for album page
+let audioPlayer = null;
+let currentTrackIndex = -1;
+let albumTracks = [];
+
 document.addEventListener('DOMContentLoaded', function() {
     initializeAlbumPage();
 });
@@ -8,7 +16,24 @@ document.addEventListener('DOMContentLoaded', function() {
  * Inicializa todos los componentes de la página de álbum
  */
 function initializeAlbumPage() {
+    initializeAudioPlayer();
     setupAlbumEventListeners();
+}
+
+/**
+ * Initialize HTML5 audio player
+ */
+function initializeAudioPlayer() {
+    audioPlayer = new Audio();
+    audioPlayer.addEventListener('ended', () => {
+        console.log('Track finished');
+        // Auto-play next track in album
+        playNextTrack();
+    });
+    audioPlayer.addEventListener('error', (e) => {
+        console.error('Audio player error:', e);
+        alert('Error al reproducir la canción');
+    });
 }
 
 /**
@@ -170,9 +195,99 @@ function handleTrackPlay(event) {
     event.preventDefault();
     const trackItem = event.currentTarget.closest('.track-item');
     const trackName = trackItem.querySelector('.track-name a').textContent;
+    const trackId = trackItem.getAttribute('data-track-id');
+    
+    if (!trackId) {
+        alert('ID de canción no disponible');
+        return;
+    }
+    
+    // Build album tracks array for auto-play
+    buildAlbumTracksArray();
+    
+    // Find current track index
+    currentTrackIndex = albumTracks.findIndex(t => t.trackId === trackId);
     
     showNotification(`Reproduciendo: ${trackName}`, 'info');
-    console.log('Reproduciendo canción:', trackName);
+    playTrack(trackId);
+}
+
+/**
+ * Build album tracks array from DOM
+ */
+function buildAlbumTracksArray() {
+    if (albumTracks.length > 0) return; // Already built
+    
+    const trackItems = document.querySelectorAll('.track-item');
+    albumTracks = Array.from(trackItems).map(item => ({
+        trackId: item.getAttribute('data-track-id'),
+        name: item.querySelector('.track-name a').textContent
+    }));
+}
+
+/**
+ * Play next track in album
+ */
+function playNextTrack() {
+    if (currentTrackIndex < 0 || currentTrackIndex >= albumTracks.length - 1) {
+        console.log('No more tracks to play');
+        return;
+    }
+    
+    currentTrackIndex++;
+    const nextTrack = albumTracks[currentTrackIndex];
+    
+    if (nextTrack && nextTrack.trackId) {
+        showNotification(`Reproduciendo: ${nextTrack.name}`, 'info');
+        playTrack(nextTrack.trackId);
+    }
+}
+
+/**
+ * Fetch and play track from microservice
+ */
+async function playTrack(trackId) {
+    if (!trackId) {
+        alert('ID de canción no disponible');
+        return;
+    }
+
+    try {
+        const url = `${MUSIC_SERVICE_URL}/track/${trackId}`;
+        
+        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
+            console.log(`Fetching track from: ${url}`);
+        }
+
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'audio/*'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Get audio blob
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
+            console.log(`Audio blob received, size: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+        }
+        
+        // Set audio source and play
+        audioPlayer.src = audioUrl;
+        audioPlayer.play();
+        console.log('Playing track:', trackId);
+
+    } catch (error) {
+        console.error('Error playing track:', error);
+        alert(`Error al reproducir: ${error.message}`);
+    }
 }
 
 /**
