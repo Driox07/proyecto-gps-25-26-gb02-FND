@@ -40,7 +40,10 @@ app.add_middleware(
     allow_headers=["*"],  # Permitir todos los headers
 )
 
-app.mount("/static", StaticFiles(directory='static'), name="static")
+# Obtener la ruta absoluta del directorio static
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 def index(request: Request):
@@ -174,28 +177,45 @@ def shop(request: Request,
         all_genres = store_data.get("genres", [])
         all_artists = store_data.get("artists", [])
         
+        print(f"[DEBUG] TPP Response: {len(productos)} productos, {len(all_genres)} géneros, {len(all_artists)} artistas")
+        
     except requests.RequestException as e:
         print(f"Error obteniendo tienda desde TPP: {e}")
         productos = []
         pagination = {}
         all_genres = []
         all_artists = []
+    except Exception as e:
+        print(f"Error inesperado en shop: {e}")
+        import traceback
+        traceback.print_exc()
+        productos = []
+        pagination = {}
+        all_genres = []
+        all_artists = []
 
-    # ===== CREAR MAPEOS para resolver IDs =====
-    artists_map = {a['artistId']: a['artisticName'] for a in all_artists}
-    genres_map = {g['id']: g['name'] for g in all_genres}
+    # ===== CREAR MAPEOS para resolver IDs (manejo seguro) =====
+    artists_map = {}
+    for a in all_artists:
+        if isinstance(a, dict) and 'artistId' in a and 'artisticName' in a:
+            artists_map[a['artistId']] = a['artisticName']
+    
+    genres_map = {}
+    for g in all_genres:
+        if isinstance(g, dict) and 'id' in g and 'name' in g:
+            genres_map[g['id']] = g['name']
 
-    # ===== SEPARAR por tipo =====
-    songs = [p for p in productos if p.get('songId', 0) != 0]
-    albums = [p for p in productos if p.get('albumId', 0) != 0 and p.get('songId', 0) == 0]
-    merch = [p for p in productos if p.get('merchId', 0) != 0]
+    # ===== SEPARAR por tipo (usando nombres de campo con guiones bajos) =====
+    songs = [p for p in productos if p.get('song_id', 0) not in [0, None]]
+    albums = [p for p in productos if p.get('album_id', 0) not in [0, None] and p.get('song_id', 0) in [0, None]]
+    merch = [p for p in productos if p.get('merch_id', 0) not in [0, None]]
 
     print(f"Shop: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
+    print(f"Shop: artists_map={len(artists_map)}, genres_map={len(genres_map)}")
 
     return osv.get_shop_view(
         request, userdata, 
-        songs, all_genres, all_artists, albums, merch,
-        artists_map, genres_map, pagination
+        songs, all_genres, all_artists, albums, merch
     )
 
 @app.get("/cart")
