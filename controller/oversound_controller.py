@@ -304,14 +304,28 @@ def shop(request: Request, artists: str = Query(default=None), genres: str = Que
 
 
 @app.get("/cart")
-def cart(request: Request):
+async def get_cart(request: Request):
     """
-    Ruta del carrito - Renderiza la página del carrito
+    Obtiene los productos del carrito del usuario autenticado
+    Proxea la llamada a TPP GET /cart
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     
-    return osv.get_cart_view(request, userdata, servers.SYU)
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        cart_resp = requests.get(
+            f"{servers.TPP}/cart",
+            timeout=5,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        cart_resp.raise_for_status()
+        return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error obteniendo carrito: {e}")
+        return JSONResponse(content={"error": "No se pudo obtener el carrito"}, status_code=500)
 
 
 @app.get("/giftcard")
