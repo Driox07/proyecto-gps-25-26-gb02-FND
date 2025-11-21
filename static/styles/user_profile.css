@@ -955,48 +955,7 @@ body {
     }
 }
 
-@media (max-width: 480px) {
-    .profile-image,
-    .profile-image-placeholder {
-        width: 120px;
-        height: 120px;
-    }
 
-    .profile-image-placeholder {
-        font-size: 48px;
-    }
-
-    .profile-nickname {
-        font-size: 28px;
-    }
-
-    .profile-fullname {
-        font-size: 18px;
-    }
-
-    .favorites-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .category-title {
-        font-size: 20px;
-    }
-
-    .btn {
-        padding: 10px 20px;
-        font-size: 14px;
-    }
-}
-
-/* ...existing code... */
-.meta-item .meta-line {
-    margin: 0;             /* eliminar margen por defecto */
-    padding: 2px 0;        /* espacio vertical pequeño entre líneas */
-    display: block;        /* asegurar salto de línea */
-    color: var(--muted-color, #666);
-    font-size: 0.95rem;
-}
-/* ...existing code... */
 /* Label Section Styles */
 .label-section {
     padding: 60px 20px;
@@ -1116,4 +1075,8 @@ body {
     color: #666;
     font-size: 1rem;
     margin-bottom: 30px;
+}
+
+#stats-tab h3 {
+    color: #b375ff;
 }

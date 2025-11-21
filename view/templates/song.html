@@ -105,6 +105,58 @@
                     {% else %}
                         <p class="song-description empty" id="song-description">Sin descripción disponible</p>
                     {% endif %}
+
+                    <!-- Statistics Section - Poner los datacos debajo de la descripción ndea-->
+                    {% if stats %}
+                    {% set downloads = stats.downloads|default(stats.total_downloads|default(stats.totalDownloads|default(0))) %}
+                    {% set sales = stats.sales|default(stats.total_sales|default(stats.totalSales|default(0))) %}
+                    {% set plays = stats.playbacks|default(stats.total_playbacks|default(stats.totalPlaybacks|default(0))) %}
+
+                    <hr class="stats-line" style="margin-top:16px; margin-bottom:12px;">
+
+                    <div class="stats-inline" id="stats-inline" role="group" aria-label="Estadísticas"
+                        style="display:flex;flex-direction:row;align-items:center;gap:18px;flex-wrap:nowrap;overflow-x:auto;padding:8px 0;">
+                        <div class="stat-item" title="Descargas" style="display:flex;align-items:center;gap:10px;min-width:120px;">
+                           <div class="stat-icon" aria-hidden="true" style="flex:0 0 auto;">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"></svg>
+                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-width="1.2"></path>
+                                 <polyline points="7 10 12 15 17 10" stroke-width="1.2"></polyline>
+                                 <line x1="12" y1="15" x2="12" y2="3" stroke-width="1.2"></line>
+                              </svg>
+                           </div>
+                           <div class="stat-text" style="display:flex;flex-direction:column;align-items:flex-start;">
+                              <div class="stat-value">{{ "{:,}".format(downloads) }}</div>
+                              <div class="stat-label">Descargas</div>
+                           </div>
+                        </div>
+
+                        <div class="stat-item" title="Ventas" style="display:flex;align-items:center;gap:10px;min-width:120px;">
+                           <div class="stat-icon" aria-hidden="true" style="flex:0 0 auto;">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                 <path d="M6 2l1.5 4h11l-1.4 6H8.1" stroke-width="1.2"></path>
+                                 <circle cx="9" cy="20" r="1.2" stroke-width="1.2"></circle>
+                                 <circle cx="18" cy="20" r="1.2" stroke-width="1.2"></circle>
+                              </svg>
+                           </div>
+                           <div class="stat-text" style="display:flex;flex-direction:column;align-items:flex-start;">
+                              <div class="stat-value">{{ "{:,}".format(sales) }}</div>
+                              <div class="stat-label">Ventas</div>
+                           </div>
+                        </div>
+
+                        <div class="stat-item" title="Reproducciones" style="display:flex;align-items:center;gap:10px;min-width:120px;">
+                           <div class="stat-icon" aria-hidden="true" style="flex:0 0 auto;">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                 <polygon points="5 3 19 12 5 21 5 3" stroke-width="1.2"></polygon>
+                              </svg>
+                           </div>
+                           <div class="stat-text" style="display:flex;flex-direction:column;align-items:flex-start;">
+                              <div class="stat-value">{{ "{:,}".format(plays) }}</div>
+                              <div class="stat-label">Reproducciones</div>
+                           </div>
+                        </div>
+                    </div>
+                    {%endif %}
                 </div>
 
                 <!-- Genres Section -->

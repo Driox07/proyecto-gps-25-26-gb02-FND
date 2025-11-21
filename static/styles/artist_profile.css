@@ -585,6 +585,14 @@ body {
     color: #999;
 }
 
+.stat-block {
+    margin-bottom: 5rem; /* or any spacing you like */
+}
+
+.stat-block:last-child {
+    margin-bottom: 0; /* remove margin for last item */
+}
+
 /* ===== Responsive Design ===== */
 @media (max-width: 768px) {
     .artist-header-content {
@@ -750,3 +758,4 @@ body {
         color: #666;
     }
 }
+

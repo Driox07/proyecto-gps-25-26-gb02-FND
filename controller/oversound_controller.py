@@ -548,8 +548,22 @@ def get_song(request: Request, songId: int):
         tipoUsuario = 0
         if userdata:
             tipoUsuario = 1  # TODO: Implementar lógica para distinguir artista
+
+        metrics = None
+        try:
+            metrics_resp = requests.get(f"{servers.RYE}/statistics/metrics/artist/{songId}", timeout=5)
+            metrics_resp.raise_for_status()
+            metrics_data = metrics_resp.json()  
+            metrics = {
+                "sales": metrics_data.get("sales", 0),
+                "downloads": metrics_data.get("downloads", 0),
+                "playbacks": metrics_data.get("playbacks", 0)
+            }
+        except requests.RequestException as e:
+            print(f"Error obteniendo métricas del artista: {e}")
+            metrics = {"playbacks": 0, "sales": 0, "downloads": 0}
         
-        return osv.get_song_view(request, song_data, tipoUsuario, userdata, isLiked, inCarrito, servers.SYU)
+        return osv.get_song_view(request, song_data, tipoUsuario, userdata, isLiked, inCarrito, servers.SYU, metrics)
         
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
@@ -1546,8 +1560,22 @@ def get_artist_profile(request: Request, artistId: int):
             except requests.RequestException as e:
                 print(f"Error obteniendo merchandising del artista: {e}")
                 artist_data['owner_merch'] = []
+
+        metrics = None
+        try:
+            metrics_resp = requests.get(f"{servers.RYE}/statistics/metrics/artist/{artistId}", timeout=5)
+            metrics_resp.raise_for_status()
+            metrics_data = metrics_resp.json()  # Expecting JSON like {"playbacks": 123, "songs": 5, "popularity": 12}
+            metrics = {
+                "playbacks": metrics_data.get("playbacks", 0),
+                "songs": metrics_data.get("songs", 0),
+                "popularity": metrics_data.get("popularity", None)
+            }
+        except requests.RequestException as e:
+            print(f"Error obteniendo métricas del artista: {e}")
+            metrics = {"playbacks": 0, "songs": 0, "popularity": None}
         
-        return osv.get_artist_profile_view(request, artist_data, userdata, is_own_profile, servers.SYU)
+        return osv.get_artist_profile_view(request, artist_data, userdata, is_own_profile, servers.SYU, metrics)
         
     except requests.RequestException as e:
         print(f"Error obteniendo perfil del artista: {e}")
