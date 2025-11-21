@@ -337,10 +337,20 @@
 
     <script>
         // Configuración de servidores para JavaScript
-        const SERVER_CONFIG = {
-            SYU: "{{ syu_server }}",
-            TYA: "{{ tya_server }}"
+        window.SERVER_CONFIG = {
+            SYU: "{{ syu_server if syu_server else '' }}",
+            TYA: "{{ tya_server if tya_server else '' }}"
         };
+        
+        // Datos del usuario para JavaScript
+        window.userData = {
+            userId: {% if user and user.userId %}{{ user.userId }}{% elif data and data.userdata and data.userdata.userId %}{{ data.userdata.userId }}{% else %}null{% endif %},
+            username: "{% if user and user.username %}{{ user.username }}{% elif data and data.userdata and data.userdata.username %}{{ data.userdata.username }}{% else %}{% endif %}",
+            artistId: {% if user and user.artistId %}{{ user.artistId }}{% elif data and data.userdata and data.userdata.artistId %}{{ data.userdata.artistId }}{% else %}null{% endif %}
+        };
+        
+        console.log('Template loaded with userData:', window.userData);
+        console.log('SERVER_CONFIG:', window.SERVER_CONFIG);
     </script>
     <script src="{{ url_for('static', path='js/UserProfile.js') }}"></script>
 </body>

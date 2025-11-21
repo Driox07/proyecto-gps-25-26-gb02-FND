@@ -524,10 +524,50 @@ if (!document.querySelector('style[data-notification-styles]')) {
  */
 async function loadArtistInfo() {
     const artistContent = document.getElementById('artist-content');
-    if (!artistContent) return;
+    if (!artistContent) {
+        console.log('Artist content element not found');
+        return;
+    }
 
-    // Por ahora mostramos estado sin artista hasta que el backend implemente el endpoint
-    displayNoArtist();
+    console.log('Loading artist info...');
+    console.log('userData:', window.userData);
+    console.log('SERVER_CONFIG:', window.SERVER_CONFIG);
+
+    // Verificar si el usuario tiene artistId
+    if (!window.userData || !window.userData.artistId) {
+        console.log('No artistId found for user. userData:', window.userData);
+        displayNoArtist();
+        return;
+    }
+
+    console.log('Artist ID found:', window.userData.artistId);
+
+    // Si tiene artistId, cargar información del artista
+    try {
+        const url = `${SERVER_CONFIG.TYA}/artist/${window.userData.artistId}`;
+        console.log('Fetching artist data from:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        console.log('Response status:', response.status);
+
+        if (response.ok) {
+            const artistData = await response.json();
+            console.log('Artist data loaded:', artistData);
+            displayExistingArtist(artistData);
+        } else {
+            console.log('Response not OK, displaying no artist');
+            displayNoArtist();
+        }
+    } catch (error) {
+        console.error('Error loading artist info:', error);
+        displayArtistError();
+    }
     
     // TODO: Cuando TYA implemente el endpoint /artist/by-user/{userId}, descomentar:
     /*

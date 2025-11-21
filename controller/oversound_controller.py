@@ -554,7 +554,7 @@ def get_song(request: Request, songId: int):
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
         print(e)
-        return osv.get_error_view(request, userdata, f"No se pudo cargar la canción")
+        return osv.get_error_view(request, userdata, f"No se pudo cargar la canción", str(e))
 
 
 @app.get("/album/{albumId}")
@@ -665,7 +665,7 @@ def get_album(request: Request, albumId: int):
         
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
-        return osv.get_error_view(request, userdata, f"No se pudo cargar el álbum")
+        return osv.get_error_view(request, userdata, f"No se pudo cargar el álbum", str(e))
 
 @app.get("/merch/{merchId}")
 def get_merch(request: Request, merchId: int):
@@ -725,7 +725,7 @@ def get_merch(request: Request, merchId: int):
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
         print(e)
-        return osv.get_error_view(request, userdata, f"No se pudo cargar el producto de merchandising")
+        return osv.get_error_view(request, userdata, f"No se pudo cargar el producto de merchandising", str(e))
 
 
 @app.get("/label/{labelId}")
@@ -763,7 +763,7 @@ def get_label(request: Request, labelId: int):
         
     except requests.RequestException as e:
         print(e)
-        return osv.get_error_view(request, userdata, "No se pudo cargar la discográfica")
+        return osv.get_error_view(request, userdata, "No se pudo cargar la discográfica", str(e))
 
 
 @app.get("/label/create")
@@ -809,13 +809,13 @@ def get_label_edit(request: Request, labelId: int):
         
         # Verificar que sea propietario
         if label_data.get('ownerId') != userdata.get('userId'):
-            return osv.get_error_view(request, userdata, "No tienes permisos para editar esta discográfica")
+            return osv.get_error_view(request, userdata, "No tienes permisos para editar esta discográfica", "")
         
         return osv.get_label_create_view(request, label_data, userdata, servers.SYU)
         
     except requests.RequestException as e:
         print(e)
-        return osv.get_error_view(request, userdata, "No se pudo cargar la discográfica")
+        return osv.get_error_view(request, userdata, "No se pudo cargar la discográfica", str(e))
 
 
 @app.post("/label/create")
@@ -1116,7 +1116,7 @@ def get_profile(request: Request):
         
     except Exception as e:
         print(e)
-        return osv.get_error_view(request, userdata, "No se pudo cargar el perfil")
+        return osv.get_error_view(request, userdata, "No se pudo cargar el perfil", str(e))
 
 
 @app.get("/profile/{username}")
@@ -1170,7 +1170,7 @@ def get_user_profile(request: Request, username: str):
         )
         
     except requests.RequestException as e:
-        return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del usuario")
+        return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del usuario", str(e))
 
 
 # ===================== CART ENDPOINTS =====================
@@ -1398,6 +1398,88 @@ async def remove_favorite(request: Request, content_type: str, content_id: int):
         print(f"Error eliminando de favoritos: {e}")
         return JSONResponse(content={"error": "No se pudo eliminar de favoritos"}, status_code=500)
 
+
+# ===================== ARTIST CREATE ROUTES =====================
+@app.get("/artist/create")
+def artist_create_page(request: Request):
+    """
+    Ruta para mostrar la página de crear perfil de artista
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar si el usuario ya tiene un perfil de artista
+    if userdata.get('artistId'):
+        return RedirectResponse(f"/artist/{userdata.get('artistId')}")
+    
+    return osv.get_artist_create_view(request, userdata, servers.SYU)
+
+
+@app.post("/artist/create")
+async def create_artist(request: Request):
+    """
+    Ruta para procesar la creación de un perfil de artista
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    # Verificar si el usuario ya tiene un perfil de artista
+    if userdata.get('artistId'):
+        return JSONResponse(content={"error": "Ya tienes un perfil de artista"}, status_code=400)
+    
+    try:
+        body = await request.json()
+        
+        # Agregar el ID del usuario
+        body['userId'] = userdata.get('userId')
+        
+        # Enviar a TYA para crear el artista
+        artist_resp = requests.post(
+            f"{servers.TYA}/artist/upload",
+            json=body,
+            timeout=15,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        
+        if artist_resp.ok:
+            artist_data = artist_resp.json()
+            artist_id = artist_data.get('artistId')
+            
+            # Actualizar el usuario en SYU con el relatedArtist
+            try:
+                user_update_resp = requests.patch(
+                    f"{servers.SYU}/user/{userdata.get('username')}",
+                    json={"relatedArtist": artist_id},
+                    timeout=5,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                
+                if not user_update_resp.ok:
+                    print(f"Advertencia: No se pudo actualizar el usuario con relatedArtist. Status: {user_update_resp.status_code}")
+                    # No fallar la operación, el artista ya fue creado
+            except requests.RequestException as e:
+                print(f"Advertencia: Error al actualizar usuario con relatedArtist: {e}")
+                # No fallar la operación, el artista ya fue creado
+            
+            return JSONResponse(content={
+                "message": "Perfil de artista creado exitosamente",
+                "artistId": artist_id
+            })
+        else:
+            error_data = artist_resp.json() if artist_resp.text else {"error": "Error desconocido"}
+            return JSONResponse(content=error_data, status_code=artist_resp.status_code)
+    
+    except Exception as e:
+        print(f"Error creando perfil de artista: {e}")
+        return JSONResponse(content={"error": "Error al crear el perfil de artista"}, status_code=500)
+
+
 # ===================== ARTIST PROFILE ROUTES =====================
 @app.get("/artist/{artistId}")
 def get_artist_profile(request: Request, artistId: int):
@@ -1469,7 +1551,8 @@ def get_artist_profile(request: Request, artistId: int):
         
     except requests.RequestException as e:
         print(f"Error obteniendo perfil del artista: {e}")
-        return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del artista")
+        return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del artista", str(e))
+
 
 
 # ===================== UPLOAD ROUTES =====================
@@ -1486,7 +1569,7 @@ def upload_song_page(request: Request):
     
     # Verificar que el usuario sea un artista
     if not userdata.get('artistId'):
-        return osv.get_error_view(request, userdata, "Debes ser un artista para subir canciones")
+        return osv.get_error_view(request, userdata, "Debes ser un artista para subir canciones", "")
     
     return osv.get_upload_song_view(request, userdata)
 
@@ -1547,7 +1630,7 @@ def upload_album_page(request: Request):
     
     # Verificar que el usuario sea un artista
     if not userdata.get('artistId'):
-        return osv.get_error_view(request, userdata, "Debes ser un artista para crear álbumes")
+        return osv.get_error_view(request, userdata, "Debes ser un artista para crear álbumes", "")
     
     return osv.get_upload_album_view(request, userdata)
 
@@ -1609,7 +1692,7 @@ def upload_merch_page(request: Request):
     
     # Verificar que el usuario sea un artista
     if not userdata.get('artistId'):
-        return osv.get_error_view(request, userdata, "Debes ser un artista para subir merchandising")
+        return osv.get_error_view(request, userdata, "Debes ser un artista para subir merchandising", "")
     
     return osv.get_upload_merch_view(request, userdata)
 
@@ -1663,16 +1746,16 @@ async def upload_merch(request: Request):
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
-    return osv.get_error_view(request, userdata, "Te has columpiado con la URL")
+    return osv.get_error_view(request, userdata, "Te has columpiado con la URL", str(exc))
 
 @app.exception_handler(500)
 def internal_server_error_handler(request: Request, exc: Exception):
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
-    return osv.get_error_view(request, userdata, "Algo ha salido mal")
+    return osv.get_error_view(request, userdata, "Algo ha salido mal", str(exc))
 
 @app.exception_handler(422)
 def unproc_content_error_handler(request: Request, exce: Exception):
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
-    return osv.get_error_view(request, userdata, "Te has columpiado")
+    return osv.get_error_view(request, userdata, "Te has columpiado", str(exce))
