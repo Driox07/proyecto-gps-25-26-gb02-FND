@@ -54,10 +54,13 @@ class View():
             artists_map = {}
         if genres_map is None:
             genres_map = {}
-        data = {"userdata": userdata, "songs": songs, "albums": albums, "merch": merch}
+        data = {"userdata": userdata}
         return templates.TemplateResponse("shop.html", {
             "request": request, 
-            "data": data, 
+            "data": data,
+            "songs": songs,
+            "albums": albums,
+            "merch": merch,
             "genres": genres,
             "artists": artistas,
             "artists_map": artists_map, 
