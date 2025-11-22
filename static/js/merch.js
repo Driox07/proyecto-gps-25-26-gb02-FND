@@ -2,7 +2,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     setupButtonListeners();
     setupAnimations();
-    checkMerchFavoriteStatus();
 });
 
 /**
@@ -79,18 +78,22 @@ function setupButtonListeners() {
     // Favorite button
     const favoriteButton = document.getElementById('favorite-button');
     if (favoriteButton) {
-        favoriteButton.addEventListener('click', () => {
-            const merchId = window.location.pathname.split('/').pop();
-            if (!merchId) {
-                alert('ID de mercancía no disponible');
-                return;
-            }
-            if (typeof toggleFavoriteMerch === 'function') {
-                toggleFavoriteMerch(parseInt(merchId), favoriteButton);
-            } else {
-                alert('Los favoritos de mercancía aún no están disponibles');
-            }
-        });
+        // If the element has data-fav-merch, favorites.js will already attach
+        // the handler — avoid duplicate listeners which cause double requests
+        if (!favoriteButton.dataset || !favoriteButton.dataset.favMerch) {
+            favoriteButton.addEventListener('click', () => {
+                const merchId = window.location.pathname.split('/').pop();
+                if (!merchId) {
+                    alert('ID de mercancía no disponible');
+                    return;
+                }
+                if (typeof toggleFavoriteMerch === 'function') {
+                    toggleFavoriteMerch(parseInt(merchId), favoriteButton);
+                } else {
+                    alert('Los favoritos de mercancía aún no están disponibles');
+                }
+            });
+        }
     }
 
     // Delete button
@@ -217,28 +220,6 @@ function setupAnimations() {
         imageContainer.addEventListener('mouseleave', () => {
             imageContainer.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
         });
-    }
-}
-
-/**
- * Check if the current merch is in favorites and update button state
- */
-async function checkMerchFavoriteStatus() {
-    const favoriteButton = document.getElementById('favorite-button');
-    if (!favoriteButton) return;
-    
-    const merchId = window.location.pathname.split('/').pop();
-    if (!merchId || isNaN(merchId)) return;
-    
-    try {
-        if (typeof isMerchFavorited === 'function') {
-            const isFavorited = await isMerchFavorited(parseInt(merchId));
-            if (typeof updateFavoriteButtonState === 'function') {
-                updateFavoriteButtonState(favoriteButton, isFavorited);
-            }
-        }
-    } catch (error) {
-        console.error('Error checking merch favorite status:', error);
     }
 }
 

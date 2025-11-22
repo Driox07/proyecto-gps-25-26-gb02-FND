@@ -327,7 +327,13 @@ async function getFavoriteMerch() {
 async function isSongFavorited(songId) {
     try {
         const favorites = await getFavoriteSongs();
-        return favorites.some(song => song.id === songId);
+        // SYU API returns an array of ids (integers) but some endpoints might
+        // return objects with an `id` field. Be robust and accept both.
+        return favorites.some(item => {
+            if (typeof item === 'number') return item === songId;
+            if (item && (item.id !== undefined)) return item.id === songId;
+            return false;
+        });
     } catch (error) {
         console.error('Error verificando si es favorito:', error);
         return false;
@@ -342,7 +348,11 @@ async function isSongFavorited(songId) {
 async function isAlbumFavorited(albumId) {
     try {
         const favorites = await getFavoriteAlbums();
-        return favorites.some(album => album.id === albumId);
+        return favorites.some(item => {
+            if (typeof item === 'number') return item === albumId;
+            if (item && (item.id !== undefined)) return item.id === albumId;
+            return false;
+        });
     } catch (error) {
         console.error('Error verificando si es favorito:', error);
         return false;
@@ -357,7 +367,11 @@ async function isAlbumFavorited(albumId) {
 async function isMerchFavorited(merchId) {
     try {
         const favorites = await getFavoriteMerch();
-        return favorites.some(merch => merch.id === merchId);
+        return favorites.some(item => {
+            if (typeof item === 'number') return item === merchId;
+            if (item && (item.id !== undefined)) return item.id === merchId;
+            return false;
+        });
     } catch (error) {
         console.error('Error verificando si es favorito:', error);
         return false;
@@ -422,7 +436,7 @@ function showFavoritesNotification(message, type = 'info') {
  * Inicializa event listeners para botones de favorito
  * Se debe llamar cuando el DOM esté listo
  */
-function initializeFavoriteButtons() {
+async function initializeFavoriteButtons() {
     // Botones de favorito para canciones
     const favoriteSongButtons = document.querySelectorAll('[data-fav-song]');
     favoriteSongButtons.forEach(button => {
@@ -433,6 +447,24 @@ function initializeFavoriteButtons() {
             toggleFavoriteSong(songId, button);
         });
     });
+
+    // Ajustar estado visual inicial para botones de canción
+    try {
+        const songIds = Array.from(favoriteSongButtons).map(b => parseInt(b.dataset.favSong)).filter(Boolean);
+        if (songIds.length) {
+            const favs = await getFavoriteSongs();
+            favoriteSongButtons.forEach(button => {
+                const id = parseInt(button.dataset.favSong);
+                let isFav = false;
+                if (favs && favs.length) {
+                    isFav = favs.some(item => (typeof item === 'number' ? item === id : (item && item.id !== undefined ? item.id === id : false)));
+                }
+                updateFavoriteButtonState(button, isFav);
+            });
+        }
+    } catch (e) {
+        console.warn('Error inicializando estados de canciones favoritos:', e);
+    }
 
     // Botones de favorito para álbumes
     const favoriteAlbumButtons = document.querySelectorAll('[data-fav-album]');
@@ -445,6 +477,24 @@ function initializeFavoriteButtons() {
         });
     });
 
+    // Ajustar estado visual inicial para botones de álbum
+    try {
+        const albumIds = Array.from(favoriteAlbumButtons).map(b => parseInt(b.dataset.favAlbum)).filter(Boolean);
+        if (albumIds.length) {
+            const favs = await getFavoriteAlbums();
+            favoriteAlbumButtons.forEach(button => {
+                const id = parseInt(button.dataset.favAlbum);
+                let isFav = false;
+                if (favs && favs.length) {
+                    isFav = favs.some(item => (typeof item === 'number' ? item === id : (item && item.id !== undefined ? item.id === id : false)));
+                }
+                updateFavoriteButtonState(button, isFav);
+            });
+        }
+    } catch (e) {
+        console.warn('Error inicializando estados de álbumes favoritos:', e);
+    }
+
     // Botones de favorito para artistas
     const favoriteArtistButtons = document.querySelectorAll('[data-fav-artist]');
     favoriteArtistButtons.forEach(button => {
@@ -456,6 +506,24 @@ function initializeFavoriteButtons() {
         });
     });
 
+    // Ajustar estado visual inicial para botones de artista
+    try {
+        const artistIds = Array.from(favoriteArtistButtons).map(b => parseInt(b.dataset.favArtist)).filter(Boolean);
+        if (artistIds.length) {
+            const favs = await getFavoriteArtists();
+            favoriteArtistButtons.forEach(button => {
+                const id = parseInt(button.dataset.favArtist);
+                let isFav = false;
+                if (favs && favs.length) {
+                    isFav = favs.some(item => (typeof item === 'number' ? item === id : (item && item.id !== undefined ? item.id === id : false)));
+                }
+                updateFavoriteButtonState(button, isFav);
+            });
+        }
+    } catch (e) {
+        console.warn('Error inicializando estados de artistas favoritos:', e);
+    }
+
     // Botones de favorito para mercancía
     const favoriteMerchButtons = document.querySelectorAll('[data-fav-merch]');
     favoriteMerchButtons.forEach(button => {
@@ -466,7 +534,25 @@ function initializeFavoriteButtons() {
             toggleFavoriteMerch(merchId, button);
         });
     });
+
+    // Ajustar estado visual inicial para botones de merch
+    try {
+        const merchIds = Array.from(favoriteMerchButtons).map(b => parseInt(b.dataset.favMerch)).filter(Boolean);
+        if (merchIds.length) {
+            const favs = await getFavoriteMerch();
+            favoriteMerchButtons.forEach(button => {
+                const id = parseInt(button.dataset.favMerch);
+                let isFav = false;
+                if (favs && favs.length) {
+                    isFav = favs.some(item => (typeof item === 'number' ? item === id : (item && item.id !== undefined ? item.id === id : false)));
+                }
+                updateFavoriteButtonState(button, isFav);
+            });
+        }
+    } catch (e) {
+        console.warn('Error inicializando estados de mercancía favoritos:', e);
+    }
 }
 
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', initializeFavoriteButtons);
+    // Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => { initializeFavoriteButtons().catch(e => console.error(e)); });

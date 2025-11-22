@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeAudioPlayer();
     setupButtonListeners();
     setupAnimations();
-    checkSongFavoriteStatus();
 });
 
 /**
@@ -203,14 +202,21 @@ function setupButtonListeners() {
     // Favorite button
     const favoriteButton = document.getElementById('favorite-button');
     if (favoriteButton) {
-        favoriteButton.addEventListener('click', () => {
-            const songId = getTrackId();
-            if (!songId) {
-                alert('ID de canción no disponible');
-                return;
-            }
-            toggleFavoriteSong(songId, favoriteButton);
-        });
+        // If the template already sets data-fav-song we rely on the shared
+        // favorites.js initializer to attach the click handler to avoid
+        // duplicate requests and double notifications.
+        if (!favoriteButton.dataset || !favoriteButton.dataset.favSong) {
+            favoriteButton.addEventListener('click', () => {
+                // Prefer explicit dataset if set by the template, otherwise fall back to URL
+                const songId = favoriteButton.dataset && favoriteButton.dataset.favSong ? favoriteButton.dataset.favSong : getSongIdFromUrl();
+                if (!songId) {
+                    alert('ID de canción no disponible');
+                    return;
+                }
+                toggleFavoriteSong(songId, favoriteButton);
+            });
+        }
+    }
     }
 
     // Delete button
@@ -337,26 +343,6 @@ function setupAnimations() {
         coverContainer.addEventListener('mouseleave', () => {
             coverContainer.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
         });
-    }
-}
-
-/**
- * Check if the current song is in favorites and update button state
- */
-async function checkSongFavoriteStatus() {
-    const favoriteButton = document.getElementById('favorite-button');
-    if (!favoriteButton) return;
-    
-    const songId = getTrackId();
-    if (!songId) return;
-    
-    try {
-        const isFavorited = await isSongFavorited(parseInt(songId));
-        if (typeof updateFavoriteButtonState === 'function') {
-            updateFavoriteButtonState(favoriteButton, isFavorited);
-        }
-    } catch (error) {
-        console.error('Error checking favorite status:', error);
     }
 }
 
