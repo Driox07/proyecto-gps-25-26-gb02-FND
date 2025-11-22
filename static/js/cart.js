@@ -104,8 +104,20 @@ async function loadCartFromServer() {
  * Elimina un producto del servidor
  */
 async function removeProductFromServer(productId, productType) {
+    const url = `/cart/${productId}?type=${productType}`;
+    console.log('Enviando petición DELETE a:', url);
+    console.log('ProductId:', productId, 'ProductType:', productType);
+    console.log('Configuración de fetch - credentials: include');
+    
+    // Verificar si hay cookie de auth
+    const authCookie = document.cookie.split(';').find(c => c.trim().startsWith('oversound_auth='));
+    console.log('Cookie oversound_auth presente:', !!authCookie);
+    if (authCookie) {
+        console.log('Valor de cookie (mascarado):', authCookie.split('=')[1].substring(0, 10) + '...');
+    }
+    
     try {
-        const response = await fetch(`/cart/${productId}?type=${productType}`, {
+        const response = await fetch(url, {
             method: 'DELETE',
             credentials: 'include',
             headers: {
@@ -113,17 +125,19 @@ async function removeProductFromServer(productId, productType) {
             }
         });
 
+        console.log('Respuesta del servidor - Status:', response.status);
+        
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             console.error('Error eliminando del servidor:', errorData);
             return false;
         }
 
-        console.log('Producto eliminado del servidor');
+        console.log('Producto eliminado del servidor exitosamente');
         return true;
 
     } catch (error) {
-        console.error('Error eliminando producto:', error);
+        console.error('Error en la petición:', error);
         return false;
     }
 }
@@ -172,27 +186,42 @@ function createCartItemElement(item, index) {
     const totalPrice = price.toFixed(2);
 
     // Obtener URL de imagen
-    const imageUrl = item.cover || 'https://via.placeholder.com/120?text=Producto';
+    let imageUrl = '';
+    const isValidCover = item.cover && (item.cover.startsWith('data:') || item.cover.startsWith('/static/') || item.cover.startsWith('/'));
+    
+    if (item.song_id) {
+        imageUrl = isValidCover ? item.cover : '/static/img/utils/default-song.svg';
+    } else if (item.album_id) {
+        imageUrl = isValidCover ? item.cover : '/static/img/utils/default-album.svg';
+    } else if (item.merch_id) {
+        imageUrl = isValidCover ? item.cover : '/static/img/utils/default-merch.svg';
+    } else {
+        imageUrl = '/static/img/utils/default-song.svg'; // fallback
+    }
 
     // Determinar tipo de producto
     let productType = 'Producto';
     let productId = null;
+    let typeParam = null;
     
-    if (item.songId) {
+    if (item.song_id) {
         productType = 'song';
-        productId = item.songId;
-    } else if (item.albumId) {
+        productId = item.song_id;
+        typeParam = '0';
+    } else if (item.album_id) {
         productType = 'album';
-        productId = item.albumId;
-    } else if (item.merchId) {
+        productId = item.album_id;
+        typeParam = '1';
+    } else if (item.merch_id) {
         productType = 'merch';
-        productId = item.merchId;
+        productId = item.merch_id;
+        typeParam = '2';
     }
 
     const productTypeLabel = productType === 'song' ? 'Canción' : productType === 'album' ? 'Álbum' : 'Merchandising';
 
     div.innerHTML = `
-        <img src="${imageUrl}" alt="${item.name}" class="cart-item-image" onerror="this.src='https://via.placeholder.com/120?text=Sin+Imagen'">
+        <img src="${imageUrl}" alt="${item.name}" class="cart-item-image">
         
         <div class="cart-item-info">
             <h3 class="cart-item-name">${item.name}</h3>
@@ -202,14 +231,14 @@ function createCartItemElement(item, index) {
 
         <div class="cart-item-controls">
             <div class="cart-item-total">€${totalPrice}</div>
-            <button class="btn-remove" data-index="${index}" data-product-id="${productId}" data-product-type="${productType}">Eliminar</button>
+            <button class="btn-remove" data-index="${index}" data-product-id="${productId}" data-product-type="${typeParam}">Eliminar</button>
         </div>
     `;
 
     // Event listener para el botón de eliminar
     const removeBtn = div.querySelector('.btn-remove');
     if (removeBtn) {
-        removeBtn.addEventListener('click', () => openDeleteModal(index, productId, productType));
+        removeBtn.addEventListener('click', () => openDeleteModal(index, productId, typeParam));
     }
 
     return div;
