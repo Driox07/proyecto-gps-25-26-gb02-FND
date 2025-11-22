@@ -1,6 +1,7 @@
 // Song Page - Interactive Features
 // Configuration for the music microservice (defined in config.js)
-const MUSIC_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.musicService.url : 'http://localhost:8080';
+const MUSIC_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.musicService.url : 'http://localhost:8080'; // TO DO ????
+const STATS_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.statsService.url : 'http://10.1.1.9:8084'; 
 
 // Global audio player instance
 let audioPlayer = null;
@@ -48,6 +49,68 @@ function getTrackId() {
         return playButton.getAttribute('data-track-id');
     }
     return null;
+}
+
+function getSongId() {
+    const playButton = document.getElementById('play-button');
+        if (playButton) {
+        return playButton.getAttribute('data-song-id');
+        }
+    return null;
+}
+
+function getArtistId() {
+    const playButton = document.getElementById('play-button');
+        if (playButton) {
+            return playButton.getAttribute('artist-id');
+        }
+    return null
+}
+
+async function addStats(songId, artistId) {
+    if (!songId) {
+        console.warn("Song ID missing for stats");
+        return;
+    }
+
+    if (!artistId) {
+        console.warn("Artist ID missing for stats");
+        return;
+    }
+
+    async function sendStat(url, subjectId, label) {
+        try {
+            const body = {
+                subjectId,
+                playbacks: 1,
+                startDate: new Date().toISOString()
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                credentials: 'include', // Cookie auth
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+
+            if (CONFIG?.debug?.logging) {
+                console.log(`Estadísticas de ${label} enviadas:`, body);
+            }
+
+        } catch (error) {
+            console.error(`Error enviando estadísticas de ${label}:`, error);
+        }
+    }
+
+    await sendStat(`${STATS_SERVICE_URL}/history/songs`, songId, "canción");
+    await sendStat(`${STATS_SERVICE_URL}/history/artists`, artistId, "artista");
 }
 
 /**
@@ -99,6 +162,11 @@ async function playTrack(trackId) {
         audioPlayer.src = audioUrl;
         audioPlayer.play();
         console.log('Playing track:', trackId);
+        // Stat logic -------------------------
+        const songId = getSongId();
+        const artistId = getArtistId();
+        addStats(songId, artistId);
+        // ------------------------------------
 
     } catch (error) {
         console.error('Error playing track:', error);
@@ -116,11 +184,13 @@ function setupButtonListeners() {
         playButton.addEventListener('click', () => {
             const songTitle = document.getElementById('song-title').textContent;
             const trackId = getTrackId();
+
             
             if (!trackId) {
                 alert('ID de canción no disponible');
                 return;
             }
+
             
             if (audioPlayer.paused) {
                 if (!audioPlayer.src) {

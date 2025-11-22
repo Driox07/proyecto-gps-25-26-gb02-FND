@@ -74,9 +74,9 @@ class View():
     def get_songs_view(self, request: Request, songs):
         return templates.TemplateResponse("main/index.html", {"request" :request, "songs" : songs})
     
-    def get_song_view(self, request: Request, song_info : dict, tipoUsuario: int, user, isLiked: bool, inCarrito: bool, syu_server: str = None):
+    def get_song_view(self, request: Request, song_info : dict, tipoUsuario: int, user : dict, isLiked: bool, inCarrito: bool, syu_server: str = None, metrics: dict = None):
         data = {"userdata": user, "syu_server": syu_server, "song": song_info}
-        return templates.TemplateResponse("song.html", {"request": request, "data": data, "tipoUsuario": tipoUsuario, "isLiked": isLiked, "inCarrito": inCarrito})
+        return templates.TemplateResponse("song.html", {"request": request, "data": data, "tipoUsuario": tipoUsuario, "user": user, "isLiked": isLiked, "inCarrito": inCarrito, "stats": metrics})
 
     def get_edit_song_view(self, request: Request, song_info):
         return templates.TemplateResponse("music/song-edit.html", {"request": request, "song": song_info})    
@@ -169,13 +169,14 @@ class View():
         return templates.TemplateResponse("main/search.html", {"request": request, "items": all_items})
     
     # Renderizar la template artist_profile.html
-    def get_artist_profile_view(self, request: Request, artist: dict, userdata: dict, is_own_profile: bool, syu_server: str = None):
+    def get_artist_profile_view(self, request: Request, artist: dict, userdata: dict, is_own_profile: bool, syu_server: str = None, metrics: dict = None):
         data = {"userdata": userdata, "syu_server": syu_server}
         return templates.TemplateResponse("artist_profile.html", {
             "request": request,
             "data": data,
             "artist": artist,
-            "is_own_profile": is_own_profile
+            "is_own_profile": is_own_profile,
+            "stats": metrics
         })
     
     # Renderizar la template artist_studio.html

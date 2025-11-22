@@ -141,6 +141,13 @@
                         </svg>
                         Discográfica
                     </button>
+                    <button class="tab-button" data-tab="stats">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke-width="2"></rect>
+                            <path d="M3 17l6-6 4 4 8-8" stroke-width="2"></path>
+                        </svg>
+                        Estadísticas
+                    </button>
                 </div>
 
                 <!-- Canciones Tab -->
@@ -380,6 +387,28 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Statistics Tab -->
+                <div class="tab-content" id="stats-tab">
+                    <div class="content-header">
+                        <h2>Estadísticas</h2>
+                    </div>
+
+                    <div class="stat-block">
+                        <h3 style="color: #8a75ff;">Reproducciones</h3>
+                        <p style="color: #ffffff;">Las canciones de este artista acumulan un total de {{ stats.playbacks }} reproducciones</p>
+                    </div>
+
+                    <div class="stat-block">
+                        <h3 style="color: #8a75ff;">Número de canciones</h3>
+                        <p style="color: #ffffff;">Este artista tiene un total de {{ stats.songs }}</p>
+                    </div>
+
+                    <div class="stat-block">
+                        <h3 style="color: #8a75ff;">Popularidad</h3>
+                        <p style="color: #ffffff;">Este artista se encuentra en el puesto nº {{ stats.popularity }} de popularidad total</p>
+                    </div>
+
             </div>
         </section>
     </main>
