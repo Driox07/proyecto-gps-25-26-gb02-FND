@@ -1,14 +1,40 @@
 // Album Page Functionality
 
+// Configuration for the music microservice (defined in config.js)
+const MUSIC_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.musicService.url : 'http://localhost:8000';
+
+// Global audio player instance for album page
+let audioPlayer = null;
+let currentTrackIndex = -1;
+let albumTracks = [];
+
 document.addEventListener('DOMContentLoaded', function() {
     initializeAlbumPage();
+    checkAlbumFavoriteStatus();
 });
 
 /**
  * Inicializa todos los componentes de la página de álbum
  */
 function initializeAlbumPage() {
+    initializeAudioPlayer();
     setupAlbumEventListeners();
+}
+
+/**
+ * Initialize HTML5 audio player
+ */
+function initializeAudioPlayer() {
+    audioPlayer = new Audio();
+    audioPlayer.addEventListener('ended', () => {
+        console.log('Track finished');
+        // Auto-play next track in album
+        playNextTrack();
+    });
+    audioPlayer.addEventListener('error', (e) => {
+        console.error('Audio player error:', e);
+        alert('Error al reproducir la canción');
+    });
 }
 
 /**
@@ -55,6 +81,12 @@ function setupAlbumEventListeners() {
             }
         });
     });
+    
+    // Botón de eliminar álbum
+    const deleteAlbumButton = document.getElementById('delete-album-button');
+    if (deleteAlbumButton) {
+        deleteAlbumButton.addEventListener('click', handleDeleteAlbum);
+    }
 }
 
 /**
@@ -91,46 +123,52 @@ function handleBuyAlbum(event) {
 /**
  * Maneja la adición del álbum al carrito
  */
-function handleAddAlbumToCart(event) {
+async function handleAddAlbumToCart(event) {
     event.preventDefault();
     
+    const albumId = getAlbumIdFromUrl();
     const albumTitle = document.querySelector('.album-title').textContent;
-    const albumArtist = document.querySelector('.album-artist a').textContent;
-    const albumPrice = document.getElementById('album-price').textContent;
-    const albumCover = document.querySelector('.album-cover').src;
     
-    // Crear objeto del carrito para el álbum
-    const cartItem = {
-        id: getAlbumIdFromUrl(),
-        type: 'album',
-        name: albumTitle,
-        artist: albumArtist,
-        price: parseFloat(albumPrice.replace('€', '')),
-        image: albumCover,
-        timestamp: new Date().getTime()
-    };
-
-    // Guardar en localStorage
-    let cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
-    
-    // Verificar si el álbum ya está en el carrito
-    const itemExists = cart.some(item => item.id === cartItem.id && item.type === 'album');
-    
-    if (itemExists) {
-        showNotification('Este álbum ya está en tu carrito', 'warning');
+    if (!albumId || albumId === 'unknown') {
+        showNotification('ID de álbum no disponible', 'error');
         return;
     }
 
-    cart.push(cartItem);
-    localStorage.setItem('oversound_cart', JSON.stringify(cart));
+    try {
+        const response = await fetch('/cart', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                songId: null,
+                albumId: parseInt(albumId),
+                merchId: null,
+                unidades: null
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Error del servidor al añadir al carrito:', errorData);
+            showNotification(`Error: ${errorData.error || 'No se pudo añadir al carrito'}`, 'error');
+            return;
+        }
 
-    showNotification(`${albumTitle} añadido al carrito`, 'success');
-    
-    // Animar el botón
-    animateButton(event.currentTarget);
+        showNotification(`${albumTitle} añadido al carrito`, 'success');
+        
+        // Animar el botón
+        animateButton(event.currentTarget);
 
-    // Emitir evento para actualizar el header
-    window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
+        // Emitir evento para actualizar el header
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+        
+    } catch (error) {
+        console.error('Error al añadir al carrito:', error);
+        showNotification('Error al añadir al carrito', 'error');
+    }
 }
 
 /**
@@ -139,19 +177,68 @@ function handleAddAlbumToCart(event) {
 function handleToggleFavorite(event) {
     event.preventDefault();
     const button = event.currentTarget;
-    const isFavorited = button.classList.toggle('favorited');
-
-    if (isFavorited) {
-        showNotification('Álbum añadido a favoritos', 'success');
-        button.style.fill = '#ff6b6b';
-        button.style.color = '#ff6b6b';
-    } else {
-        showNotification('Álbum eliminado de favoritos', 'info');
-        button.style.fill = 'none';
-        button.style.color = 'white';
+    const albumId = getAlbumIdFromUrl();
+    
+    if (!albumId || albumId === 'unknown') {
+        showNotification('ID de álbum no disponible', 'error');
+        return;
     }
+    
+    if (typeof toggleFavoriteAlbum === 'function') {
+        toggleFavoriteAlbum(parseInt(albumId), button);
+    } else {
+        // Fallback to old behavior
+        const isFavorited = button.classList.toggle('favorited');
+        if (isFavorited) {
+            showNotification('Álbum añadido a favoritos', 'success');
+            button.style.fill = '#ff6b6b';
+            button.style.color = '#ff6b6b';
+        } else {
+            showNotification('Álbum eliminado de favoritos', 'info');
+            button.style.fill = 'none';
+            button.style.color = 'white';
+        }
+        animateButton(button);
+    }
+}
 
-    animateButton(button);
+/**
+ * Maneja la eliminación del álbum
+ */
+async function handleDeleteAlbum(event) {
+    event.preventDefault();
+    const button = document.getElementById('delete-album-button');
+    const albumId = button.getAttribute('data-album-id');
+    
+    if (!albumId) {
+        showNotification('ID de álbum no disponible', 'error');
+        return;
+    }
+    
+    if (confirm('¿Estás seguro de que deseas eliminar este álbum? Esta acción no se puede deshacer.')) {
+        try {
+            const response = await fetch(`/album/${albumId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                showNotification('Álbum eliminado exitosamente', 'success');
+                setTimeout(() => {
+                    window.location.href = '/shop';
+                }, 1500);
+            } else {
+                const error = await response.json();
+                showNotification(`Error: ${error.message || 'Error desconocido'}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error eliminando álbum:', error);
+            showNotification('Error al eliminar el álbum', 'error');
+        }
+    }
 }
 
 /**
@@ -170,9 +257,99 @@ function handleTrackPlay(event) {
     event.preventDefault();
     const trackItem = event.currentTarget.closest('.track-item');
     const trackName = trackItem.querySelector('.track-name a').textContent;
+    const trackId = trackItem.getAttribute('data-track-id');
+    
+    if (!trackId) {
+        alert('ID de canción no disponible');
+        return;
+    }
+    
+    // Build album tracks array for auto-play
+    buildAlbumTracksArray();
+    
+    // Find current track index
+    currentTrackIndex = albumTracks.findIndex(t => t.trackId === trackId);
     
     showNotification(`Reproduciendo: ${trackName}`, 'info');
-    console.log('Reproduciendo canción:', trackName);
+    playTrack(trackId);
+}
+
+/**
+ * Build album tracks array from DOM
+ */
+function buildAlbumTracksArray() {
+    if (albumTracks.length > 0) return; // Already built
+    
+    const trackItems = document.querySelectorAll('.track-item');
+    albumTracks = Array.from(trackItems).map(item => ({
+        trackId: item.getAttribute('data-track-id'),
+        name: item.querySelector('.track-name a').textContent
+    }));
+}
+
+/**
+ * Play next track in album
+ */
+function playNextTrack() {
+    if (currentTrackIndex < 0 || currentTrackIndex >= albumTracks.length - 1) {
+        console.log('No more tracks to play');
+        return;
+    }
+    
+    currentTrackIndex++;
+    const nextTrack = albumTracks[currentTrackIndex];
+    
+    if (nextTrack && nextTrack.trackId) {
+        showNotification(`Reproduciendo: ${nextTrack.name}`, 'info');
+        playTrack(nextTrack.trackId);
+    }
+}
+
+/**
+ * Fetch and play track from microservice
+ */
+async function playTrack(trackId) {
+    if (!trackId) {
+        alert('ID de canción no disponible');
+        return;
+    }
+
+    try {
+        const url = `${MUSIC_SERVICE_URL}/track/${trackId}`;
+        
+        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
+            console.log(`Fetching track from: ${url}`);
+        }
+
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'audio/*'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Get audio blob
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
+            console.log(`Audio blob received, size: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+        }
+        
+        // Set audio source and play
+        audioPlayer.src = audioUrl;
+        audioPlayer.play();
+        console.log('Playing track:', trackId);
+
+    } catch (error) {
+        console.error('Error playing track:', error);
+        alert(`Error al reproducir: ${error.message}`);
+    }
 }
 
 /**
@@ -244,6 +421,28 @@ trackItems.forEach(item => {
         this.style.background = 'white';
     });
 });
+
+/**
+ * Check if the current album is in favorites and update button state
+ */
+async function checkAlbumFavoriteStatus() {
+    const favoriteButton = document.getElementById('favorite-album-button');
+    if (!favoriteButton) return;
+    
+    const albumId = getAlbumIdFromUrl();
+    if (!albumId || albumId === 'unknown') return;
+    
+    try {
+        if (typeof isAlbumFavorited === 'function') {
+            const isFavorited = await isAlbumFavorited(parseInt(albumId));
+            if (typeof updateFavoriteButtonState === 'function') {
+                updateFavoriteButtonState(favoriteButton, isFavorited);
+            }
+        }
+    } catch (error) {
+        console.error('Error checking album favorite status:', error);
+    }
+}
 
 // Agregar estilos para animaciones dinámicas
 const style = document.createElement('style');

@@ -173,7 +173,7 @@
                     <div class="songs-grid">
                         {% if artist.owner_songs %}
                             {% for song in artist.owner_songs %}
-                                <div class="song-card">
+                                <div class="song-card" data-track-id="{{ song.trackId }}">
                                     <div class="card-image">
                                         {% if song.cover %}
                                             <img src="{{ song.cover }}" alt="{{ song.title }}">
@@ -185,7 +185,7 @@
                                             </div>
                                         {% endif %}
                                         <div class="card-overlay">
-                                            <a href="/song/{{ song.songId }}" class="play-button">
+                                            <a href="#" class="play-button">
                                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                                                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                                                 </svg>
@@ -413,6 +413,7 @@
         </section>
     </main>
 
+    <script src="{{ url_for('static', path='js/config.js') }}"></script>
     <script src="{{ url_for('static', path='js/ArtistProfile.js') }}"></script>
 </body>
 </html>

@@ -1,0 +1,508 @@
+openapi: 3.0.4
+info:
+  title: Tienda y Pasarela de Pago (TPP)
+  description: Esta es la documentación para la API del Microservicio de Tienda y
+    Pasarela de Pago (TPP) del proyecto OverSounds.
+  version: 2.0.0
+externalDocs:
+  description: Github access
+  url: https://github.com/orgs/UniExtremadura/teams/gb02
+servers:
+- url: http://localhost
+tags:
+- name: store
+  description: Management of store items displayed in the website storefront (catalog).
+- name: payment
+  description: Management of payment methods associated with users.
+- name: cart
+  description: Operations related to user shopping carts.
+paths:
+  /store:
+    get:
+      tags:
+      - store
+      summary: Returns a paginated list of products available items in the storefront.
+      description: Returns a paginated list of products available items in the storefront.
+      operationId: show_storefront_products
+      parameters:
+      - name: page
+        in: query
+        description: Page number (starts at 1)
+        required: false
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+      - name: limit
+        in: query
+        description: Number of items per page
+        required: false
+        schema:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+      responses:
+        "200":
+          description: Products returned successfully with pagination metadata.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 20
+                      total:
+                        type: integer
+                        example: 150
+                      totalPages:
+                        type: integer
+                        example: 8
+                x-content-type: application/json
+        "400":
+          description: Bad request.
+        "500":
+          description: Generic error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-openapi-router-controller: swagger_server.controllers.store_controller
+  /cart:
+    get:
+      tags:
+      - cart
+      summary: Get the products from a user's cart.
+      description: Get the products from a user's cart.
+      operationId: get_cart_products
+      responses:
+        "200":
+          description: List of products in the user's cart.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+                x-content-type: application/json
+        "400":
+          description: Bad request.
+        "500":
+          description: Generic error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+      - oversound_auth:
+        - read:cart
+      x-openapi-router-controller: swagger_server.controllers.cart_controller
+    post:
+      tags:
+      - cart
+      summary: Add a product to the cart.
+      description: Add a product to the cart.
+      operationId: add_to_cart
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/cart_body"
+      responses:
+        "200":
+          description: Product added to cart successfully.
+        "400":
+          description: Bad request.
+        "500":
+          description: Generic error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+      - oversound_auth:
+        - write:cart
+      x-openapi-router-controller: swagger_server.controllers.cart_controller
+  /cart/{productId}:
+    delete:
+      tags:
+      - cart
+      summary: Remove a product from the cart.
+      description: Remove a product from the cart.
+      operationId: remove_from_cart
+      parameters:
+      - name: productId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      - name: type
+        in: query
+        required: true
+        explode: false
+        schema:
+          type: string     
+      responses:
+        "200":
+          description: Product removed from cart successfully.
+        "400":
+          description: Bad request.
+        "404":
+          description: Product not found in cart.
+        "500":
+          description: Generic error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+      - oversound_auth:
+        - write:cart
+        - read:cart
+      x-openapi-router-controller: swagger_server.controllers.cart_controller
+  /payment:
+    get:
+      tags:
+      - payment
+      summary: Returns a list of payment methods for the selected user.
+      description: Returns a list of payment methods for the selected user.
+      operationId: show_user_payment_methods
+      responses:
+        "200":
+          description: Payment methods returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentMethod"
+                x-content-type: application/json
+        "400":
+          description: Bad request.
+        "500":
+          description: Generic error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+      - oversound_auth:
+        - read:payment
+      x-openapi-router-controller: swagger_server.controllers.payment_controller
+    post:
+      tags:
+      - payment
+      summary: Add a new payment method
+      description: Add a new payment method
+      operationId: add_payment_method
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentMethod"
+      responses:
+        "200":
+          description: Payment method successfully added.
+        "400":
+          description: Invalid input.
+        "500":
+          description: Generic error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+      - oversound_auth:
+        - write:payment
+      x-openapi-router-controller: swagger_server.controllers.payment_controller
+  /payment/{paymentMethodId}:
+    delete:
+      tags:
+      - payment
+      summary: Delete a payment method by ID.
+      description: Delete a payment method by ID.
+      operationId: delete_payment_method
+      parameters:
+      - name: paymentMethodId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer   
+      responses:
+        "200":
+          description: Payment method successfully deleted.
+        "400":
+          description: Invalid ID supplied.
+        "404":
+          description: Payment method not found.
+        "500":
+          description: Generic error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+      - oversound_auth:
+        - write:payment
+        - read:payment
+      x-openapi-router-controller: swagger_server.controllers.payment_controller
+  /purchase:
+    post:
+      tags:
+      - purchases
+      summary: Set a product as purchased by the user.
+      description: Set a product as purchased by the user.
+      operationId: set_purchase
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Purchase"
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  purchaseId:
+                    type: integer
+                    example: 100
+        "422":
+          description: Validation exception
+        "500":
+          description: Generic error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+      - oversound_auth:
+        - write:purchases
+      x-openapi-router-controller: swagger_server.controllers.purchases_controller
+components:
+  schemas:
+    Product:
+      required:
+      - artist
+      - colaborators
+      - cover
+      - releaseDate
+      - description
+      - name
+      - price
+      type: object
+      properties:
+        songId:
+          type: integer
+          description: ID of the Song (NULL if not song)
+          example: 0
+        albumId:
+          type: integer
+          description: ID of the Album (NULL if not album)
+          example: 0
+        merchId:
+          type: integer
+          description: ID of the Merch (NULL if not merch)
+          example: 0
+        name:
+          type: string
+          description: Name of the product
+          example: California Girls
+        price:
+          type: number
+          description: Price of the Song
+          format: float
+          example: 10.99
+        description:
+          type: string
+          description: Description of the product
+          example: CELEBRATING TEN YEARS OF TEENAGE DREAM!! REMASTERED IN 4K!
+        artist:
+          type: integer
+          description: ID of the Artist that the product belongs to
+          example: 0
+        colaborators:
+          type: array
+          description: List of IDs of Artists who collaborated on the product (only
+            song and album)
+          example:
+          - 1
+          - 2
+          items:
+            type: integer
+        releaseDate:
+          type: string
+          description: Date of release of the Song
+          format: date-time
+          example: 2010-01-15T10:30:00Z
+        duration:
+          type: integer
+          description: Duration of song in seconds (null if not a song)
+          format: int32
+          example: 10
+        genre:
+          type: integer
+          description: ID of the primary genre of a song (null if not song or album)
+          example: 0
+        cover:
+          type: string
+          description: base64 image of the cover
+          example: "data:image/png;base64,iVBORw0KGgoAAAAN..."
+        songList:
+          type: array
+          description: List of the names of songs that an Album has (null if not album)
+          example:
+          - Album 1
+          - Album 2
+          - Album 3
+          items:
+            type: integer
+      description: "A product on the store, that can be either a song, album or merch."
+      example:
+        artist: 0
+        releaseDate: 2010-01-15T10:30:00Z
+        albumId: 0
+        description: CELEBRATING TEN YEARS OF TEENAGE DREAM!! REMASTERED IN 4K!
+        songList:
+        - 1
+        - 2
+        - 3
+        merchId: 0
+        duration: 10
+        cover: "data:image/png;base64,iVBORw0KGgoAAAAN..."
+        price: 10.99
+        name: California Girls
+        genre: 0
+        colaborators:
+        - 1
+        - 2
+        songId: 0
+    PaymentMethod:
+      required:
+      - cardHolder
+      - cardNumber
+      - expireMonth
+      - expireYear
+      type: object
+      properties:
+        cardNumber:
+          type: string
+          description: Masked card number.
+          example: '**** **** **** 1234'
+        expireMonth:
+          maximum: 12
+          minimum: 1
+          type: integer
+          description: Expire month of the card.
+          example: 12
+        expireYear:
+          type: integer
+          description: Expire year of the card.
+          example: 2030
+        cardHolder:
+          type: string
+          description: Name of the card
+          example: John Doe
+      description: A simple Payment Method object for storing card details.
+      example:
+        expireMonth: 12
+        cardHolder: John Doe
+        expireYear: 2030
+        cardNumber: '**** **** **** 1234'
+    Purchase:
+      required:
+      - paymentMethodId
+      - purchaseDate
+      - purchasePrice
+      type: object
+      properties:
+        purchasePrice:
+          type: number
+          description: Price of the Song
+          format: float
+          example: 10.99
+        purchaseDate:
+          type: string
+          description: Date of the purchase
+          format: date-time
+          example: 2010-01-15T10:30:00Z
+        paymentMethodId:
+          type: integer
+          description: id of the payment method
+          example: 0
+        songIds:
+          type: array
+          items:
+            type: integer
+          description: List of song IDs to purchase
+          example: [1, 2, 3]
+        albumIds:
+          type: array
+          items:
+            type: integer
+          description: List of album IDs to purchase
+          example: [1, 2]
+        merchIds:
+          type: array
+          items:
+            type: integer
+          description: List of merch IDs to purchase
+          example: [1]
+      description: A purchase made by an user.
+      example:
+        purchasePrice: 10.99
+        purchaseDate: 2010-01-15T10:30:00Z
+        paymentMethodId: 0
+        songIds: [1, 2, 3]
+        albumIds: [1, 2]
+        merchIds: [1]
+    Error:
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    cart_body:
+      type: object
+      properties:
+        songId:
+          type: integer
+          description: ID of the song to add.
+        albumId:
+          type: integer
+          description: ID of the album to add.
+        merchId:
+          type: integer
+          description: ID of the merch to add. 
+        unidades:
+          type: integer
+          description: Quantity of items to add (only if merch)
+
+  securitySchemes:
+    oversound_auth:
+      type: apiKey
+      name: oversound_auth
+      in: cookie
+      x-apikeyInfoFunc: swagger_server.controllers.authorization_controller.check_oversound_auth
+

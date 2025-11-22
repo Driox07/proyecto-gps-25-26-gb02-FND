@@ -1,9 +1,7 @@
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
-from API_KEYS import API_CREDENTIALS
 
 templates = Jinja2Templates(directory="view/templates") # Esta ruta es la que se va a usar para renderizar las plantillas
-apicreds = API_CREDENTIALS() # Cargamos las credenciales de la API de Firebase
 
 class View():
 
@@ -51,9 +49,23 @@ class View():
         return templates.TemplateResponse("error.html", {"request": request, "data": data})
 
     # Renderizar la template shop.html
-    def get_shop_view(self, request: Request, userdata: dict, songs, genres, artistas, albums, merch):
-        data = {"userdata": userdata, "songs": songs, "genres": genres, "artistas": artistas, "albums": albums, "merch": merch}
-        return templates.TemplateResponse("shop.html", {"request": request, "data": data})
+    def get_shop_view(self, request: Request, userdata: dict, songs, genres, artistas, albums, merch, artists_map=None, genres_map=None):
+        if artists_map is None:
+            artists_map = {}
+        if genres_map is None:
+            genres_map = {}
+        data = {"userdata": userdata}
+        return templates.TemplateResponse("shop.html", {
+            "request": request, 
+            "data": data,
+            "songs": songs,
+            "albums": albums,
+            "merch": merch,
+            "genres": genres,
+            "artists": artistas,
+            "artists_map": artists_map, 
+            "genres_map": genres_map
+        })
 
     # Esta función se va a usar para renderizar la template songs.html
     def get_upload_song_view(self, request: Request):
@@ -71,7 +83,7 @@ class View():
 
     # Renderizar la template logut.html
     def get_logout_view(self, request: Request):
-        return templates.TemplateResponse("auth/logout.html", {"request": request, "API_CREDENTIALS" : apicreds })
+        return templates.TemplateResponse("auth/logout.html", {"request": request})
 
     # Renderizar la template profile.html
     # Necesita un user_info completo, no se contempla otro caso.
@@ -89,7 +101,6 @@ class View():
             "payment_methods": payment_methods,
             "syu_server": syu_server,
             "tya_server": tya_server,
-            "API_CREDENTIALS" : apicreds
         })
     
     # Renderizar la template faqs.html
@@ -272,3 +283,28 @@ class View():
     def get_artist_create_view(self, request: Request, userdata: dict = None, syu_server: str = None):
         data = {"userdata": userdata, "syu_server": syu_server}
         return templates.TemplateResponse("artist_create.html", {"request": request, "data": data})
+    
+    # Renderizar la template user_profile_edit.html
+    def get_user_profile_edit_view(self, request: Request, userdata: dict = None, syu_server: str = None):
+        data = {"userdata": userdata, "syu_server": syu_server}
+        return templates.TemplateResponse("user_profile_edit.html", {"request": request, "data": data})
+    
+    # Renderizar la template artist_profile_edit.html
+    def get_artist_profile_edit_view(self, request: Request, userdata: dict = None, artist_data: dict = None, tya_server: str = None):
+        data = {"userdata": userdata, "artist": artist_data, "tya_server": tya_server}
+        return templates.TemplateResponse("artist_profile_edit.html", {"request": request, "data": data})
+    
+    # Renderizar la template song_edit.html
+    def get_song_edit_view(self, request: Request, userdata: dict = None, song_data: dict = None, tya_server: str = None):
+        data = {"userdata": userdata, "song": song_data, "tya_server": tya_server}
+        return templates.TemplateResponse("edit_song.html", {"request": request, "data": data})
+    
+    # Renderizar la template album_edit.html
+    def get_album_edit_view(self, request: Request, userdata: dict = None, album_data: dict = None, tya_server: str = None):
+        data = {"userdata": userdata, "album": album_data, "tya_server": tya_server}
+        return templates.TemplateResponse("edit_album.html", {"request": request, "data": data})
+    
+    # Renderizar la template merch_edit.html
+    def get_merch_edit_view(self, request: Request, userdata: dict = None, merch_data: dict = None, tya_server: str = None):
+        data = {"userdata": userdata, "merch": merch_data, "tya_server": tya_server}
+        return templates.TemplateResponse("edit_merch.html", {"request": request, "data": data})

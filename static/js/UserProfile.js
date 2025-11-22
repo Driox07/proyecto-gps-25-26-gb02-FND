@@ -1,5 +1,13 @@
 // User Profile Page Interactivity
+
+// Configuration for the music microservice (defined in config.js)
+const MUSIC_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.musicService.url : 'http://localhost:8000';
+
+// Global audio player instance
+let audioPlayer = null;
+
 document.addEventListener('DOMContentLoaded', () => {
+    initializeAudioPlayer();
     loadArtistInfo();
     loadPaymentMethods();
     setupPaymentMethodsModal();
@@ -11,9 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             const card = button.closest('.favorite-card');
             const title = card.querySelector('.card-title').textContent;
-            console.log('Playing:', title);
-            // Aquí puedes añadir la lógica para reproducir la canción/álbum
-            alert(`Reproduciendo: ${title}`);
+            const trackId = card.getAttribute('data-track-id');
+            
+            if (trackId) {
+                console.log('Playing:', title);
+                playTrack(trackId);
+            } else {
+                alert('Esta canción no tiene un track disponible');
+            }
         });
     });
 
@@ -935,4 +948,65 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', addArtistStyles);
 } else {
     addArtistStyles();
+}
+
+/**
+ * Initialize HTML5 audio player
+ */
+function initializeAudioPlayer() {
+    audioPlayer = new Audio();
+    audioPlayer.addEventListener('ended', () => {
+        console.log('Track finished');
+    });
+    audioPlayer.addEventListener('error', (e) => {
+        console.error('Audio player error:', e);
+        alert('Error al reproducir la canción');
+    });
+}
+
+/**
+ * Fetch and play track from microservice
+ */
+async function playTrack(trackId) {
+    if (!trackId) {
+        alert('ID de canción no disponible');
+        return;
+    }
+
+    try {
+        const url = `${MUSIC_SERVICE_URL}/track/${trackId}`;
+        
+        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
+            console.log(`Fetching track from: ${url}`);
+        }
+
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'audio/*'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Get audio blob
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
+            console.log(`Audio blob received, size: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+        }
+        
+        // Set audio source and play
+        audioPlayer.src = audioUrl;
+        audioPlayer.play();
+        console.log('Playing track:', trackId);
+
+    } catch (error) {
+        console.error('Error playing track:', error);
+        alert(`Error al reproducir: ${error.message}`);
+    }
 }

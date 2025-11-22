@@ -2,6 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     setupButtonListeners();
     setupAnimations();
+    checkMerchFavoriteStatus();
 });
 
 /**
@@ -31,56 +32,40 @@ function setupButtonListeners() {
     if (addToCartButton) {
         addToCartButton.addEventListener('click', async () => {
             const merchName = document.getElementById('merch-name').textContent;
-            const merchPrice = document.getElementById('merch-price').textContent;
-            const merchImage = document.querySelector('.merch-image')?.src || 'https://via.placeholder.com/120?text=Sin+Imagen';
             
             // Obtener ID de merch desde el URL
             const merchId = window.location.pathname.split('/').pop();
             
+            if (!merchId || isNaN(parseInt(merchId))) {
+                alert('ID de producto no disponible');
+                return;
+            }
+            
             try {
-                // Agregar a carrito local
-                const cartItem = {
-                    id: parseInt(merchId),
-                    name: merchName,
-                    price: merchPrice,
-                    type: 'merch',
-                    image: merchImage,
-                    quantity: 1
-                };
-
-                let cart = JSON.parse(localStorage.getItem('oversound_cart')) || [];
-                const existingItem = cart.find(item => item.id === parseInt(merchId));
+                const response = await fetch('/cart', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        songId: null,
+                        albumId: null,
+                        merchId: parseInt(merchId),
+                        unidades: 1
+                    })
+                });
                 
-                if (existingItem) {
-                    existingItem.quantity += 1;
-                } else {
-                    cart.push(cartItem);
-                }
-
-                localStorage.setItem('oversound_cart', JSON.stringify(cart));
-                
-                // Intentar sincronizar con backend si el usuario está autenticado
-                try {
-                    await fetch('/cart', {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            productId: parseInt(merchId),
-                            productType: 'merch',
-                            quantity: 1,
-                            price: merchPrice
-                        })
-                    });
-                } catch (error) {
-                    console.warn('No se pudo sincronizar con backend, usando localStorage:', error);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Error del servidor al añadir al carrito:', errorData);
+                    alert(`Error al añadir al carrito: ${errorData.error || 'Error desconocido'}`);
+                    return;
                 }
 
                 // Emitir evento para actualizar el header
-                window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cart }));
+                window.dispatchEvent(new CustomEvent('cartUpdated'));
                 
                 alert(`${merchName} añadido al carrito`);
                 
@@ -100,12 +85,45 @@ function setupButtonListeners() {
                 alert('ID de mercancía no disponible');
                 return;
             }
-            // Nota: Si la API soporta favoritos de merch, usar toggleFavoriteMerch
-            // Por ahora comentado ya que podría no estar implementado
             if (typeof toggleFavoriteMerch === 'function') {
                 toggleFavoriteMerch(parseInt(merchId), favoriteButton);
             } else {
                 alert('Los favoritos de mercancía aún no están disponibles');
+            }
+        });
+    }
+
+    // Delete button
+    const deleteButton = document.getElementById('delete-merch-button');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', async () => {
+            const merchId = deleteButton.getAttribute('data-merch-id');
+            if (!merchId) {
+                alert('ID de producto no disponible');
+                return;
+            }
+            
+            if (confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.')) {
+                try {
+                    const response = await fetch(`/merch/${merchId}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        alert('Producto eliminado exitosamente');
+                        window.location.href = '/shop';
+                    } else {
+                        const error = await response.json();
+                        alert(`Error al eliminar el producto: ${error.message || 'Error desconocido'}`);
+                    }
+                } catch (error) {
+                    console.error('Error eliminando producto:', error);
+                    alert('Error al eliminar el producto');
+                }
             }
         });
     }
@@ -199,6 +217,28 @@ function setupAnimations() {
         imageContainer.addEventListener('mouseleave', () => {
             imageContainer.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
         });
+    }
+}
+
+/**
+ * Check if the current merch is in favorites and update button state
+ */
+async function checkMerchFavoriteStatus() {
+    const favoriteButton = document.getElementById('favorite-button');
+    if (!favoriteButton) return;
+    
+    const merchId = window.location.pathname.split('/').pop();
+    if (!merchId || isNaN(merchId)) return;
+    
+    try {
+        if (typeof isMerchFavorited === 'function') {
+            const isFavorited = await isMerchFavorited(parseInt(merchId));
+            if (typeof updateFavoriteButtonState === 'function') {
+                updateFavoriteButtonState(favoriteButton, isFavorited);
+            }
+        }
+    } catch (error) {
+        console.error('Error checking merch favorite status:', error);
     }
 }
 

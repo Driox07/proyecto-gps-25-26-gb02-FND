@@ -16,7 +16,42 @@ tags:
     description: Tokens de inicio de sesión y sus fechas de validez
   - name: favs
     description: Todos los álbumes, canciones y artistas marcados como favoritos por los usuarios
-paths:      
+paths:
+  /user/link-artist:
+    post:
+      tags:
+        - user
+      summary: Create a new artist
+      description: Creates a new artist in the platform
+      operationId: ArtistLinkData
+      requestBody:
+        $ref: "#/components/requestBodies/ArtistLinkData"
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  artistId:
+                    type: integer
+                    description: ID of the newly created artist
+                    example: 381734
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - oversounds_auth:
+            - write
+      
   /user/{username}:
     patch:
       tags:
@@ -112,7 +147,7 @@ paths:
         - oversounds_auth:
             - write
 
-  /auth/{token}:
+  /auth:
     get:
       tags:
         - session
@@ -132,7 +167,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SecureUser'
+                $ref: '#/components/schemas/User'
         '500':
           description: Unexpected error
           content:
@@ -164,6 +199,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
   
+  /logout:
+    post:
+      tags:
+        - session
+      summary: Logs out an user by invalidating their session token
+      description: Logs out an user by invalidating their session token
+      operationId: logout
+      parameters:
+        - name: token
+          in: path
+          description: Session token to be invalidated
+          required: true
+          schema:
+            $ref: '#/components/schemas/SessionToken'
+      responses:
+        '200':
+          description: Successful operation
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /register:
     post:
       tags:
@@ -179,7 +238,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SecureUser'
+                $ref: '#/components/schemas/User'
         '500':
           description: Unexpected error
           content:
@@ -453,7 +512,7 @@ components:
     User:
       type: object
       properties:
-        id:
+        userId:
           type: integer
           format: int64
           description: Unique identifier for the user
@@ -462,56 +521,40 @@ components:
           type: string
           description: Username chosen by the user for authentication
           example: asanchez
-        joinDate:
+        regDate:
           type: string
           description: Date when the user registered in the platform
           example: '2023-10-10 17:32:00.0000'
-        relatedArtist:
-          type: integer
-          description: ID of the artist associated with this user account, if applicable (null if not artist)
-          example: 381734
-      
-    SecureUser:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          description: Unique identifier for the user
-          example: 10
-        username:
-          type: string
-          description: Username chosen by the user for authentication
-          example: asanchez
-        joinDate:
-          type: string
-          description: Date when the user registered in the platform
-          example: '2023-10-10 17:32:00.0000'
-        firstName:
+        name:
           type: string
           description: First name of the user
           example: Adrián
-        lastName:
+        firstLastName:
           type: string
-          description: Last name of the user
+          description: Last name of the user. Will be null if requested user is not the same as the authenticated one
           example: Sánchez
+        secondLastName:
+          type: string
+          description: Second last name of the user. Will be null if requested user is not the same as the authenticated one
+          example: López
         email:
           type: string
           description: Email address of the user
           example: asanchez@email.com
         password:
           type: string
-          description: Hashed password for user authentication
+          description: Hashed password for user authentication. Will be null if requested user is not the same as the authenticated one
           example: '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5'
-        phone:
+        image:
           type: string
-          description: Phone number of the user
-          example: '927938372'
+          description: Path to the profile image (stored in SYU service)
+          nullable: true
+          example: '/pfp/driox.png'
         relatedArtist:
           type: integer
           description: ID of the artist associated with this user account, if applicable (null if not artist)
           example: 381734
-    
+
     RegistrationUser:
       type: object
       properties:
@@ -519,39 +562,46 @@ components:
           type: string
           description: Username chosen by the user for authentication
           example: asanchez
-        firstName:
+        regDate:
+          type: string
+          description: Date when the user registered in the platform
+          example: '2023-10-10 17:32:00.0000'
+        name:
           type: string
           description: First name of the user
           example: Adrián
-        lastName:
+        firstLastName:
           type: string
           description: Last name of the user
           example: Sánchez
+        secondLastName:
+          type: string
+          description: Second last name of the user
+          example: López
         email:
           type: string
           description: Email address of the user
           example: asanchez@email.com
         password:
           type: string
-          description: Plain text password provided during registration
-          example: "manteca"
-        phone:
+          description: Hashed password for user authentication. Will be null if requested user is not the same as the authenticated one
+          example: '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5'
+        image:
           type: string
-          description: Phone number of the user
-          example: '927938372'
-        isArtist:
-          type: boolean
-          description: Indicates if the user is registering as an artist
-          example: false
+          format: byte
+          description: Base64 encoded profile image that will be stored in SYU service
+          nullable: true
+        relatedArtist:
+          type: integer
+          description: ID of the artist associated with this user account, if applicable (null if not artist)
+          example: 381734
       required:
-        - username
-        - firstName
-        - lastName
+        - nick
+        - fechaReg
+        - apellido1
         - email
-        - password
-        - phone
-        - isArtist
-    
+        - contrasena
+        
     Credentials:
       type: object
       properties:
@@ -601,6 +651,33 @@ components:
           example: '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5'
       required:
         - token
+    
+    ArtistLinkData:
+      type: object
+      properties:
+        artisticName:
+          type: string
+          description: Name of the artist
+          example: 'Katy Perry'
+        artisticBiography:
+          type: string
+          description: Biography of the artist
+          example: 'American singer, songwriter and actress known for her pop hits'
+        artisticEmail:
+          type: string
+          description: Contact email of the artist
+          example: 'contact@katyperry.com'
+        artisticImage:
+          type: string
+          description: URL or path to the artist's profile image
+          example: '/images/artists/katy-perry-profile.jpg'
+        socialMediaUrl:
+          type: string
+          description: URL to the artist's social media profile
+          example: 'https://twitter.com/katyperry'
+      required:
+        - artisticName
+        - artisticEmail
           
     Error:
       type: object
@@ -647,8 +724,16 @@ components:
           schema:
             $ref: "#/components/schemas/Credentials"
     
+    ArtistLinkData:
+      description: Artist data to be created
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ArtistLinkData'
+      required: true
+    
   securitySchemes:
     oversounds_auth:
       type: apiKey
       in: cookie
-      name: token
+      name: oversounds_auth
