@@ -9,8 +9,18 @@ class View():
         pass
 
     # Esta función se va a usar para renderizar la template home.html
-    def get_home_view(self, request: Request, userdata: dict, syu_server: str, rye_server: str):
-        data = {"userdata": userdata, "syu_server": syu_server, "rye_server": rye_server}
+    def get_home_view(self, request: Request, userdata: dict, syu_server: str, rye_server: str, tya_server: str, top_songs: list = None, top_artists: list = None, rec_songs: list = None, rec_artists: list = None):
+        # Ensure lists are defined
+        if top_songs is None:
+            top_songs = []
+        if top_artists is None:
+            top_artists = []
+        if rec_songs is None:
+            rec_songs = []
+        if rec_artists is None:
+            rec_artists = []
+
+        data = {"userdata": userdata, "syu_server": syu_server, "rye_server": rye_server, "tya_server": tya_server, "top_songs": top_songs, "top_artists": top_artists, "rec_songs": rec_songs, "rec_artists": rec_artists}
         return templates.TemplateResponse("home.html", {"request" : request, "data": data})
     
     # Renderizar la template login.html

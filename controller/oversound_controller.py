@@ -50,7 +50,41 @@ def index(request: Request):
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     print(userdata)
-    return osv.get_home_view(request, userdata, servers.SYU, servers.RYE)
+    # Load top lists and recommendations from RYE (server-side to avoid CORS and speed up page)
+    top_songs = []
+    top_artists = []
+    rec_songs = []
+    rec_artists = []
+
+    try:
+        ts = requests.get(f"{servers.RYE}/statistics/top-10-songs", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+        if ts.ok:
+            top_songs = ts.json()
+    except requests.RequestException as e:
+        print(f"Error fetching top songs from RYE: {e}")
+
+    try:
+        ta = requests.get(f"{servers.RYE}/statistics/top-10-artists", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+        if ta.ok:
+            top_artists = ta.json()
+    except requests.RequestException as e:
+        print(f"Error fetching top artists from RYE: {e}")
+
+    try:
+        rs = requests.get(f"{servers.RYE}/recommendations/song", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+        if rs.ok:
+            rec_songs = rs.json()
+    except requests.RequestException as e:
+        print(f"Error fetching recommended songs from RYE: {e}")
+
+    try:
+        ra = requests.get(f"{servers.RYE}/recommendations/artist", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+        if ra.ok:
+            rec_artists = ra.json()
+    except requests.RequestException as e:
+        print(f"Error fetching recommended artists from RYE: {e}")
+
+    return osv.get_home_view(request, userdata, servers.SYU, servers.RYE, servers.TYA, top_songs, top_artists, rec_songs, rec_artists)
 
 @app.get("/login")
 def login_page(request: Request):

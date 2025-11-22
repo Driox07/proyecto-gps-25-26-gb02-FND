@@ -43,19 +43,65 @@
 
     <section class="top-section">
         <h2>Top 10 Canciones</h2>
-        <div id="top-songs" class="top-grid"></div>
+        <div id="top-songs" class="top-grid">
+            {% if data.top_songs and data.top_songs | length > 0 %}
+                {% for s in data.top_songs %}
+                    <div class="top-card">
+                        <img src="{{ (data.tya_server + '/static' + s.image) if s.image else '/static/img/utils/default-song.svg' }}" alt="{{ s.name or s.title or 'Canción' }}" />
+                        <p class="top-name">{{ s.name or s.title or 'Título desconocido' }}</p>
+                        <span class="top-meta">{{ s.genre or s.genreName or '' }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No hay canciones en el top.</p>
+            {% endif %}
+        </div>
 
         <h2>Top 10 Artistas</h2>
-        <div id="top-artists" class="top-grid"></div>
+        <div id="top-artists" class="top-grid">
+            {% if data.top_artists and data.top_artists | length > 0 %}
+                {% for a in data.top_artists %}
+                    <div class="top-card">
+                        <img src="{{ (data.tya_server + '/static' + a.image) if a.image else '/static/img/utils/default-artist.svg' }}" alt="{{ a.name or a.artisticName or 'Artista' }}" />
+                        <p class="top-name">{{ a.name or a.artisticName or 'Nombre desconocido' }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No hay artistas en el top.</p>
+            {% endif %}
+        </div>
     </section>
 
     <section class="top-section">
         <h2>Recomendaciones para ti</h2>
         <h3>Canciones</h3>
-        <div id="recommended-songs" class="top-grid"></div>
+        <div id="recommended-songs" class="top-grid">
+            {% if data.rec_songs and data.rec_songs | length > 0 %}
+                {% for s in data.rec_songs %}
+                    <div class="top-card">
+                        <img src="{{ (data.tya_server + '/static' + s.image) if s.image else '/static/img/utils/default-song.svg' }}" alt="{{ s.name or s.title or 'Canción' }}" />
+                        <p class="top-name">{{ s.name or s.title or 'Título desconocido' }}</p>
+                        <span class="top-meta">{{ s.genre or s.genreName or '' }}</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No hay recomendaciones de canciones por ahora.</p>
+            {% endif %}
+        </div>
 
         <h3>Artistas</h3>
-        <div id="recommended-artists" class="top-grid"></div>
+        <div id="recommended-artists" class="top-grid">
+            {% if data.rec_artists and data.rec_artists | length > 0 %}
+                {% for a in data.rec_artists %}
+                    <div class="top-card">
+                        <img src="{{ (data.tya_server + '/static' + a.image) if a.image else '/static/img/utils/default-artist.svg' }}" alt="{{ a.name or a.artisticName or 'Artista' }}" />
+                        <p class="top-name">{{ a.name or a.artisticName or 'Nombre desconocido' }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No hay recomendaciones de artistas por ahora.</p>
+            {% endif %}
+        </div>
     </section>
 
     <!-- Features Section -->
@@ -160,9 +206,6 @@
         </div>
     </footer>
 
-    <script>
-        const RYE_URL = '{{ data.rye_server }}';
-    </script>
-    <script src="{{ url_for('static', path='js/home.js') }}"></script>
+    <!-- Home data rendered server-side by controller; no client-side fetches to RYE to avoid CORS -->
 </body>
 </html>

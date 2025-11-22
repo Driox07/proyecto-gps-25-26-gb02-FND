@@ -107,19 +107,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 //---
 async function loadTop10() {
+    // Prefer server-injected data (present when controller fetched RYE server-side)
     try {
-        const songsRes = await fetch(`${STATS_SERVICE_URL}/statistics/top-10-songs`, {
-            credentials: "include"
-        });
-        const artistsRes = await fetch(`${STATS_SERVICE_URL}/statistics/top-10-artists`, {
-            credentials: "include"
-        });
+        if (typeof TOP_SONGS !== 'undefined' && TOP_SONGS && TOP_SONGS.length) {
+            renderTopSongs(TOP_SONGS);
+        } else {
+            const songsRes = await fetch(`${STATS_SERVICE_URL}/statistics/top-10-songs`, { credentials: "include" });
+            const songs = await songsRes.json();
+            renderTopSongs(songs);
+        }
 
-        const songs = await songsRes.json();
-        const artists = await artistsRes.json();
-
-        renderTopSongs(songs);
-        renderTopArtists(artists);
+        if (typeof TOP_ARTISTS !== 'undefined' && TOP_ARTISTS && TOP_ARTISTS.length) {
+            renderTopArtists(TOP_ARTISTS);
+        } else {
+            const artistsRes = await fetch(`${STATS_SERVICE_URL}/statistics/top-10-artists`, { credentials: "include" });
+            const artists = await artistsRes.json();
+            renderTopArtists(artists);
+        }
 
     } catch (err) {
         console.error("Error loading top lists:", err);
@@ -128,6 +132,10 @@ async function loadTop10() {
 
 function renderTopSongs(songs) {
     const container = document.getElementById("top-songs");
+    if (!songs || !songs.length) {
+        container.innerHTML = "<p>No hay canciones en el top.</p>";
+        return;
+    }
     container.innerHTML = songs.map(s => `
         <div class="top-card">
             <img src="${s.image || '/static/default-cover.png'}" />
@@ -139,6 +147,10 @@ function renderTopSongs(songs) {
 
 function renderTopArtists(artists) {
     const container = document.getElementById("top-artists");
+    if (!artists || !artists.length) {
+        container.innerHTML = "<p>No hay artistas en el top.</p>";
+        return;
+    }
     container.innerHTML = artists.map(a => `
         <div class="top-card">
             <img src="${a.image || '/static/default-artist.png'}" />
@@ -149,16 +161,21 @@ function renderTopArtists(artists) {
 //..
 async function loadRecommendations() {
     try {
-        const [songsRes, artistsRes] = await Promise.all([
-            fetch(`${STATS_SERVICE_URL}/recommendations/song`, { credentials: 'include' }),
-            fetch(`${STATS_SERVICE_URL}/recommendations/artist`, { credentials: 'include' })
-        ]);
+        if (typeof RECOMMENDED_SONGS !== 'undefined' && RECOMMENDED_SONGS && RECOMMENDED_SONGS.length) {
+            renderRecommendedSongs(RECOMMENDED_SONGS);
+        } else {
+            const songsRes = await fetch(`${STATS_SERVICE_URL}/recommendations/song`, { credentials: 'include' });
+            const songs = await songsRes.json();
+            renderRecommendedSongs(songs);
+        }
 
-        const songs = await songsRes.json();
-        const artists = await artistsRes.json();
-
-        renderRecommendedSongs(songs);
-        renderRecommendedArtists(artists);
+        if (typeof RECOMMENDED_ARTISTS !== 'undefined' && RECOMMENDED_ARTISTS && RECOMMENDED_ARTISTS.length) {
+            renderRecommendedArtists(RECOMMENDED_ARTISTS);
+        } else {
+            const artistsRes = await fetch(`${STATS_SERVICE_URL}/recommendations/artist`, { credentials: 'include' });
+            const artists = await artistsRes.json();
+            renderRecommendedArtists(artists);
+        }
 
     } catch (err) {
         console.error("Error loading recommendations:", err);
