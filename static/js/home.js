@@ -1,4 +1,5 @@
 const STATS_SERVICE_URL = RYE_URL; 
+
 // Home page interactivity
 document.addEventListener('DOMContentLoaded', () => {
     // Smooth scroll for anchor links

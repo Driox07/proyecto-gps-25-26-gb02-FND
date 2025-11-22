@@ -239,6 +239,12 @@
         const TYA_URL = '{{ tya_server }}';
         const RYE_URL = '{{ rye_server }}';
         const PT_URL = '{{ pt_server }}';
+        // Current authenticated user id (null when not authenticated)
+        {% if data.userdata and data.userdata.userId is not none %}
+        const USER_ID = {{ data.userdata.userId }};
+        {% else %}
+        const USER_ID = null;
+        {% endif %}
     </script>
     <script src="{{ url_for('static', path='js/song.js') }}"></script>
 </body>

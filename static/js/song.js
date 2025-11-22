@@ -78,13 +78,19 @@ async function addStats(songId, artistId) {
         return;
     }
 
-    async function sendStat(url, subjectId, label) {
+    // Resolve current user id injected by template (may be null)
+    const userid = (typeof USER_ID !== 'undefined' && USER_ID !== null) ? USER_ID : null;
+
+    async function sendStat(userid, url, subjectId, label) {
         try {
             const body = {
-                subjectId,
+                id: userid ? parseInt(userid, 10) : null,
+                subjectId: parseInt(subjectId, 10),
                 playbacks: 1,
                 startDate: new Date().toISOString()
             };
+
+            console.log("Sending stat:", body);
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -109,8 +115,9 @@ async function addStats(songId, artistId) {
         }
     }
 
-    await sendStat(`${STATS_SERVICE_URL}/history/songs`, songId, "canción");
-    await sendStat(`${STATS_SERVICE_URL}/history/artists`, artistId, "artista");
+    // Use local proxy endpoints to avoid CORS preflight issues
+    await sendStat(userid, `/stats/history/songs`, songId, "canción");
+    await sendStat(userid, `/stats/history/artists`, artistId, "artista");
 }
 
 /**

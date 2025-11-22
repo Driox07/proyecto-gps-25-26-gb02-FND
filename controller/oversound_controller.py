@@ -549,13 +549,14 @@ def get_song(request: Request, songId: int):
 
         metrics = None
         try:
-            metrics_resp = requests.get(f"{servers.RYE}/statistics/metrics/artist/{songId}", timeout=5)
+            metrics_resp = requests.get(f"{servers.RYE}/statistics/metrics/song/{songId}", timeout=5)
             metrics_resp.raise_for_status()
-            metrics_data = metrics_resp.json()  
+            metrics_data = metrics_resp.json()
+            print(f"[DEBUG] Metrics response data: {metrics_data}")
             metrics = {
-                "sales": metrics_data.get("sales", 0),
-                "downloads": metrics_data.get("downloads", 0),
-                "playbacks": metrics_data.get("playbacks", 0)
+            "sales": metrics_data.get("sales", 0),
+            "downloads": metrics_data.get("downloads", 0),
+            "playbacks": metrics_data.get("playbacks", 0)
             }
         except requests.RequestException as e:
             print(f"Error obteniendo métricas del artista: {e}")
@@ -2565,6 +2566,61 @@ async def get_track(request: Request, trackId: int):
             content={"error": f"Error al procesar el track: {str(e)}"},
             status_code=500
         )
+
+
+@app.post('/stats/history/songs')
+async def proxy_stats_songs(request: Request):
+    """Proxy para estadísticas de canciones -> reenvía a RYE/history/songs evitando CORS en el navegador"""
+    token = request.cookies.get('oversound_auth')
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse(content={"error": "JSON inválido"}, status_code=400)
+
+    try:
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
+        if token:
+            headers["Cookie"] = f"oversound_auth={token}"
+
+        resp = requests.post(f"{servers.RYE}/history/songs", json=body, timeout=5, headers=headers)
+        resp.raise_for_status()
+        return JSONResponse(content=resp.json(), status_code=resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error proxying song stats to RYE: {e}")
+        # intentar devolver el body de respuesta si existe
+        try:
+            if 'resp' in locals() and resp is not None:
+                return JSONResponse(content=resp.json(), status_code=resp.status_code)
+        except Exception:
+            pass
+        return JSONResponse(content={"error": "No se pudo enviar la estadística"}, status_code=500)
+
+
+@app.post('/stats/history/artists')
+async def proxy_stats_artists(request: Request):
+    """Proxy para estadísticas de artistas -> reenvía a RYE/history/artists evitando CORS en el navegador"""
+    token = request.cookies.get('oversound_auth')
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse(content={"error": "JSON inválido"}, status_code=400)
+
+    try:
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
+        if token:
+            headers["Cookie"] = f"oversound_auth={token}"
+
+        resp = requests.post(f"{servers.RYE}/history/artists", json=body, timeout=5, headers=headers)
+        resp.raise_for_status()
+        return JSONResponse(content=resp.json(), status_code=resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error proxying artist stats to RYE: {e}")
+        try:
+            if 'resp' in locals() and resp is not None:
+                return JSONResponse(content=resp.json(), status_code=resp.status_code)
+        except Exception:
+            pass
+        return JSONResponse(content={"error": "No se pudo enviar la estadística"}, status_code=500)
 
 
 
