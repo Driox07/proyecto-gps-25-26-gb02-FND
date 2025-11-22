@@ -1623,10 +1623,10 @@ async def add_to_cart(request: Request):
 
 
 @app.delete("/cart/{product_id}")
-async def remove_from_cart(request: Request, product_id: int):
+async def remove_from_cart(request: Request, product_id: int, type: str = None):
     """
     Elimina un producto del carrito del usuario autenticado
-    Proxea la llamada a TPP DELETE /cart/{productId}
+    Proxea la llamada a TPP DELETE /cart/{productId}?type={type}
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
@@ -1635,9 +1635,14 @@ async def remove_from_cart(request: Request, product_id: int):
         return JSONResponse(content={"error": "No autenticado"}, status_code=401)
     
     try:
+        # Construir URL con parámetro type si existe
+        url = f"{servers.TPP}/cart/{product_id}"
+        if type:
+            url += f"?type={type}"
+        
         # Enviar a TPP
         cart_resp = requests.delete(
-            f"{servers.TPP}/cart/{product_id}",
+            url,
             timeout=2,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
