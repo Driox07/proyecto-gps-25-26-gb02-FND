@@ -222,26 +222,40 @@ def shop(request: Request,
 @app.get("/cart")
 async def get_cart(request: Request):
     """
-    Obtiene los productos del carrito del usuario autenticado
-    Proxea la llamada a TPP GET /cart
+    Endpoint del carrito que responde con HTML o JSON según el header Accept
+    - Si Accept contiene 'application/json': devuelve JSON con los productos del carrito
+    - Si Accept contiene 'text/html': renderiza la página HTML del carrito
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     
-    if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    # Obtener el header Accept
+    accept_header = request.headers.get("accept", "")
     
-    try:
-        cart_resp = requests.get(
-            f"{servers.TPP}/cart",
-            timeout=5,
-            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
-        )
-        cart_resp.raise_for_status()
-        return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
-    except requests.RequestException as e:
-        print(f"Error obteniendo carrito: {e}")
-        return JSONResponse(content={"error": "No se pudo obtener el carrito"}, status_code=500)
+    # Si la petición espera JSON (llamada desde JavaScript)
+    if "application/json" in accept_header:
+        if not userdata:
+            return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+        
+        try:
+            cart_resp = requests.get(
+                f"{servers.TPP}/cart",
+                timeout=5,
+                headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+            )
+            cart_resp.raise_for_status()
+            return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
+        except requests.RequestException as e:
+            print(f"Error obteniendo carrito: {e}")
+            return JSONResponse(content={"error": "No se pudo obtener el carrito"}, status_code=500)
+    
+    # Si la petición espera HTML (navegación normal)
+    else:
+        if not userdata:
+            return RedirectResponse("/login")
+        
+        # Renderizar la vista del carrito
+        return osv.get_cart_view(request, userdata, servers.SYU)
 
 
 @app.get("/giftcard")
