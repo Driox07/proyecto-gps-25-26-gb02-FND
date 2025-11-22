@@ -165,7 +165,7 @@ def shop(request: Request,
         store_resp = requests.get(
             f"{servers.TPP}/store",
             params={"page": page, "limit": limit},
-            timeout=10,
+            timeout=30,
             headers={"Accept": "application/json"}
         )
         store_resp.raise_for_status()
@@ -197,21 +197,36 @@ def shop(request: Request,
     # ===== CREAR MAPEOS para resolver IDs (manejo seguro) =====
     artists_map = {}
     for a in all_artists:
-        if isinstance(a, dict) and 'artistId' in a and 'artisticName' in a:
-            artists_map[a['artistId']] = a['artisticName']
+        if isinstance(a, dict):
+            # Intentar obtener artistId con ambas notaciones
+            artist_id = a.get('artistId') or a.get('artist_id')
+            artist_name = a.get('artisticName') or a.get('artistic_name')
+            if artist_id and artist_name:
+                artists_map[artist_id] = artist_name
     
     genres_map = {}
     for g in all_genres:
-        if isinstance(g, dict) and 'id' in g and 'name' in g:
-            genres_map[g['id']] = g['name']
+        if isinstance(g, dict):
+            # Obtener id y name del género
+            genre_id = g.get('id') or g.get('genre_id')
+            genre_name = g.get('name') or g.get('genre_name')
+            if genre_id and genre_name:
+                genres_map[genre_id] = genre_name
 
     # ===== SEPARAR por tipo (usando nombres de campo con guiones bajos) =====
     songs = [p for p in productos if p.get('song_id', 0) not in [0, None]]
     albums = [p for p in productos if p.get('album_id', 0) not in [0, None] and p.get('song_id', 0) in [0, None]]
     merch = [p for p in productos if p.get('merch_id', 0) not in [0, None]]
 
-    print(f"Shop: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
-    print(f"Shop: artists_map={len(artists_map)}, genres_map={len(genres_map)}")
+    print(f"[DEBUG] Shop: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
+    print(f"[DEBUG] Shop: artists_map={len(artists_map)} items, genres_map={len(genres_map)} items")
+    if productos:
+        print(f"[DEBUG] Sample product keys: {list(productos[0].keys())}")
+        print(f"[DEBUG] Sample product artist field: {productos[0].get('artist')} (type: {type(productos[0].get('artist'))})")
+    if artists_map:
+        print(f"[DEBUG] Sample artists_map keys: {list(artists_map.keys())[:5]}")
+    if genres_map:
+        print(f"[DEBUG] Sample genres_map keys: {list(genres_map.keys())[:5]}")
 
     return osv.get_shop_view(
         request, userdata, 
