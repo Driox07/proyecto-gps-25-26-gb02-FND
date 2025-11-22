@@ -2323,7 +2323,7 @@ async def update_specific_artist_profile(request: Request, artistId: int):
 
 
 # ===================== UPLOAD ROUTES =====================
-@app.get("/upload-song")
+@app.get("/song/upload")
 def upload_song_page(request: Request):
     """
     Ruta para mostrar la página de subir canción
@@ -2341,7 +2341,7 @@ def upload_song_page(request: Request):
     return osv.get_upload_song_view(request, userdata)
 
 
-@app.post("/upload-song")
+@app.post("/song/upload")
 async def upload_song(request: Request):
     """
     Ruta para procesar la subida de una canción
@@ -2384,7 +2384,7 @@ async def upload_song(request: Request):
         return JSONResponse(content={"error": "Error al subir la canción"}, status_code=500)
 
 
-@app.get("/upload-album")
+@app.get("/album/upload")
 def upload_album_page(request: Request):
     """
     Ruta para mostrar la página de subir álbum
@@ -2402,7 +2402,7 @@ def upload_album_page(request: Request):
     return osv.get_upload_album_view(request, userdata)
 
 
-@app.post("/upload-album")
+@app.post("/album/upload")
 async def upload_album(request: Request):
     """
     Ruta para procesar la creación de un álbum
@@ -2446,7 +2446,7 @@ async def upload_album(request: Request):
 
 
 # Upload Merchandising Routes
-@app.get("/upload-merch")
+@app.get("/merch/upload")
 def upload_merch_page(request: Request):
     """
     Ruta para mostrar la página de subir merchandising
@@ -2464,7 +2464,7 @@ def upload_merch_page(request: Request):
     return osv.get_upload_merch_view(request, userdata)
 
 
-@app.post("/upload-merch")
+@app.post("/merch/upload")
 async def upload_merch(request: Request):
     """
     Ruta para procesar la subida de merchandising
