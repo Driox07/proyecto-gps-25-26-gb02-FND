@@ -282,3 +282,18 @@ class View():
     def get_artist_profile_edit_view(self, request: Request, userdata: dict = None, artist_data: dict = None, tya_server: str = None):
         data = {"userdata": userdata, "artist": artist_data, "tya_server": tya_server}
         return templates.TemplateResponse("artist_profile_edit.html", {"request": request, "data": data})
+    
+    # Renderizar la template song_edit.html
+    def get_song_edit_view(self, request: Request, userdata: dict = None, song_data: dict = None, tya_server: str = None):
+        data = {"userdata": userdata, "song": song_data, "tya_server": tya_server}
+        return templates.TemplateResponse("edit_song.html", {"request": request, "data": data})
+    
+    # Renderizar la template album_edit.html
+    def get_album_edit_view(self, request: Request, userdata: dict = None, album_data: dict = None, tya_server: str = None):
+        data = {"userdata": userdata, "album": album_data, "tya_server": tya_server}
+        return templates.TemplateResponse("edit_album.html", {"request": request, "data": data})
+    
+    # Renderizar la template merch_edit.html
+    def get_merch_edit_view(self, request: Request, userdata: dict = None, merch_data: dict = None, tya_server: str = None):
+        data = {"userdata": userdata, "merch": merch_data, "tya_server": tya_server}
+        return templates.TemplateResponse("edit_merch.html", {"request": request, "data": data})

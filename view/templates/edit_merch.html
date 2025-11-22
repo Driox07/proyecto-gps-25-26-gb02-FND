@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Merchandising - OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/edit_merch.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="main-content">
+        <div class="container">
+            <div class="upload-header">
+                <h2>Editar Merchandising</h2>
+                <p>Actualiza la información de tu producto</p>
+            </div>
+
+            <div id="message" class="message" style="display:none;"></div>
+
+            <form id="edit-merch-form">
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="title">Nombre del producto *</label>
+                        <input type="text" id="title" name="title" required placeholder="Ej: Camiseta Tour 2024" value="{{ data.merch.title if data.merch.title else '' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="price">Precio (€) *</label>
+                        <input type="number" id="price" name="price" step="0.01" required min="0.01" placeholder="24.99" value="{{ data.merch.price if data.merch.price else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="releaseDate">Fecha de lanzamiento</label>
+                        <input type="date" id="releaseDate" name="releaseDate" value="{{ data.merch.releaseDate[:10] if data.merch.releaseDate else '' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="description">Descripción *</label>
+                        <textarea id="description" name="description" rows="4" required placeholder="Describe tu producto de merchandising...">{{ data.merch.description if data.merch.description else '' }}</textarea>
+                        <small>La descripción es obligatoria para productos de merchandising</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="cover">Imagen del producto (URL) *</label>
+                        <input type="url" id="cover" name="cover" required placeholder="https://ejemplo.com/producto.jpg" value="{{ data.merch.cover if data.merch.cover else '' }}">
+                        {% if data.merch.cover %}
+                        <div class="preview-container" style="margin-top: 10px;">
+                            <img src="{{ data.merch.cover }}" alt="Vista previa" style="max-width: 200px; border-radius: 8px;">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="collaborators">Colaboradores</label>
+                        <input type="text" id="collaborators" name="collaborators" placeholder="Ej: 5,12,8 (IDs de artistas separados por comas)" value="{% if data.merch.collaborators %}{{ data.merch.collaborators|join(',') }}{% endif %}">
+                        <small>IDs de otros artistas asociados a este producto</small>
+                    </div>
+                </div>
+
+                <input type="hidden" id="merchId" value="{{ data.merch.merchId }}">
+
+                <div class="form-actions">
+                    <a href="/artist/studio" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" id="save-btn" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', path='js/edit_merch.js') }}"></script>
+</body>
+</html>
