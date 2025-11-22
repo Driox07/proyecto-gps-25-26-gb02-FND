@@ -165,7 +165,7 @@ def shop(request: Request,
         store_resp = requests.get(
             f"{servers.TPP}/store",
             params={"page": page, "limit": limit},
-            timeout=10,
+            timeout=30,
             headers={"Accept": "application/json"}
         )
         store_resp.raise_for_status()
@@ -197,21 +197,36 @@ def shop(request: Request,
     # ===== CREAR MAPEOS para resolver IDs (manejo seguro) =====
     artists_map = {}
     for a in all_artists:
-        if isinstance(a, dict) and 'artistId' in a and 'artisticName' in a:
-            artists_map[a['artistId']] = a['artisticName']
+        if isinstance(a, dict):
+            # Intentar obtener artistId con ambas notaciones
+            artist_id = a.get('artistId') or a.get('artist_id')
+            artist_name = a.get('artisticName') or a.get('artistic_name')
+            if artist_id and artist_name:
+                artists_map[artist_id] = artist_name
     
     genres_map = {}
     for g in all_genres:
-        if isinstance(g, dict) and 'id' in g and 'name' in g:
-            genres_map[g['id']] = g['name']
+        if isinstance(g, dict):
+            # Obtener id y name del género
+            genre_id = g.get('id') or g.get('genre_id')
+            genre_name = g.get('name') or g.get('genre_name')
+            if genre_id and genre_name:
+                genres_map[genre_id] = genre_name
 
     # ===== SEPARAR por tipo (usando nombres de campo con guiones bajos) =====
     songs = [p for p in productos if p.get('song_id', 0) not in [0, None]]
     albums = [p for p in productos if p.get('album_id', 0) not in [0, None] and p.get('song_id', 0) in [0, None]]
     merch = [p for p in productos if p.get('merch_id', 0) not in [0, None]]
 
-    print(f"Shop: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
-    print(f"Shop: artists_map={len(artists_map)}, genres_map={len(genres_map)}")
+    print(f"[DEBUG] Shop: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
+    print(f"[DEBUG] Shop: artists_map={len(artists_map)} items, genres_map={len(genres_map)} items")
+    if productos:
+        print(f"[DEBUG] Sample product keys: {list(productos[0].keys())}")
+        print(f"[DEBUG] Sample product artist field: {productos[0].get('artist')} (type: {type(productos[0].get('artist'))})")
+    if artists_map:
+        print(f"[DEBUG] Sample artists_map keys: {list(artists_map.keys())[:5]}")
+    if genres_map:
+        print(f"[DEBUG] Sample genres_map keys: {list(genres_map.keys())[:5]}")
 
     return osv.get_shop_view(
         request, userdata, 
@@ -222,26 +237,40 @@ def shop(request: Request,
 @app.get("/cart")
 async def get_cart(request: Request):
     """
-    Obtiene los productos del carrito del usuario autenticado
-    Proxea la llamada a TPP GET /cart
+    Endpoint del carrito que responde con HTML o JSON según el header Accept
+    - Si Accept contiene 'application/json': devuelve JSON con los productos del carrito
+    - Si Accept contiene 'text/html': renderiza la página HTML del carrito
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     
-    if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    # Obtener el header Accept
+    accept_header = request.headers.get("accept", "")
     
-    try:
-        cart_resp = requests.get(
-            f"{servers.TPP}/cart",
-            timeout=5,
-            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
-        )
-        cart_resp.raise_for_status()
-        return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
-    except requests.RequestException as e:
-        print(f"Error obteniendo carrito: {e}")
-        return JSONResponse(content={"error": "No se pudo obtener el carrito"}, status_code=500)
+    # Si la petición espera JSON (llamada desde JavaScript)
+    if "application/json" in accept_header:
+        if not userdata:
+            return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+        
+        try:
+            cart_resp = requests.get(
+                f"{servers.TPP}/cart",
+                timeout=5,
+                headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+            )
+            cart_resp.raise_for_status()
+            return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
+        except requests.RequestException as e:
+            print(f"Error obteniendo carrito: {e}")
+            return JSONResponse(content={"error": "No se pudo obtener el carrito"}, status_code=500)
+    
+    # Si la petición espera HTML (navegación normal)
+    else:
+        if not userdata:
+            return RedirectResponse("/login")
+        
+        # Renderizar la vista del carrito
+        return osv.get_cart_view(request, userdata, servers.SYU)
 
 
 @app.get("/giftcard")

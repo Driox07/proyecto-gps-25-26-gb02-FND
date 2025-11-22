@@ -54,8 +54,15 @@ class View():
             artists_map = {}
         if genres_map is None:
             genres_map = {}
-        data = {"userdata": userdata, "songs": songs, "genres": genres, "artistas": artistas, "albums": albums, "merch": merch}
-        return templates.TemplateResponse("shop.html", {"request": request, "data": data, "artists_map": artists_map, "genres_map": genres_map})
+        data = {"userdata": userdata, "songs": songs, "albums": albums, "merch": merch}
+        return templates.TemplateResponse("shop.html", {
+            "request": request, 
+            "data": data, 
+            "genres": genres,
+            "artists": artistas,
+            "artists_map": artists_map, 
+            "genres_map": genres_map
+        })
 
     # Esta función se va a usar para renderizar la template songs.html
     def get_upload_song_view(self, request: Request):
