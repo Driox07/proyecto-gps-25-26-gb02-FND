@@ -123,8 +123,7 @@
                         {% for song in songs %}
                             <div class="product-card" data-type="song" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
-                                    <img data-song-id="{{ song.song_id }}" 
-                                         src="/static/img/utils/default-song.svg" 
+                                    <img src="{{ tya_server }}/static{{ song.cover if song.cover else 'img/utils/default-song.svg' }}" 
                                          alt="{{ song.name if song.name else 'Canción' }}"
                                          loading="lazy">
                                     <div class="product-overlay">
@@ -174,8 +173,7 @@
                         {% for album in albums %}
                             <div class="product-card" data-type="album" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
-                                    <img data-album-id="{{ album.album_id }}" 
-                                         src="/static/img/utils/default-album.svg" 
+                                    <img src="{{ tya_server }}/static{{ album.cover if album.cover else 'img/utils/default-album.svg' }}" 
                                          alt="{{ album.name if album.name else 'Álbum' }}"
                                          loading="lazy">
                                     <div class="product-overlay">
@@ -228,8 +226,7 @@
                         {% for item in merch %}
                             <div class="product-card" data-type="merch" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
-                                    <img data-merch-id="{{ item.merch_id }}" 
-                                         src="/static/img/utils/default-merch.svg" 
+                                    <img src="{{ tya_server }}/static{{ item.cover if item.cover else 'img/utils/default-merch.svg' }}" 
                                          alt="{{ item.name if item.name else 'Merchandising' }}"
                                          loading="lazy">
                                     <div class="product-overlay">
