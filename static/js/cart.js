@@ -1,16 +1,39 @@
 // Cart.js - Gestión completa del carrito de compras desde el servidor
+console.log('Cart.js: File loaded successfully - version with debug');
 
-document.addEventListener('DOMContentLoaded', function() {
-    initializeCart();
-});
+(function() {
+    console.log('Cart.js: IIFE executed');
+
+    function initCart() {
+        console.log('Cart.js: initCart called');
+        try {
+            initializeCart();
+        } catch (error) {
+            console.error('Cart.js: Error in initializeCart:', error);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        console.log('Cart.js: DOM still loading, adding event listener');
+        document.addEventListener('DOMContentLoaded', initCart);
+    } else {
+        console.log('Cart.js: DOM already loaded, calling initCart immediately');
+        initCart();
+    }
+})();
 
 /**
  * Inicializa todos los componentes del carrito
  */
 function initializeCart() {
-    loadCartFromServer();
-    setupEventListeners();
-    checkAuthenticationStatus();
+    console.log('Cart.js: Initializing cart...');
+    try {
+        loadCartFromServer();
+        setupEventListeners();
+        checkAuthenticationStatus();
+    } catch (error) {
+        console.error('Cart.js: Error in initializeCart:', error);
+    }
 }
 
 /**
@@ -74,6 +97,7 @@ function setupEventListeners() {
  * Carga el carrito desde el servidor
  */
 async function loadCartFromServer() {
+    console.log('Cart.js: Loading cart from server...');
     try {
         const response = await fetch('/cart', {
             method: 'GET',
@@ -83,17 +107,21 @@ async function loadCartFromServer() {
             }
         });
 
+        console.log('Cart.js: Cart response status:', response.status);
+
         if (response.ok) {
             window.currentCart = await response.json();
+            console.log('Cart.js: Cart loaded:', window.currentCart);
         } else if (response.status === 401) {
+            console.log('Cart.js: User not authenticated, cart empty');
             // No autenticado, carrito vacío
             window.currentCart = [];
         } else {
-            console.error('Error al cargar carrito del servidor');
+            console.error('Cart.js: Error loading cart from server');
             window.currentCart = [];
         }
     } catch (error) {
-        console.error('Error cargando carrito:', error);
+        console.error('Cart.js: Error loading cart:', error);
         window.currentCart = [];
     }
 
@@ -146,6 +174,7 @@ async function removeProductFromServer(productId, productType) {
  * Actualiza la visualización del carrito
  */
 function updateCartDisplay() {
+    console.log('Cart.js: Updating cart display, current cart:', window.currentCart);
     const cartItems = document.getElementById('cart-items');
     const emptyCart = document.getElementById('empty-cart');
     const summaryContent = document.getElementById('summary-content');
@@ -359,15 +388,21 @@ function handleShippingSubmit(e) {
  * Maneja el proceso de checkout
  */
 async function handleCheckout() {
+    console.log('Cart.js: Handle checkout called');
     const btnCheckout = document.getElementById('btn-checkout');
-    if (!btnCheckout || btnCheckout.disabled) return;
+    if (!btnCheckout || btnCheckout.disabled) {
+        console.log('Cart.js: Checkout button disabled or not found');
+        return;
+    }
 
     // Verificar si hay productos en el carrito
     if (!window.currentCart || window.currentCart.length === 0) {
+        console.log('Cart.js: Cart is empty');
         showNotification('El carrito está vacío');
         return;
     }
 
+    console.log('Cart.js: Opening shipping modal');
     // Solicitar información de dirección
     openShippingModal();
 }
@@ -376,15 +411,20 @@ async function handleCheckout() {
  * Procesa el pago enviando la compra al backend
  */
 async function processPay() {
+    console.log('Cart.js: Processing payment');
     try {
         showNotification('Procesando pago...');
 
         // Obtener método de pago seleccionado
-        const paymentMethodId = document.getElementById('payment-method-select')?.value;
-        if (!paymentMethodId) {
+        const selectedPayment = document.querySelector('input[name="payment-method"]:checked');
+        console.log('Cart.js: Selected payment method element:', selectedPayment);
+        if (!selectedPayment) {
+            console.log('Cart.js: No payment method selected');
             showNotification('Por favor selecciona un método de pago');
             return;
         }
+        const paymentMethodId = selectedPayment.value;
+        console.log('Cart.js: Payment method ID:', paymentMethodId);
 
         // Preparar datos según el esquema de la API
         // Nota: Se usa camelCase porque el modelo Purchase de TPP tiene attribute_map
@@ -421,10 +461,12 @@ async function processPay() {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
+            console.error('Cart.js: Payment failed:', errorData);
             throw new Error(errorData.message || errorData.error || 'Error al procesar la compra');
         }
 
         const result = await response.json();
+        console.log('Cart.js: Payment successful:', result);
         
         showNotification('¡Compra realizada con éxito!');
         
@@ -441,7 +483,7 @@ async function processPay() {
         }, 2000);
 
     } catch (error) {
-        console.error('Error en el pago:', error);
+        console.error('Cart.js: Payment error:', error);
         showNotification(`Error: ${error.message}`);
     }
 }
@@ -488,6 +530,7 @@ function updateSummary() {
  * Verifica el estado de autenticación y los métodos de pago
  */
 async function checkAuthenticationStatus() {
+    console.log('Cart.js: Checking authentication status...');
     try {
         const response = await fetch('/payment', {
             method: 'GET',
@@ -496,6 +539,8 @@ async function checkAuthenticationStatus() {
                 'Accept': 'application/json'
             }
         });
+
+        console.log('Cart.js: Payment methods response status:', response.status);
 
         const checkoutSection = document.getElementById('checkout-section');
         const noPaymentMethod = document.getElementById('no-payment-method');
@@ -508,25 +553,33 @@ async function checkAuthenticationStatus() {
         if (checkoutSection) checkoutSection.style.display = 'flex';
 
         if (response.status === 401) {
+            console.log('Cart.js: User not authenticated');
             // No autenticado
             if (checkoutSection) checkoutSection.style.display = 'none';
             if (notAuthenticated) notAuthenticated.style.display = 'block';
             if (btnCheckout) btnCheckout.disabled = true;
         } else if (response.ok) {
             const paymentMethods = await response.json();
+            console.log('Cart.js: Payment methods received:', paymentMethods);
 
             if (!paymentMethods || paymentMethods.length === 0) {
+                console.log('Cart.js: No payment methods found, showing no-payment-method section');
                 // Sin métodos de pago
                 if (checkoutSection) checkoutSection.style.display = 'none';
                 if (noPaymentMethod) noPaymentMethod.style.display = 'block';
                 if (btnCheckout) btnCheckout.disabled = true;
+                const paymentSection = document.getElementById('payment-selection-section');
+                if (paymentSection) paymentSection.style.display = 'none';
             } else {
+                console.log('Cart.js: Payment methods found, showing payment selection section');
                 // Autenticado y con métodos de pago
-                populatePaymentMethods(paymentMethods);
+                populatePaymentMethodsGrid(paymentMethods);
                 if (checkoutSection) checkoutSection.style.display = 'flex';
                 if (noPaymentMethod) noPaymentMethod.style.display = 'none';
                 if (notAuthenticated) notAuthenticated.style.display = 'none';
                 if (btnCheckout) btnCheckout.disabled = false;
+                const paymentSection = document.getElementById('payment-selection-section');
+                if (paymentSection) paymentSection.style.display = 'block';
             }
         } else {
             console.error('Error al verificar métodos de pago');
@@ -546,20 +599,121 @@ async function checkAuthenticationStatus() {
 }
 
 /**
- * Puebla el selector de métodos de pago
+ * Puebla el grid de métodos de pago con tarjetas seleccionables
  */
-function populatePaymentMethods(paymentMethods) {
-    const select = document.getElementById('payment-method-select');
-    if (!select) return;
+function populatePaymentMethodsGrid(paymentMethods) {
+    console.log('Cart.js: Populating payment methods grid with', paymentMethods.length, 'methods');
+    const grid = document.getElementById('payment-methods-grid');
+    if (!grid) {
+        console.error('Cart.js: payment-methods-grid element not found');
+        return;
+    }
 
-    select.innerHTML = '<option value="">Seleccionar método de pago</option>';
-    
-    paymentMethods.forEach(method => {
-        const option = document.createElement('option');
-        option.value = method.id || method.paymentMethodId;
-        option.textContent = `${method.cardHolder} - ${method.cardNumber}`;
-        select.appendChild(option);
+    grid.innerHTML = paymentMethods.map((method, index) => {
+        // Mapear campos de la respuesta
+        const cardHolder = method.card_holder || method.cardHolder || '';
+        const cardNumber = method.card_number || method.cardNumber || '';
+        const expireMonth = method.expire_month || method.expireMonth || 0;
+        const expireYear = method.expire_year || method.expireYear || 0;
+        const id = method.id || method.paymentMethodId;
+        
+        // Extraer últimos 4 dígitos del cardNumber
+        const lastFour = cardNumber.slice(-4);
+        
+        // Formatear fecha de expiración
+        const expireMonthStr = String(expireMonth).padStart(2, '0');
+        const expireYearStr = String(expireYear).slice(-2);
+        const expiry = `${expireMonthStr}/${expireYearStr}`;
+        
+        // Detectar tipo de tarjeta por los primeros dígitos
+        const cardType = detectCardType(cardNumber);
+        
+        return `
+        <div class="payment-card" data-payment-id="${id}">
+            <div class="card-radio">
+                <input type="radio" name="payment-method" value="${id}" id="payment-${id}" ${index === 0 ? 'checked' : ''}>
+                <label for="payment-${id}"></label>
+            </div>
+            <div class="card-details">
+                <div class="card-logo">${getCardLogo(cardType)}</div>
+                <div class="card-number">•••• •••• •••• ${lastFour}</div>
+                <div class="card-name">${cardHolder}</div>
+                <div class="card-expiry">Vence: ${expiry}</div>
+                <div class="card-type">${cardType}</div>
+            </div>
+        </div>
+    `;
+    }).join('');
+
+    console.log('Cart.js: Payment methods grid HTML generated');
+
+    // Add event listeners for selection
+    grid.querySelectorAll('.payment-card').forEach(card => {
+        card.addEventListener('click', () => {
+            console.log('Cart.js: Payment card clicked');
+            const radio = card.querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = true;
+                updateSelectedCard();
+            }
+        });
     });
+
+    // Add event listeners for radio buttons
+    grid.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', updateSelectedCard);
+    });
+}
+
+/**
+ * Actualiza la visualización de la tarjeta seleccionada
+ */
+function updateSelectedCard() {
+    console.log('Cart.js: Updating selected card');
+    const cards = document.querySelectorAll('.payment-card');
+    cards.forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    const selectedRadio = document.querySelector('input[name="payment-method"]:checked');
+    if (selectedRadio) {
+        const selectedCard = selectedRadio.closest('.payment-card');
+        if (selectedCard) {
+            selectedCard.classList.add('selected');
+            console.log('Cart.js: Selected payment method:', selectedRadio.value);
+        }
+    } else {
+        console.log('Cart.js: No payment method selected');
+    }
+}
+
+/**
+ * Detecta el tipo de tarjeta basado en el número
+ */
+function detectCardType(cardNumber) {
+    if (!cardNumber) return 'Desconocido';
+    
+    const number = cardNumber.replace(/\s/g, '');
+    
+    if (number.startsWith('4')) return 'Visa';
+    if (number.startsWith('5') || number.startsWith('2')) return 'Mastercard';
+    if (number.startsWith('3')) return 'American Express';
+    if (number.startsWith('6')) return 'Discover';
+    
+    return 'Crédito';
+}
+
+/**
+ * Obtiene el logo de la tarjeta
+ */
+function getCardLogo(cardType) {
+    switch (cardType.toLowerCase()) {
+        case 'visa': return 'VISA';
+        case 'mastercard': return 'MC';
+        case 'american express': return 'AMEX';
+        case 'discover': return 'DISC';
+        default: return 'CARD';
+    }
 }
 
 /**

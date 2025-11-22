@@ -93,6 +93,18 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Selección de Método de Pago -->
+                <div class="payment-selection-section" id="payment-selection-section" style="display: none;">
+                    <div class="payment-selection-header">
+                        <h2>Seleccionar Método de Pago</h2>
+                        <p class="payment-selection-subtitle">Elige cómo deseas pagar tu compra</p>
+                    </div>
+
+                    <div class="payment-methods-grid" id="payment-methods-grid">
+                        <!-- Métodos de pago cargados dinámicamente -->
+                    </div>
+                </div>
             </aside>
         </div>
     </div>
@@ -191,6 +203,6 @@
     </footer>
 
     <script>var TYA_SERVER = '{{ data.tya_server }}';</script>
-    <script src="{{ url_for('static', path='js/cart.js') }}?v=6"></script>
+    <script src="/static/js/cart.js?v=7"></script>
 </body>
 </html>
