@@ -120,9 +120,10 @@
                         {% for song in songs %}
                             <div class="product-card" data-type="song" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
-                                    <img src="{{ song.cover if song.cover else '/static/img/utils/default-song.png' }}" 
+                                    <img data-song-id="{{ song.song_id }}" 
+                                         src="/static/img/utils/default-song.svg" 
                                          alt="{{ song.name if song.name else 'Canción' }}"
-                                         onerror="this.src='/static/img/utils/default-song.png'">
+                                         loading="lazy">
                                     <div class="product-overlay">
                                         <a href="/song/{{ song.song_id }}" class="btn-view">Ver Detalles</a>
                                     </div>
@@ -170,9 +171,10 @@
                         {% for album in albums %}
                             <div class="product-card" data-type="album" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
-                                    <img src="{{ album.cover if album.cover else '/static/img/utils/default-album.png' }}" 
+                                    <img data-album-id="{{ album.album_id }}" 
+                                         src="/static/img/utils/default-album.svg" 
                                          alt="{{ album.name if album.name else 'Álbum' }}"
-                                         onerror="this.src='/static/img/utils/default-album.png'">
+                                         loading="lazy">
                                     <div class="product-overlay">
                                         <a href="/album/{{ album.album_id }}" class="btn-view">Ver Detalles</a>
                                     </div>
@@ -223,9 +225,10 @@
                         {% for item in merch %}
                             <div class="product-card" data-type="merch" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
-                                    <img src="{{ item.cover if item.cover else '/static/img/utils/default-merch.png' }}" 
+                                    <img data-merch-id="{{ item.merch_id }}" 
+                                         src="/static/img/utils/default-merch.svg" 
                                          alt="{{ item.name if item.name else 'Merchandising' }}"
-                                         onerror="this.src='/static/img/utils/default-merch.png'">
+                                         loading="lazy">
                                     <div class="product-overlay">
                                         <a href="/merch/{{ item.merch_id }}" class="btn-view">Ver Detalles</a>
                                     </div>
@@ -271,5 +274,9 @@
     </main>
 
     <script src="{{ url_for('static', path='js/shop.js') }}"></script>
+    <script>
+        // Configuración de URLs de microservicios
+        const TYA_URL = 'http://localhost:8081';
+    </script>
 </body>
 </html>

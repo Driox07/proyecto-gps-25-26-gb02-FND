@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCart();
     restoreScrollPosition();
     checkAllProductsFavoriteStatus();
+    initLazyImageLoading();
 });
 
 // ============ PAGINATION ============
@@ -442,3 +443,67 @@ setTimeout(() => {
         observer.observe(card);
     });
 }, 100);
+
+// ============ LAZY LOADING DE IMÁGENES ============
+function initLazyImageLoading() {
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                loadImageFromTYA(img);
+                observer.unobserve(img);
+            }
+        });
+    }, {
+        rootMargin: '50px 0px', // Cargar 50px antes de entrar en viewport
+        threshold: 0.01
+    });
+
+    // Observar todas las imágenes de productos
+    document.querySelectorAll('.product-image img').forEach(img => {
+        imageObserver.observe(img);
+    });
+}
+
+async function loadImageFromTYA(img) {
+    // Evitar recargar si ya se intentó
+    if (img.dataset.loaded) return;
+    img.dataset.loaded = 'true';
+
+    let endpoint = '';
+    if (img.dataset.songId) {
+        endpoint = `/song/${img.dataset.songId}`;
+    } else if (img.dataset.albumId) {
+        endpoint = `/album/${img.dataset.albumId}`;
+    } else if (img.dataset.merchId) {
+        endpoint = `/merch/${img.dataset.merchId}`;
+    }
+
+    if (!endpoint) return;
+
+    try {
+        const response = await fetch(`${TYA_URL}${endpoint}`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.cover && data.cover.startsWith('data:image')) {
+                img.src = data.cover;
+            }
+            // Si no es base64, quizás es una URL, pero según el esquema, debería ser base64
+        } else {
+            console.warn(`Failed to load image for ${endpoint}: ${response.status}`);
+        }
+    } catch (error) {
+        console.error(`Error loading image for ${endpoint}:`, error);
+    }
+}
+
+// Inicializar lazy loading después de que el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    // ... existing code ...
+    initLazyImageLoading();
+});
