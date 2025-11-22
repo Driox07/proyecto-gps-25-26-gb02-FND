@@ -7,6 +7,9 @@
     <title>Tienda - OverSound</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='styles/shop.css') }}">
+    <script>
+        const TYA_URL = '{{ tya_server }}';
+    </script>
 </head>
 <body>
     {% include 'common/header.html' %}
@@ -274,9 +277,5 @@
     </main>
 
     <script src="{{ url_for('static', path='js/shop.js') }}"></script>
-    <script>
-        // Configuración de URLs de microservicios
-        const TYA_URL = 'http://localhost:8081';
-    </script>
 </body>
 </html>

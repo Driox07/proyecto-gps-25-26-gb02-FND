@@ -1,7 +1,7 @@
 // Artist Profile Page JavaScript
 
 // Configuration for the music microservice (defined in config.js)
-const MUSIC_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.musicService.url : 'http://localhost:8000';
+const MUSIC_SERVICE_URL = PT_URL;
 
 // Global audio player instance
 let audioPlayer = null;
