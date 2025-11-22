@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function(){
         }
 
         try{
-            const resp = await fetch('/upload-song', {
+            const resp = await fetch('/song/upload', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
