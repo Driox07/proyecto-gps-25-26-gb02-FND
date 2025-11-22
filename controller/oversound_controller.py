@@ -304,7 +304,7 @@ async def get_cart(request: Request):
             return RedirectResponse("/login")
         
         # Renderizar la vista del carrito
-        return osv.get_cart_view(request, userdata, servers.SYU)
+        return osv.get_cart_view(request, userdata, servers.TYA)
 
 
 @app.get("/giftcard")

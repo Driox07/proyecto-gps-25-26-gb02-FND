@@ -187,14 +187,14 @@ function createCartItemElement(item, index) {
 
     // Obtener URL de imagen
     let imageUrl = '';
-    const isValidCover = item.cover && (item.cover.startsWith('data:') || item.cover.startsWith('/static/') || item.cover.startsWith('/'));
-    
+    let itemCover = TYA_SERVER + '/static' + (item.cover || '');
+
     if (item.song_id) {
-        imageUrl = isValidCover ? item.cover : '/static/img/utils/default-song.svg';
+        imageUrl = (item.cover) ? itemCover : '/static/img/utils/default-song.svg';
     } else if (item.album_id) {
-        imageUrl = isValidCover ? item.cover : '/static/img/utils/default-album.svg';
+        imageUrl = (item.cover) ? itemCover : '/static/img/utils/default-album.svg';
     } else if (item.merch_id) {
-        imageUrl = isValidCover ? item.cover : '/static/img/utils/default-merch.svg';
+        imageUrl = (item.cover) ? itemCover : '/static/img/utils/default-merch.svg';
     } else {
         imageUrl = '/static/img/utils/default-song.svg'; // fallback
     }
