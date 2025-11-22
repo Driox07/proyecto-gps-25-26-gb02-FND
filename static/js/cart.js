@@ -358,6 +358,7 @@ async function processPay() {
         }
 
         // Preparar datos según el esquema de la API
+        // Nota: Se usa camelCase porque el modelo Purchase de TPP tiene attribute_map
         const purchaseData = {
             purchasePrice: calculateTotal(),
             purchaseDate: new Date().toISOString(),
@@ -391,12 +392,19 @@ async function processPay() {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || 'Error al procesar la compra');
+            throw new Error(errorData.message || errorData.error || 'Error al procesar la compra');
         }
 
         const result = await response.json();
         
         showNotification('¡Compra realizada con éxito!');
+        
+        // Limpiar el carrito localmente (el backend ya lo limpia en BD)
+        window.currentCart = [];
+        updateCartDisplay();
+        
+        // Emitir evento para actualizar el contador del header
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
         
         // Redirigir a la página principal después de 2 segundos
         setTimeout(() => {
@@ -410,15 +418,24 @@ async function processPay() {
 }
 
 /**
- * Calcula el total del carrito
+ * Calcula el subtotal del carrito (sin IVA)
  */
-function calculateTotal() {
-    let total = 0;
+function calculateSubtotal() {
+    let subtotal = 0;
     window.currentCart.forEach(item => {
         const price = parseFloat(item.price || 0);
-        total += price;
+        subtotal += price;
     });
-    return total;
+    return subtotal;
+}
+
+/**
+ * Calcula el total del carrito (con IVA incluido)
+ */
+function calculateTotal() {
+    const subtotal = calculateSubtotal();
+    const tax = subtotal * 0.21;
+    return subtotal + tax;
 }
 
 /**
@@ -429,15 +446,9 @@ function updateSummary() {
     const taxElement = document.getElementById('tax');
     const totalElement = document.getElementById('total');
 
-    let subtotal = 0;
-
-    window.currentCart.forEach(item => {
-        const price = parseFloat(item.price || 0);
-        subtotal += price;
-    });
-
+    const subtotal = calculateSubtotal();
     const tax = subtotal * 0.21;
-    const total = subtotal + tax;
+    const total = calculateTotal();
 
     if (subtotalElement) subtotalElement.textContent = `€${subtotal.toFixed(2)}`;
     if (taxElement) taxElement.textContent = `€${tax.toFixed(2)}`;
