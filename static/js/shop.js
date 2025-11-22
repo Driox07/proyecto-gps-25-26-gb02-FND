@@ -12,7 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initCustomDropdowns();
     initFilters();
     initPagination();
-    initCart();
+    if (isAuthenticated) {
+        initCart();
+    }
     restoreScrollPosition();
 });
 
