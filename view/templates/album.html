@@ -234,6 +234,9 @@
     </main>
 
     <script src="{{ url_for('static', path='js/config.js') }}"></script>
+    <script>
+        const PT_URL = '{{ data.pt_server }}';
+    </script>
     <script src="{{ url_for('static', path='js/album.js') }}"></script>
 </body>
 </html>

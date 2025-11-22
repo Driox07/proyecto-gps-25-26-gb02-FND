@@ -1,7 +1,7 @@
 // User Profile Page Interactivity
 
 // Configuration for the music microservice (defined in config.js)
-const MUSIC_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.musicService.url : 'http://localhost:8000';
+const MUSIC_SERVICE_URL = PT_URL;
 
 // Global audio player instance
 let audioPlayer = null;
@@ -151,7 +151,7 @@ async function loadPaymentMethods() {
     try {
         // Las peticiones se harán directamente al microservicio SYU
         // El backend de SYU debe manejar la autenticación con cookies
-        const response = await fetch(`${SERVER_CONFIG.SYU}/user/payment-methods`, {
+        const response = await fetch(`${SYU_URL}/user/payment-methods`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -549,7 +549,7 @@ async function loadArtistInfo() {
 
     console.log('Loading artist info...');
     console.log('userData:', window.userData);
-    console.log('SERVER_CONFIG:', window.SERVER_CONFIG);
+    console.log('SYU_URL:', SYU_URL, 'TYA_URL:', TYA_URL);
 
     // Verificar si el usuario tiene artistId
     if (!window.userData || !window.userData.artistId) {
@@ -562,7 +562,7 @@ async function loadArtistInfo() {
 
     // Si tiene artistId, cargar información del artista
     try {
-        const url = `${SERVER_CONFIG.TYA}/artist/${window.userData.artistId}`;
+        const url = `${TYA_URL}/artist/${window.userData.artistId}`;
         console.log('Fetching artist data from:', url);
         
         const response = await fetch(url, {
@@ -600,7 +600,7 @@ async function loadArtistInfo() {
         }
         
         // Hacer petición directa al microservicio TYA
-        const response = await fetch(`${SERVER_CONFIG.TYA}/artist/by-user/${userId}`, {
+        const response = await fetch(`${TYA_URL}/artist/by-user/${userId}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json'

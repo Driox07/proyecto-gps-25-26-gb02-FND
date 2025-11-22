@@ -1,7 +1,7 @@
 // Song Page - Interactive Features
 // Configuration for the music microservice (defined in config.js)
-const MUSIC_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.musicService.url : 'http://localhost:8080'; // TO DO ????
-const STATS_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.statsService.url : 'http://10.1.1.9:8084'; 
+const MUSIC_SERVICE_URL = PT_URL;
+const STATS_SERVICE_URL = RYE_URL; 
 
 // Global audio player instance
 let audioPlayer = null;
@@ -323,7 +323,6 @@ function setupButtonListeners() {
             }
         });
     }
-}
 
 /**
  * Setup page animations

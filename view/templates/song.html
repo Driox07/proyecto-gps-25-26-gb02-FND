@@ -234,6 +234,12 @@
 
     <script src="{{ url_for('static', path='js/config.js') }}"></script>
     <script src="{{ url_for('static', path='js/favorites.js') }}"></script>
+    <script>
+        const SYU_URL = '{{ syu_server }}';
+        const TYA_URL = '{{ tya_server }}';
+        const RYE_URL = '{{ rye_server }}';
+        const PT_URL = '{{ pt_server }}';
+    </script>
     <script src="{{ url_for('static', path='js/song.js') }}"></script>
 </body>
 </html>

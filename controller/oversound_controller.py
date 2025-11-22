@@ -50,7 +50,7 @@ def index(request: Request):
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     print(userdata)
-    return osv.get_home_view(request, userdata, servers.SYU)
+    return osv.get_home_view(request, userdata, servers.SYU, servers.RYE)
 
 @app.get("/login")
 def login_page(request: Request):
@@ -231,7 +231,7 @@ def shop(request: Request,
     return osv.get_shop_view(
         request, userdata, 
         songs, all_genres, all_artists, albums, merch,
-        artists_map, genres_map
+        artists_map, genres_map, servers.TYA
     )
 
 @app.get("/cart")
@@ -561,7 +561,7 @@ def get_song(request: Request, songId: int):
             print(f"Error obteniendo métricas del artista: {e}")
             metrics = {"playbacks": 0, "sales": 0, "downloads": 0}
         
-        return osv.get_song_view(request, song_data, tipoUsuario, userdata, isLiked, inCarrito, servers.SYU, metrics)
+        return osv.get_song_view(request, song_data, tipoUsuario, userdata, isLiked, inCarrito, servers.SYU, metrics, servers.TYA, servers.RYE, servers.PT)
         
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
@@ -809,7 +809,7 @@ def get_album(request: Request, albumId: int):
         if userdata:
             tipoUsuario = 1  # TODO: Implementar lógica para distinguir artista
         
-        return osv.get_album_view(request, album_data, tipoUsuario, isLiked, inCarrito, tiempo_formateado, userdata, servers.SYU)
+        return osv.get_album_view(request, album_data, tipoUsuario, isLiked, inCarrito, tiempo_formateado, userdata, servers.PT)
         
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
@@ -1465,7 +1465,8 @@ def get_profile(request: Request):
             is_own_profile=True,
             payment_methods=payment_methods,
             syu_server=servers.SYU,
-            tya_server=servers.TYA
+            tya_server=servers.TYA,
+            pt_server=servers.PT
         )
         
     except Exception as e:
@@ -1520,7 +1521,8 @@ def get_user_profile(request: Request, username: str):
             is_own_profile=is_own_profile,
             payment_methods=payment_methods if is_own_profile else [],
             syu_server=servers.SYU,
-            tya_server=servers.TYA
+            tya_server=servers.TYA,
+            pt_server=servers.PT
         )
         
     except requests.RequestException as e:
@@ -2053,7 +2055,7 @@ def get_artist_profile(request: Request, artistId: int):
             print(f"Error obteniendo métricas del artista: {e}")
             metrics = {"playbacks": 0, "songs": 0, "popularity": None}
         
-        return osv.get_artist_profile_view(request, artist_data, userdata, is_own_profile, servers.SYU, metrics)
+        return osv.get_artist_profile_view(request, artist_data, userdata, is_own_profile, servers.SYU, metrics, servers.TYA, servers.RYE, servers.PT)
         
     except requests.RequestException as e:
         print(f"Error obteniendo perfil del artista: {e}")
