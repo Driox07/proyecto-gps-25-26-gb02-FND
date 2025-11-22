@@ -143,15 +143,8 @@ async function loadPaymentMethods() {
     const grid = document.getElementById('payment-methods-grid');
     if (!grid) return;
 
-    // Por ahora mostramos estado vacío hasta que el backend implemente el endpoint
-    displayEmptyPaymentState();
-    
-    // TODO: Cuando el backend esté listo, descomentar:
-    /*
     try {
-        // Las peticiones se harán directamente al microservicio SYU
-        // El backend de SYU debe manejar la autenticación con cookies
-        const response = await fetch(`${SYU_URL}/user/payment-methods`, {
+        const response = await fetch(`${TPP_SERVER}/payment`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -184,7 +177,6 @@ async function loadPaymentMethods() {
             </div>
         `;
     }
-    */
 }
 
 /**
@@ -193,24 +185,30 @@ async function loadPaymentMethods() {
 function displayPaymentMethods(methods) {
     const grid = document.getElementById('payment-methods-grid');
     grid.innerHTML = methods.map(method => {
+        // Mapear campos de la respuesta
+        const cardHolder = method.card_holder || '';
+        const cardNumber = method.card_number || '';
+        const expireMonth = method.expire_month || 0;
+        const expireYear = method.expire_year || 0;
+        const id = method.id;
+        
         // Extraer últimos 4 dígitos del cardNumber
-        const cardNumber = method.cardNumber || '';
         const lastFour = cardNumber.slice(-4);
         
         // Formatear fecha de expiración
-        const expireMonth = String(method.expireMonth || 0).padStart(2, '0');
-        const expireYear = String(method.expireYear || 0).slice(-2);
-        const expiry = `${expireMonth}/${expireYear}`;
+        const expireMonthStr = String(expireMonth).padStart(2, '0');
+        const expireYearStr = String(expireYear).slice(-2);
+        const expiry = `${expireMonthStr}/${expireYearStr}`;
         
         // Detectar tipo de tarjeta por los primeros dígitos
         const cardType = detectCardType(cardNumber);
         
         return `
-        <div class="payment-card" data-payment-id="${method.id}">
+        <div class="payment-card" data-payment-id="${id}">
             <div class="payment-card-header">
                 <div class="card-logo">${getCardLogo(cardType)}</div>
                 <div class="card-actions">
-                    <button class="card-action-btn delete-btn" title="Eliminar" data-payment-id="${method.id}">
+                    <button class="card-action-btn delete-btn" title="Eliminar" data-payment-id="${id}">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <polyline points="3 6 5 6 21 6" stroke-width="2"></polyline>
                             <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke-width="2"></path>
@@ -226,7 +224,7 @@ function displayPaymentMethods(methods) {
             <div class="payment-card-info">
                 <div class="card-holder">
                     <div class="info-label">Titular</div>
-                    <div class="info-value">${method.cardHolder || 'N/A'}</div>
+                    <div class="info-value">${cardHolder}</div>
                 </div>
                 <div class="card-expiry">
                     <div class="info-label">Vencimiento</div>
@@ -449,7 +447,7 @@ async function deletePaymentMethod(paymentId) {
     }
 
     try {
-        const response = await fetch(`/payment/${paymentId}`, {
+        const response = await fetch(`${TPP_SERVER}/payment/${paymentId}`, {
             method: 'DELETE',
             credentials: 'include',
             headers: {
