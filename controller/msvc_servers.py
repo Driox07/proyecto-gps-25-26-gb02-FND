@@ -8,7 +8,7 @@ PARA ASEGURAR EL CORRECTO FUNCIONAMIENTO DE LAS COOKIES DEL SITIO.
 
 FND = 'http://localhost:8000'
 SYU = 'http://localhost:8080'
-TYA = 'http://localhost:8081'
+TYA = 'http://10.1.1.2:8081'
 TPP = 'http://localhost:8082'
 PT  = 'http://localhost:8083'
 RYE = 'http://localhost:8084'

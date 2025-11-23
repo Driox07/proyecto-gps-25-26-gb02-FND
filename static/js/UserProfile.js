@@ -143,19 +143,13 @@ async function loadPaymentMethods() {
     const grid = document.getElementById('payment-methods-grid');
     if (!grid) return;
 
-    // Por ahora mostramos estado vacío hasta que el backend implemente el endpoint
-    displayEmptyPaymentState();
-    
-    // TODO: Cuando el backend esté listo, descomentar:
-    /*
     try {
-        // Las peticiones se harán directamente al microservicio SYU
-        // El backend de SYU debe manejar la autenticación con cookies
-        const response = await fetch(`${SERVER_CONFIG.SYU}/user/payment-methods`, {
+        // Llamar al endpoint del backend que hace proxy a TPP
+        const response = await fetch('/payment', {
             method: 'GET',
             credentials: 'include',
             headers: {
-                'Content-Type': 'application/json'
+                'Accept': 'application/json'
             }
         });
 
@@ -184,7 +178,6 @@ async function loadPaymentMethods() {
             </div>
         `;
     }
-    */
 }
 
 /**
@@ -383,7 +376,8 @@ async function addPaymentMethod() {
             method: 'POST',
             credentials: 'include',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 card_holder: cardName,

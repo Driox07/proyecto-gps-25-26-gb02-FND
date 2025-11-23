@@ -29,7 +29,8 @@ origins = [
     "http://127.0.0.1:8000",
     "http://127.0.0.1:8080",
     "http://10.1.1.4:8000",
-    "http://10.1.1.4:8080"
+    "http://10.1.1.4:8080",
+    "http://10.1.1.2:8081",
 ]
 
 app.add_middleware(
@@ -221,6 +222,192 @@ async def get_cart(request: Request):
     except requests.RequestException as e:
         print(f"Error obteniendo carrito: {e}")
         return JSONResponse(content={"error": "No se pudo obtener el carrito"}, status_code=500)
+
+# ============ ENDPOINTS DE BÚSQUEDA ============
+
+@app.get("/api/search/song")
+def search_songs(q: str = Query(..., min_length=3)):
+    """
+    Busca canciones por query y devuelve los datos completos
+    """
+    try:
+        # Buscar (devuelve lista de objetos con songId)
+        search_resp = requests.get(
+            f"{servers.TYA}/song/search",
+            params={"q": q},
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if not search_resp.ok:
+            return JSONResponse(content=[], status_code=200)
+        
+        song_objects = search_resp.json()
+        
+        if not song_objects or len(song_objects) == 0:
+            return JSONResponse(content=[], status_code=200)
+        
+        # Extraer IDs de los objetos
+        song_ids = [obj.get('songId') for obj in song_objects if obj.get('songId')]
+        
+        if not song_ids:
+            return JSONResponse(content=[], status_code=200)
+        
+        # Resolver datos completos con IDs separados por comas en el parámetro
+        ids_string = ','.join(map(str, song_ids))
+        list_resp = requests.get(
+            f"{servers.TYA}/song/list",
+            params={"ids": ids_string},
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if list_resp.ok:
+            return JSONResponse(content=list_resp.json(), status_code=200)
+        else:
+            return JSONResponse(content=[], status_code=200)
+            
+    except requests.RequestException as e:
+        print(f"Error buscando canciones: {e}")
+        return JSONResponse(content=[], status_code=200)
+
+@app.get("/api/search/album")
+def search_albums(q: str = Query(..., min_length=3)):
+    """
+    Busca álbumes por query y devuelve los datos completos
+    """
+    try:
+        # Buscar (devuelve lista de objetos con albumId)
+        search_resp = requests.get(
+            f"{servers.TYA}/album/search",
+            params={"q": q},
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if not search_resp.ok:
+            return JSONResponse(content=[], status_code=200)
+        
+        album_objects = search_resp.json()
+        
+        if not album_objects or len(album_objects) == 0:
+            return JSONResponse(content=[], status_code=200)
+        
+        # Extraer IDs de los objetos
+        album_ids = [obj.get('albumId') for obj in album_objects if obj.get('albumId')]
+        
+        if not album_ids:
+            return JSONResponse(content=[], status_code=200)
+        
+        # Resolver datos completos con IDs separados por comas en el parámetro
+        ids_string = ','.join(map(str, album_ids))
+        list_resp = requests.get(
+            f"{servers.TYA}/album/list",
+            params={"ids": ids_string},
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if list_resp.ok:
+            return JSONResponse(content=list_resp.json(), status_code=200)
+        else:
+            return JSONResponse(content=[], status_code=200)
+            
+    except requests.RequestException as e:
+        print(f"Error buscando álbumes: {e}")
+        return JSONResponse(content=[], status_code=200)
+
+@app.get("/api/search/artist")
+def search_artists(q: str = Query(..., min_length=3)):
+    """
+    Busca artistas por query y devuelve los datos completos
+    """
+    try:
+        # Buscar (devuelve lista de objetos con artistId)
+        search_resp = requests.get(
+            f"{servers.TYA}/artist/search",
+            params={"q": q},
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if not search_resp.ok:
+            return JSONResponse(content=[], status_code=200)
+        
+        artist_objects = search_resp.json()
+        
+        if not artist_objects or len(artist_objects) == 0:
+            return JSONResponse(content=[], status_code=200)
+        
+        # Extraer IDs de los objetos
+        artist_ids = [obj.get('artistId') for obj in artist_objects if obj.get('artistId')]
+        
+        if not artist_ids:
+            return JSONResponse(content=[], status_code=200)
+        
+        # Resolver datos completos con IDs separados por comas en el parámetro
+        ids_string = ','.join(map(str, artist_ids))
+        list_resp = requests.get(
+            f"{servers.TYA}/artist/list",
+            params={"ids": ids_string},
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if list_resp.ok:
+            return JSONResponse(content=list_resp.json(), status_code=200)
+        else:
+            return JSONResponse(content=[], status_code=200)
+            
+    except requests.RequestException as e:
+        print(f"Error buscando artistas: {e}")
+        return JSONResponse(content=[], status_code=200)
+
+@app.get("/api/search/merch")
+def search_merch(q: str = Query(..., min_length=3)):
+    """
+    Busca merchandising por query y devuelve los datos completos
+    """
+    try:
+        # Buscar (devuelve lista de objetos con merchId)
+        search_resp = requests.get(
+            f"{servers.TYA}/merch/search",
+            params={"q": q},
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if not search_resp.ok:
+            return JSONResponse(content=[], status_code=200)
+        
+        merch_objects = search_resp.json()
+        
+        if not merch_objects or len(merch_objects) == 0:
+            return JSONResponse(content=[], status_code=200)
+        
+        # Extraer IDs de los objetos
+        merch_ids = [obj.get('merchId') for obj in merch_objects if obj.get('merchId')]
+        
+        if not merch_ids:
+            return JSONResponse(content=[], status_code=200)
+        
+        # Resolver datos completos con IDs separados por comas en el parámetro
+        ids_string = ','.join(map(str, merch_ids))
+        list_resp = requests.get(
+            f"{servers.TYA}/merch/list",
+            params={"ids": ids_string},
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if list_resp.ok:
+            return JSONResponse(content=list_resp.json(), status_code=200)
+        else:
+            return JSONResponse(content=[], status_code=200)
+            
+    except requests.RequestException as e:
+        print(f"Error buscando merchandising: {e}")
+        return JSONResponse(content=[], status_code=200)
 
 
 @app.get("/giftcard")
@@ -1197,6 +1384,126 @@ def get_user_profile(request: Request, username: str):
         
     except requests.RequestException as e:
         return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del usuario", str(e))
+
+
+# ==================== PAYMENT METHODS ROUTES ====================
+
+@app.get("/payment")
+def get_payment_methods(request: Request):
+    """
+    Obtener métodos de pago del usuario autenticado
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Llamar al microservicio TPP para obtener métodos de pago
+        response = requests.get(
+            f"{servers.TPP}/payment",
+            timeout=5,
+            headers={
+                "Accept": "application/json",
+                "Cookie": f"oversound_auth={token}"
+            }
+        )
+        
+        if response.ok:
+            return JSONResponse(content=response.json(), status_code=200)
+        else:
+            return JSONResponse(content={"error": "No se pudo obtener los métodos de pago"}, status_code=response.status_code)
+            
+    except requests.RequestException as e:
+        print(f"Error obteniendo métodos de pago: {e}")
+        return JSONResponse(content={"error": "Error de conexión con el servicio de pagos"}, status_code=500)
+
+
+@app.post("/payment")
+async def add_payment_method(request: Request):
+    """
+    Agregar un nuevo método de pago
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Obtener datos del body
+        data = await request.json()
+        
+        # Extraer y validar los datos
+        card_holder = data.get('card_holder')
+        card_number = data.get('card_number', '').replace(' ', '')  # Remover espacios
+        expiry = data.get('expiry')  # Formato MM/YY
+        
+        if not card_holder or not card_number or not expiry:
+            return JSONResponse(content={"error": "Datos incompletos"}, status_code=400)
+        
+        # Parsear fecha de vencimiento MM/YY
+        try:
+            expiry_parts = expiry.split('/')
+            if len(expiry_parts) != 2:
+                raise ValueError("Formato de vencimiento inválido")
+            
+            expire_month = int(expiry_parts[0])
+            expire_year = int(expiry_parts[1])
+            
+            # Convertir año de 2 dígitos a 4 dígitos (asumiendo 20XX)
+            if expire_year < 100:
+                expire_year = 2000 + expire_year
+            
+            # Validar mes
+            if expire_month < 1 or expire_month > 12:
+                raise ValueError("Mes inválido")
+                
+        except (ValueError, IndexError) as e:
+            return JSONResponse(content={"error": f"Formato de vencimiento inválido: {str(e)}"}, status_code=400)
+        
+        # Obtener últimos 4 dígitos de la tarjeta para enviar enmascarados
+        last_four = card_number[-4:] if len(card_number) >= 4 else card_number
+        masked_card = f"**** **** **** {last_four}"
+        
+        # Preparar payload para TPP según el formato especificado
+        payment_data = {
+            "expireMonth": expire_month,
+            "cardHolder": card_holder,
+            "expireYear": expire_year,
+            "cardNumber": masked_card
+        }
+        
+        # Enviar al microservicio TPP
+        response = requests.post(
+            f"{servers.TPP}/payment",
+            json=payment_data,
+            timeout=5,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Cookie": f"oversound_auth={token}"
+            }
+        )
+        
+        if response.ok:
+            return JSONResponse(content=response.json(), status_code=200)
+        else:
+            error_msg = "No se pudo agregar el método de pago"
+            try:
+                error_data = response.json()
+                error_msg = error_data.get('error', error_msg)
+            except:
+                pass
+            return JSONResponse(content={"error": error_msg}, status_code=response.status_code)
+            
+    except requests.RequestException as e:
+        print(f"Error agregando método de pago: {e}")
+        return JSONResponse(content={"error": "Error de conexión con el servicio de pagos"}, status_code=500)
+    except Exception as e:
+        print(f"Error inesperado: {e}")
+        return JSONResponse(content={"error": "Error al procesar la solicitud"}, status_code=500)
 
 
 @app.get("/profile/edit")
