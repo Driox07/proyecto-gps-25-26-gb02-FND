@@ -186,82 +186,126 @@ async def register(request: Request):
 
 @app.get("/shop")
 def shop(request: Request, 
-         page: int = Query(default=1),
-         limit: int = Query(default=100)):
+         genres: str = Query(default=None),
+         artists: str = Query(default=None),
+         order: str = Query(default="date"),
+         direction: str = Query(default="desc"),
+         page: int = Query(default=1)):
     """
-    Renderiza la vista de la tienda.
-    Una sola llamada a TPP /store obtiene todo: productos, géneros y artistas.
+    Renderiza la vista de la tienda con filtrado desde TYA.
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
 
     try:
-        # ===== UNA SOLA LLAMADA obtiene todo =====
-        store_resp = requests.get(
-            f"{servers.TPP}/store",
-            params={"page": page, "limit": limit},
-            timeout=30,
+        # Construir parámetros de filtrado
+        filter_params = {
+            "order": order,
+            "direction": direction,
+            "page": page
+        }
+        
+        if genres:
+            filter_params["genres"] = genres
+        
+        if artists:
+            filter_params["artists"] = artists
+
+        # Obtener IDs filtrados desde TYA
+        song_ids_resp = requests.get(
+            f"{servers.TYA}/song/filter",
+            params=filter_params,
+            timeout=10,
             headers={"Accept": "application/json"}
         )
-        store_resp.raise_for_status()
-        store_data = store_resp.json()
+        song_ids = song_ids_resp.json() if song_ids_resp.ok else []
         
-        # Extraer datos
-        productos = store_data.get("data", [])
-        pagination = store_data.get("pagination", {})
-        all_genres = store_data.get("genres", [])
-        all_artists = store_data.get("artists", [])
+        album_ids_resp = requests.get(
+            f"{servers.TYA}/album/filter",
+            params=filter_params,
+            timeout=10,
+            headers={"Accept": "application/json"}
+        )
+        album_ids = album_ids_resp.json() if album_ids_resp.ok else []
         
-        print(f"[DEBUG] TPP Response: {len(productos)} productos, {len(all_genres)} géneros, {len(all_artists)} artistas")
+        merch_ids_resp = requests.get(
+            f"{servers.TYA}/merch/filter",
+            params=filter_params,
+            timeout=10,
+            headers={"Accept": "application/json"}
+        )
+        merch_ids = merch_ids_resp.json() if merch_ids_resp.ok else []
+
+        # Obtener datos completos de los productos
+        songs = []
+        if song_ids:
+            songs_resp = requests.get(
+                f"{servers.TYA}/song/list",
+                params={"ids": ",".join(map(str, song_ids))},
+                timeout=10,
+                headers={"Accept": "application/json"}
+            )
+            songs = songs_resp.json() if songs_resp.ok else []
+
+        albums = []
+        if album_ids:
+            albums_resp = requests.get(
+                f"{servers.TYA}/album/list",
+                params={"ids": ",".join(map(str, album_ids))},
+                timeout=10,
+                headers={"Accept": "application/json"}
+            )
+            albums = albums_resp.json() if albums_resp.ok else []
+
+        merch = []
+        if merch_ids:
+            merch_resp = requests.get(
+                f"{servers.TYA}/merch/list",
+                params={"ids": ",".join(map(str, merch_ids))},
+                timeout=10,
+                headers={"Accept": "application/json"}
+            )
+            merch = merch_resp.json() if merch_resp.ok else []
+
+        # Obtener géneros y artistas para los filtros
+        genres_resp = requests.get(f"{servers.TYA}/genres", timeout=5, headers={"Accept": "application/json"})
+        all_genres = genres_resp.json() if genres_resp.ok else []
         
-    except requests.RequestException as e:
-        print(f"Error obteniendo tienda desde TPP: {e}")
-        productos = []
-        pagination = {}
-        all_genres = []
-        all_artists = []
+        # Obtener todos los artistas (necesitamos un endpoint, por ahora usar búsqueda vacía o todos)
+        artists_resp = requests.get(
+            f"{servers.TYA}/artist/filter",
+            params={"order": "name", "direction": "asc"},
+            timeout=10,
+            headers={"Accept": "application/json"}
+        )
+        if artists_resp.ok:
+            artist_ids = artists_resp.json()
+            if artist_ids:
+                artists_list_resp = requests.get(
+                    f"{servers.TYA}/artist/list",
+                    params={"ids": ",".join(map(str, artist_ids))},
+                    timeout=10,
+                    headers={"Accept": "application/json"}
+                )
+                all_artists = artists_list_resp.json() if artists_list_resp.ok else []
+            else:
+                all_artists = []
+        else:
+            all_artists = []
+
+        # Crear mapeos
+        artists_map = {a.get('artistId'): a.get('artisticName') for a in all_artists if isinstance(a, dict) and a.get('artistId')}
+        genres_map = {g.get('id'): g.get('name') for g in all_genres if isinstance(g, dict) and g.get('id')}
+
+        print(f"[DEBUG] Shop filtered: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
+
     except Exception as e:
-        print(f"Error inesperado en shop: {e}")
+        print(f"Error en shop: {e}")
         import traceback
         traceback.print_exc()
-        productos = []
-        pagination = {}
-        all_genres = []
-        all_artists = []
-
-    # ===== CREAR MAPEOS para resolver IDs (manejo seguro) =====
-    artists_map = {}
-    for a in all_artists:
-        if isinstance(a, dict):
-            # Intentar obtener artistId con ambas notaciones
-            artist_id = a.get('artistId') or a.get('artist_id')
-            artist_name = a.get('artisticName') or a.get('artistic_name')
-            if artist_id and artist_name:
-                artists_map[artist_id] = artist_name
-    
-    genres_map = {}
-    for g in all_genres:
-        if isinstance(g, dict):
-            # Obtener id y name del género
-            genre_id = g.get('id') or g.get('genre_id')
-            genre_name = g.get('name') or g.get('genre_name')
-            if genre_id and genre_name:
-                genres_map[genre_id] = genre_name
-
-    # ===== SEPARAR por tipo (usando nombres de campo con guiones bajos) =====
-    songs = [p for p in productos if p.get('song_id', 0) not in [0, None]]
-    albums = [p for p in productos if p.get('album_id', 0) not in [0, None] and p.get('song_id', 0) in [0, None]]
-    merch = [p for p in productos if p.get('merch_id', 0) not in [0, None]]
-
-    print(f"[DEBUG] Shop: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
-    print(f"[DEBUG] Shop: artists_map={len(artists_map)} items, genres_map={len(genres_map)} items")
-    if productos:
-        print(f"[DEBUG] Sample product keys: {list(productos[0].keys())}")
-        print(f"[DEBUG] Sample product artist field: {productos[0].get('artist')} (type: {type(productos[0].get('artist'))})")
-    if artists_map:
-        print(f"[DEBUG] Sample artists_map keys: {list(artists_map.keys())[:5]}")
-    if genres_map:
-        print(f"[DEBUG] Sample genres_map keys: {list(genres_map.keys())[:5]}")
+        songs, albums, merch = [], [], []
+        all_genres, all_artists = [], []
+        artists_map, genres_map = {}, {}
 
     return osv.get_shop_view(
         request, userdata, 

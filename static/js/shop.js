@@ -298,7 +298,7 @@ function applyFilters() {
     // Guardar posición del scroll antes de recargar
     saveScrollPosition();
 
-    // Recargar la página con los nuevos parámetros
+    // Recargar la página con los nuevos parámetros (filtrado desde backend TYA)
     window.location.href = `/shop?${params.toString()}`;
 }
 
@@ -322,7 +322,7 @@ function resetFilters() {
     if (genreSelectedText) genreSelectedText.textContent = 'Seleccionar géneros';
     if (artistSelectedText) artistSelectedText.textContent = 'Seleccionar artistas';
 
-    // Recargar sin parámetros
+    // Recargar sin parámetros (todos los productos desde backend)
     window.location.href = '/shop';
 }
 
