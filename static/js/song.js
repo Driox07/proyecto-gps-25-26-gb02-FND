@@ -1,6 +1,7 @@
 // Song Page - Interactive Features
 // Configuration for the music microservice (defined in config.js)
-const MUSIC_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.musicService.url : 'http://localhost:8080';
+const MUSIC_SERVICE_URL = PT_URL;
+const STATS_SERVICE_URL = RYE_URL; 
 
 // Global audio player instance
 let audioPlayer = null;
@@ -9,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeAudioPlayer();
     setupButtonListeners();
     setupAnimations();
-    checkSongFavoriteStatus();
 });
 
 /**
@@ -49,6 +49,75 @@ function getTrackId() {
         return playButton.getAttribute('data-track-id');
     }
     return null;
+}
+
+function getSongId() {
+    const playButton = document.getElementById('play-button');
+        if (playButton) {
+        return playButton.getAttribute('data-song-id');
+        }
+    return null;
+}
+
+function getArtistId() {
+    const playButton = document.getElementById('play-button');
+        if (playButton) {
+            return playButton.getAttribute('artist-id');
+        }
+    return null
+}
+
+async function addStats(songId, artistId) {
+    if (!songId) {
+        console.warn("Song ID missing for stats");
+        return;
+    }
+
+    if (!artistId) {
+        console.warn("Artist ID missing for stats");
+        return;
+    }
+
+    // Resolve current user id injected by template (may be null)
+    const userid = (typeof USER_ID !== 'undefined' && USER_ID !== null) ? USER_ID : null;
+
+    async function sendStat(userid, url, subjectId, label) {
+        try {
+            const body = {
+                id: userid ? parseInt(userid, 10) : null,
+                subjectId: parseInt(subjectId, 10),
+                playbacks: 1,
+                startDate: new Date().toISOString()
+            };
+
+            console.log("Sending stat:", body);
+
+            const response = await fetch(url, {
+                method: 'POST',
+                credentials: 'include', // Cookie auth
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+
+            if (CONFIG?.debug?.logging) {
+                console.log(`Estadísticas de ${label} enviadas:`, body);
+            }
+
+        } catch (error) {
+            console.error(`Error enviando estadísticas de ${label}:`, error);
+        }
+    }
+
+    // Use local proxy endpoints to avoid CORS preflight issues
+    await sendStat(userid, `/stats/history/songs`, songId, "canción");
+    await sendStat(userid, `/stats/history/artists`, artistId, "artista");
 }
 
 /**
@@ -100,6 +169,11 @@ async function playTrack(trackId) {
         audioPlayer.src = audioUrl;
         audioPlayer.play();
         console.log('Playing track:', trackId);
+        // Stat logic -------------------------
+        const songId = getSongId();
+        const artistId = getArtistId();
+        addStats(songId, artistId);
+        // ------------------------------------
 
     } catch (error) {
         console.error('Error playing track:', error);
@@ -117,11 +191,13 @@ function setupButtonListeners() {
         playButton.addEventListener('click', () => {
             const songTitle = document.getElementById('song-title').textContent;
             const trackId = getTrackId();
+
             
             if (!trackId) {
                 alert('ID de canción no disponible');
                 return;
             }
+
             
             if (audioPlayer.paused) {
                 if (!audioPlayer.src) {
@@ -203,14 +279,21 @@ function setupButtonListeners() {
     // Favorite button
     const favoriteButton = document.getElementById('favorite-button');
     if (favoriteButton) {
-        favoriteButton.addEventListener('click', () => {
-            const songId = getTrackId();
-            if (!songId) {
-                alert('ID de canción no disponible');
-                return;
-            }
-            toggleFavoriteSong(songId, favoriteButton);
-        });
+        // If the template already sets data-fav-song we rely on the shared
+        // favorites.js initializer to attach the click handler to avoid
+        // duplicate requests and double notifications.
+        if (!favoriteButton.dataset || !favoriteButton.dataset.favSong) {
+            favoriteButton.addEventListener('click', () => {
+                // Prefer explicit dataset if set by the template, otherwise fall back to URL
+                const songId = favoriteButton.dataset && favoriteButton.dataset.favSong ? favoriteButton.dataset.favSong : getSongIdFromUrl();
+                if (!songId) {
+                    alert('ID de canción no disponible');
+                    return;
+                }
+                toggleFavoriteSong(songId, favoriteButton);
+            });
+        }
+    }
     }
 
     // Delete button
@@ -247,7 +330,6 @@ function setupButtonListeners() {
             }
         });
     }
-}
 
 /**
  * Setup page animations
@@ -337,26 +419,6 @@ function setupAnimations() {
         coverContainer.addEventListener('mouseleave', () => {
             coverContainer.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
         });
-    }
-}
-
-/**
- * Check if the current song is in favorites and update button state
- */
-async function checkSongFavoriteStatus() {
-    const favoriteButton = document.getElementById('favorite-button');
-    if (!favoriteButton) return;
-    
-    const songId = getTrackId();
-    if (!songId) return;
-    
-    try {
-        const isFavorited = await isSongFavorited(parseInt(songId));
-        if (typeof updateFavoriteButtonState === 'function') {
-            updateFavoriteButtonState(favoriteButton, isFavorited);
-        }
-    } catch (error) {
-        console.error('Error checking favorite status:', error);
     }
 }
 

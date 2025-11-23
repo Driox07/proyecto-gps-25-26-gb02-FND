@@ -1,3 +1,5 @@
+const STATS_SERVICE_URL = RYE_URL; 
+
 // Home page interactivity
 document.addEventListener('DOMContentLoaded', () => {
     // Smooth scroll for anchor links
@@ -96,4 +98,115 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Log page load for analytics (optional)
     console.log('OverSound Home Page loaded successfully');
+
+    // ------------------------------
+    loadTop10();
+    loadRecommendations();
+    // ------------------------------
 });
+
+//---
+async function loadTop10() {
+    // Prefer server-injected data (present when controller fetched RYE server-side)
+    try {
+        if (typeof TOP_SONGS !== 'undefined' && TOP_SONGS && TOP_SONGS.length) {
+            renderTopSongs(TOP_SONGS);
+        } else {
+            const songsRes = await fetch(`${STATS_SERVICE_URL}/statistics/top-10-songs`, { credentials: "include" });
+            const songs = await songsRes.json();
+            renderTopSongs(songs);
+        }
+
+        if (typeof TOP_ARTISTS !== 'undefined' && TOP_ARTISTS && TOP_ARTISTS.length) {
+            renderTopArtists(TOP_ARTISTS);
+        } else {
+            const artistsRes = await fetch(`${STATS_SERVICE_URL}/statistics/top-10-artists`, { credentials: "include" });
+            const artists = await artistsRes.json();
+            renderTopArtists(artists);
+        }
+
+    } catch (err) {
+        console.error("Error loading top lists:", err);
+    }
+}
+
+function renderTopSongs(songs) {
+    const container = document.getElementById("top-songs");
+    if (!songs || !songs.length) {
+        container.innerHTML = "<p>No hay canciones en el top.</p>";
+        return;
+    }
+    container.innerHTML = songs.map(s => `
+        <div class="top-card">
+            <img src="${s.image || '/static/default-cover.png'}" />
+            <p>${s.name}</p>
+            <span>${s.genre}</span>
+        </div>
+    `).join('');
+}
+
+function renderTopArtists(artists) {
+    const container = document.getElementById("top-artists");
+    if (!artists || !artists.length) {
+        container.innerHTML = "<p>No hay artistas en el top.</p>";
+        return;
+    }
+    container.innerHTML = artists.map(a => `
+        <div class="top-card">
+            <img src="${a.image || '/static/default-artist.png'}" />
+            <p>${a.name}</p>
+        </div>
+    `).join('');
+}
+//..
+async function loadRecommendations() {
+    try {
+        if (typeof RECOMMENDED_SONGS !== 'undefined' && RECOMMENDED_SONGS && RECOMMENDED_SONGS.length) {
+            renderRecommendedSongs(RECOMMENDED_SONGS);
+        } else {
+            const songsRes = await fetch(`${STATS_SERVICE_URL}/recommendations/song`, { credentials: 'include' });
+            const songs = await songsRes.json();
+            renderRecommendedSongs(songs);
+        }
+
+        if (typeof RECOMMENDED_ARTISTS !== 'undefined' && RECOMMENDED_ARTISTS && RECOMMENDED_ARTISTS.length) {
+            renderRecommendedArtists(RECOMMENDED_ARTISTS);
+        } else {
+            const artistsRes = await fetch(`${STATS_SERVICE_URL}/recommendations/artist`, { credentials: 'include' });
+            const artists = await artistsRes.json();
+            renderRecommendedArtists(artists);
+        }
+
+    } catch (err) {
+        console.error("Error loading recommendations:", err);
+    }
+}
+
+function renderRecommendedSongs(songs) {
+    const container = document.getElementById("recommended-songs");
+    if (!songs || !songs.length) {
+        container.innerHTML = "<p>No hay recomendaciones disponibles.</p>";
+        return;
+    }
+    container.innerHTML = songs.map(s => `
+        <div class="top-card">
+            <img src="${s.image || '/static/default-cover.png'}" />
+            <p>${s.name}</p>
+            <span>${s.genre}</span>
+        </div>
+    `).join('');
+}
+
+function renderRecommendedArtists(artists) {
+    const container = document.getElementById("recommended-artists");
+    if (!artists || !artists.length) {
+        container.innerHTML = "<p>No hay recomendaciones disponibles.</p>";
+        return;
+    }
+    container.innerHTML = artists.map(a => `
+        <div class="top-card">
+            <img src="${a.image || '/static/default-artist.png'}" />
+            <p>${a.name}</p>
+        </div>
+    `).join('');
+}

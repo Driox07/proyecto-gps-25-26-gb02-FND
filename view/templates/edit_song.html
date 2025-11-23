@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Canción - OverSound</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/edit_song.css') }}">
+</head>
+<body>
+    {% include 'common/header.html' %}
+    
+    <main class="main-content">
+        <div class="container">
+            <div class="upload-header">
+                <h2>Editar Canción</h2>
+                <p>Actualiza la información de tu canción</p>
+            </div>
+
+            <div id="message" class="message" style="display:none;"></div>
+
+            <form id="edit-song-form">
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="title">Título de la canción *</label>
+                        <input type="text" id="title" name="title" required placeholder="Ej: Mi Nueva Canción" value="{{ data.song.title if data.song.title else '' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="duration">Duración (segundos) *</label>
+                        <input type="number" id="duration" name="duration" required min="1" placeholder="180" value="{{ data.song.duration if data.song.duration else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Precio (€) *</label>
+                        <input type="number" id="price" name="price" step="0.01" required min="0.01" placeholder="0.99" value="{{ data.song.price if data.song.price else '' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="description">Descripción</label>
+                        <textarea id="description" name="description" rows="4" placeholder="Describe tu canción...">{{ data.song.description if data.song.description else '' }}</textarea>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="genres">Géneros *</label>
+                        <input type="text" id="genres" name="genres" required placeholder="Ej: 1,2,3 (IDs de géneros separados por comas)" value="{% if data.song.genres %}{{ data.song.genres|join(',') }}{% endif %}">
+                        <small>IDs de géneros separados por comas</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="collaborators">Colaboradores</label>
+                        <input type="text" id="collaborators" name="collaborators" placeholder="Ej: 5,12,8 (IDs de artistas separados por comas)" value="{% if data.song.collaborators %}{{ data.song.collaborators|join(',') }}{% endif %}">
+                        <small>IDs de otros artistas que colaboraron en esta canción</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label for="cover">Portada (URL) *</label>
+                        <input type="url" id="cover" name="cover" required placeholder="https://ejemplo.com/cover.jpg" value="{{ data.song.cover if data.song.cover else '' }}">
+                        {% if data.song.cover %}
+                        <div class="preview-container" style="margin-top: 10px;">
+                            <img src="{{ data.song.cover }}" alt="Vista previa" style="max-width: 200px; border-radius: 8px;">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="releaseDate">Fecha de lanzamiento</label>
+                        <input type="date" id="releaseDate" name="releaseDate" value="{{ data.song.releaseDate[:10] if data.song.releaseDate else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Track ID</label>
+                        <input type="text" value="{{ data.song.trackId }}" disabled>
+                        <small>El archivo de audio no se puede cambiar</small>
+                    </div>
+                </div>
+
+                <input type="hidden" id="songId" value="{{ data.song.songId }}">
+
+                <div class="form-actions">
+                    <a href="/artist/studio" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" id="save-btn" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', path='js/edit_song.js') }}"></script>
+</body>
+</html>

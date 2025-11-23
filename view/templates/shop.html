@@ -7,6 +7,10 @@
     <title>Tienda - OverSound</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='styles/shop.css') }}">
+    <script>
+        const TYA_URL = '{{ tya_server }}';
+        const isAuthenticated = {{ 'true' if data.userdata else 'false' }};
+    </script>
 </head>
 <body>
     {% include 'common/header.html' %}
@@ -120,11 +124,11 @@
                         {% for song in songs %}
                             <div class="product-card" data-type="song" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
-                                    <img src="{{ song.cover if song.cover else '/static/img/utils/default-song.png' }}" 
+                                    <img src="{{ tya_server }}/static{{ song.cover if song.cover else 'img/utils/default-song.svg' }}" 
                                          alt="{{ song.name if song.name else 'Canción' }}"
-                                         onerror="this.src='/static/img/utils/default-song.png'">
+                                         loading="lazy">
                                     <div class="product-overlay">
-                                        <a href="/song/{{ song.songId }}" class="btn-view">Ver Detalles</a>
+                                        <a href="/song/{{ song.song_id }}" class="btn-view">Ver Detalles</a>
                                     </div>
                                 </div>
                                 <div class="product-info">
@@ -137,7 +141,7 @@
                                     {% endif %}
                                     <div class="product-footer">
                                         <span class="product-price">€{{ "%.2f"|format(song.price|float) if song.price else '0.99' }}</span>
-                                        <button class="btn-add-cart" data-product-id="{{ song.songId }}" data-product-type="song">
+                                        <button class="btn-add-cart" data-product-id="{{ song.song_id }}" data-product-type="song">
                                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <circle cx="9" cy="21" r="1"></circle>
                                                 <circle cx="20" cy="21" r="1"></circle>
@@ -170,11 +174,11 @@
                         {% for album in albums %}
                             <div class="product-card" data-type="album" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
-                                    <img src="{{ album.cover if album.cover else '/static/img/utils/default-album.png' }}" 
+                                    <img src="{{ tya_server }}/static{{ album.cover if album.cover else 'img/utils/default-album.svg' }}" 
                                          alt="{{ album.name if album.name else 'Álbum' }}"
-                                         onerror="this.src='/static/img/utils/default-album.png'">
+                                         loading="lazy">
                                     <div class="product-overlay">
-                                        <a href="/album/{{ album.albumId }}" class="btn-view">Ver Detalles</a>
+                                        <a href="/album/{{ album.album_id }}" class="btn-view">Ver Detalles</a>
                                     </div>
                                 </div>
                                 <div class="product-info">
@@ -190,7 +194,7 @@
                                     {% endif %}
                                     <div class="product-footer">
                                         <span class="product-price">€{{ "%.2f"|format(album.price|float) if album.price else '9.99' }}</span>
-                                        <button class="btn-add-cart" data-product-id="{{ album.albumId }}" data-product-type="album">
+                                        <button class="btn-add-cart" data-product-id="{{ album.album_id }}" data-product-type="album">
                                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <circle cx="9" cy="21" r="1"></circle>
                                                 <circle cx="20" cy="21" r="1"></circle>
@@ -223,11 +227,11 @@
                         {% for item in merch %}
                             <div class="product-card" data-type="merch" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
-                                    <img src="{{ item.cover if item.cover else '/static/img/utils/default-merch.png' }}" 
+                                    <img src="{{ tya_server }}/static{{ item.cover if item.cover else 'img/utils/default-merch.svg' }}" 
                                          alt="{{ item.name if item.name else 'Merchandising' }}"
-                                         onerror="this.src='/static/img/utils/default-merch.png'">
+                                         loading="lazy">
                                     <div class="product-overlay">
-                                        <a href="/merch/{{ item.merchId }}" class="btn-view">Ver Detalles</a>
+                                        <a href="/merch/{{ item.merch_id }}" class="btn-view">Ver Detalles</a>
                                     </div>
                                 </div>
                                 <div class="product-info">
@@ -240,7 +244,7 @@
                                     {% endif %}
                                     <div class="product-footer">
                                         <span class="product-price">€{{ "%.2f"|format(item.price|float) if item.price else '19.99' }}</span>
-                                        <button class="btn-add-cart" data-product-id="{{ item.merchId }}" data-product-type="merch">
+                                        <button class="btn-add-cart" data-product-id="{{ item.merch_id }}" data-product-type="merch">
                                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <circle cx="9" cy="21" r="1"></circle>
                                                 <circle cx="20" cy="21" r="1"></circle>

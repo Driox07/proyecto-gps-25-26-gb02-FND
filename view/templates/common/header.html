@@ -55,6 +55,7 @@
         </nav>
 
         <!-- Carrito a la derecha -->
+        {% if data and data.userdata %}
         <a href="/cart" class="cart-button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="9" cy="21" r="1"></circle>
@@ -63,6 +64,7 @@
             </svg>
             <span class="cart-badge" id="cart-badge" style="display: none;">0</span>
         </a>
+        {% endif %}
 
         <!-- Usuario a la derecha -->
         <div class="header-user">

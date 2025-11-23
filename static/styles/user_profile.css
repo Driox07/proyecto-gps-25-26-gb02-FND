@@ -1189,38 +1189,6 @@ body {
     }
 }
 
-@media (max-width: 480px) {
-    .profile-image,
-    .profile-image-placeholder {
-        width: 120px;
-        height: 120px;
-    }
-
-    .profile-image-placeholder {
-        font-size: 48px;
-    }
-
-    .profile-nickname {
-        font-size: 28px;
-    }
-
-    .profile-fullname {
-        font-size: 18px;
-    }
-
-    .favorites-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .category-title {
-        font-size: 20px;
-    }
-
-    .btn {
-        padding: 10px 20px;
-        font-size: 14px;
-    }
-}
 
 /* Label Section Styles */
 .label-section {

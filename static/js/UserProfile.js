@@ -1,7 +1,7 @@
 // User Profile Page Interactivity
 
 // Configuration for the music microservice (defined in config.js)
-const MUSIC_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.musicService.url : 'http://localhost:8000';
+const MUSIC_SERVICE_URL = PT_URL;
 
 // Global audio player instance
 let audioPlayer = null;
@@ -144,8 +144,7 @@ async function loadPaymentMethods() {
     if (!grid) return;
 
     try {
-        // Llamar al endpoint del backend que hace proxy a TPP
-        const response = await fetch('/payment', {
+        const response = await fetch(`${TPP_SERVER}/payment`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -185,18 +184,31 @@ async function loadPaymentMethods() {
  */
 function displayPaymentMethods(methods) {
     const grid = document.getElementById('payment-methods-grid');
-    grid.innerHTML = methods.map(method => `
-        <div class="payment-card" data-payment-id="${method.id}">
+    grid.innerHTML = methods.map(method => {
+        // Mapear campos de la respuesta
+        const cardHolder = method.card_holder || '';
+        const cardNumber = method.card_number || '';
+        const expireMonth = method.expire_month || 0;
+        const expireYear = method.expire_year || 0;
+        const id = method.id;
+        
+        // Extraer últimos 4 dígitos del cardNumber
+        const lastFour = cardNumber.slice(-4);
+        
+        // Formatear fecha de expiración
+        const expireMonthStr = String(expireMonth).padStart(2, '0');
+        const expireYearStr = String(expireYear).slice(-2);
+        const expiry = `${expireMonthStr}/${expireYearStr}`;
+        
+        // Detectar tipo de tarjeta por los primeros dígitos
+        const cardType = detectCardType(cardNumber);
+        
+        return `
+        <div class="payment-card" data-payment-id="${id}">
             <div class="payment-card-header">
-                <div class="card-logo">${getCardLogo(method.card_type)}</div>
+                <div class="card-logo">${getCardLogo(cardType)}</div>
                 <div class="card-actions">
-                    <button class="card-action-btn set-default-btn" title="Establecer como predeterminado" data-payment-id="${method.id}">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M9 11l3 3L22 4" stroke-width="2" stroke-linecap="round"></path>
-                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke-width="2" stroke-linecap="round"></path>
-                        </svg>
-                    </button>
-                    <button class="card-action-btn delete-btn" title="Eliminar" data-payment-id="${method.id}">
+                    <button class="card-action-btn delete-btn" title="Eliminar" data-payment-id="${id}">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <polyline points="3 6 5 6 21 6" stroke-width="2"></polyline>
                             <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke-width="2"></path>
@@ -207,38 +219,31 @@ function displayPaymentMethods(methods) {
                 </div>
             </div>
             
-            <div class="payment-card-number">•••• •••• •••• ${method.card_number_last_four}</div>
+            <div class="payment-card-number">•••• •••• •••• ${lastFour}</div>
             
             <div class="payment-card-info">
                 <div class="card-holder">
                     <div class="info-label">Titular</div>
-                    <div class="info-value">${method.card_holder}</div>
+                    <div class="info-value">${cardHolder}</div>
                 </div>
                 <div class="card-expiry">
                     <div class="info-label">Vencimiento</div>
-                    <div class="info-value">${method.expiry}</div>
+                    <div class="info-value">${expiry}</div>
                 </div>
             </div>
             
             <div style="display: flex; gap: 8px; align-items: center;">
-                <span class="card-type-badge">${method.card_type === 'credit' ? 'Crédito' : 'Débito'}</span>
-                ${method.is_default ? '<span class="default-badge">Predeterminada</span>' : ''}
+                <span class="card-type-badge">${cardType}</span>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 
     // Add event listeners for actions
     grid.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             deletePaymentMethod(btn.dataset.paymentId);
-        });
-    });
-
-    grid.querySelectorAll('.set-default-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            setDefaultPaymentMethod(btn.dataset.paymentId);
         });
     });
 }
@@ -262,13 +267,34 @@ function displayEmptyPaymentState() {
 /**
  * Get card type logo
  */
-function getCardLogo(cardType) {
-    if (cardType === 'credit') {
-        return 'CC';
-    } else if (cardType === 'debit') {
-        return 'DC';
+/**
+ * Detect card type from card number
+ */
+function detectCardType(cardNumber) {
+    // Limpiar el número (quitar espacios, asteriscos, etc)
+    const cleanNumber = cardNumber.replace(/[^0-9]/g, '');
+    
+    if (cleanNumber.startsWith('4')) {
+        return 'Visa';
+    } else if (cleanNumber.startsWith('5')) {
+        return 'Mastercard';
+    } else if (cleanNumber.startsWith('3')) {
+        return 'American Express';
     }
-    return 'TC';
+    return 'Tarjeta';
+}
+
+/**
+ * Get card logo based on card type
+ */
+function getCardLogo(cardType) {
+    const logos = {
+        'Visa': '💳',
+        'Mastercard': '💳',
+        'American Express': '💳',
+        'Tarjeta': '💳'
+    };
+    return logos[cardType] || '💳';
 }
 
 /**
@@ -372,6 +398,17 @@ async function addPaymentMethod() {
     }
 
     try {
+        // Parsear fecha de expiración MM/YY
+        const [expireMonth, expireYear] = cardExpiry.split('/').map(v => v.trim());
+        const fullYear = parseInt('20' + expireYear); // Convertir YY a 20YY
+        const month = parseInt(expireMonth);
+
+        // Validar mes
+        if (month < 1 || month > 12) {
+            showNotification('Mes de expiración inválido', 'error');
+            return;
+        }
+
         const response = await fetch('/payment', {
             method: 'POST',
             credentials: 'include',
@@ -380,12 +417,10 @@ async function addPaymentMethod() {
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
-                card_holder: cardName,
-                card_number: cardNumber,
-                expiry: cardExpiry,
-                cvv: cardCvv,
-                card_type: cardType,
-                is_default: isDefault
+                cardHolder: cardName,       // camelCase como espera TPP
+                cardNumber: cardNumber,     // camelCase como espera TPP
+                expireMonth: month,         // Número entero (1-12)
+                expireYear: fullYear        // Año completo (ej: 2025)
             })
         });
 
@@ -396,11 +431,11 @@ async function addPaymentMethod() {
             loadPaymentMethods();
         } else {
             const data = await response.json();
-            showNotification(data.error || 'Error al agregar tarjeta', 'error');
+            showNotification(data.message || data.error || 'Error al agregar tarjeta', 'error');
         }
     } catch (error) {
         console.error('Error adding payment method:', error);
-        showNotification('Error al agregar tarjeta', 'error');
+        showNotification('Error al agregar tarjeta: ' + error.message, 'error');
     }
 }
 
@@ -413,7 +448,7 @@ async function deletePaymentMethod(paymentId) {
     }
 
     try {
-        const response = await fetch(`/payment/${paymentId}`, {
+        const response = await fetch(`${TPP_SERVER}/payment/${paymentId}`, {
             method: 'DELETE',
             credentials: 'include',
             headers: {
@@ -434,32 +469,7 @@ async function deletePaymentMethod(paymentId) {
     }
 }
 
-/**
- * Set default payment method
- */
-async function setDefaultPaymentMethod(paymentId) {
-    try {
-        const response = await fetch(`/payment/${paymentId}`, {
-            method: 'PATCH',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ is_default: true })
-        });
-
-        if (response.ok) {
-            showNotification('Método predeterminado establecido', 'success');
-            loadPaymentMethods();
-        } else {
-            const data = await response.json();
-            showNotification(data.error || 'Error al establecer método predeterminado', 'error');
-        }
-    } catch (error) {
-        console.error('Error setting default payment method:', error);
-        showNotification('Error al establecer método predeterminado', 'error');
-    }
-}
+// Función setDefaultPaymentMethod eliminada - no soportada por backend TPP
 
 /**
  * Show notification message
@@ -538,7 +548,7 @@ async function loadArtistInfo() {
 
     console.log('Loading artist info...');
     console.log('userData:', window.userData);
-    console.log('SERVER_CONFIG:', window.SERVER_CONFIG);
+    console.log('SYU_URL:', SYU_URL, 'TYA_URL:', TYA_URL);
 
     // Verificar si el usuario tiene artistId
     if (!window.userData || !window.userData.artistId) {
@@ -551,7 +561,7 @@ async function loadArtistInfo() {
 
     // Si tiene artistId, cargar información del artista
     try {
-        const url = `${SERVER_CONFIG.TYA}/artist/${window.userData.artistId}`;
+        const url = `${TYA_URL}/artist/${window.userData.artistId}`;
         console.log('Fetching artist data from:', url);
         
         const response = await fetch(url, {
@@ -589,7 +599,7 @@ async function loadArtistInfo() {
         }
         
         // Hacer petición directa al microservicio TYA
-        const response = await fetch(`${SERVER_CONFIG.TYA}/artist/by-user/${userId}`, {
+        const response = await fetch(`${TYA_URL}/artist/by-user/${userId}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json'

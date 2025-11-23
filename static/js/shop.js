@@ -12,9 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
     initCustomDropdowns();
     initFilters();
     initPagination();
-    initCart();
+    if (isAuthenticated) {
+        initCart();
+    }
     restoreScrollPosition();
-    checkAllProductsFavoriteStatus();
 });
 
 // ============ PAGINATION ============
@@ -442,3 +443,9 @@ setTimeout(() => {
         observer.observe(card);
     });
 }, 100);
+
+// Inicializar lazy loading después de que el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    // ... existing code ...
+    // Removed lazy image loading to avoid CORS
+});

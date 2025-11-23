@@ -41,14 +41,51 @@ app.add_middleware(
     allow_headers=["*"],  # Permitir todos los headers
 )
 
-app.mount("/static", StaticFiles(directory='static'), name="static")
+# Obtener la ruta absoluta del directorio static
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 def index(request: Request):
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     print(userdata)
-    return osv.get_home_view(request, userdata, servers.SYU)
+    # Load top lists and recommendations from RYE (server-side to avoid CORS and speed up page)
+    top_songs = []
+    top_artists = []
+    rec_songs = []
+    rec_artists = []
+
+    try:
+        ts = requests.get(f"{servers.RYE}/statistics/top-10-songs", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+        if ts.ok:
+            top_songs = ts.json()
+    except requests.RequestException as e:
+        print(f"Error fetching top songs from RYE: {e}")
+
+    try:
+        ta = requests.get(f"{servers.RYE}/statistics/top-10-artists", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+        if ta.ok:
+            top_artists = ta.json()
+    except requests.RequestException as e:
+        print(f"Error fetching top artists from RYE: {e}")
+
+    try:
+        rs = requests.get(f"{servers.RYE}/recommendations/song", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+        if rs.ok:
+            rec_songs = rs.json()
+    except requests.RequestException as e:
+        print(f"Error fetching recommended songs from RYE: {e}")
+
+    try:
+        ra = requests.get(f"{servers.RYE}/recommendations/artist", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+        if ra.ok:
+            rec_artists = ra.json()
+    except requests.RequestException as e:
+        print(f"Error fetching recommended artists from RYE: {e}")
+
+    return osv.get_home_view(request, userdata, servers.SYU, servers.RYE, servers.TYA, top_songs, top_artists, rec_songs, rec_artists)
 
 @app.get("/login")
 def login_page(request: Request):
@@ -163,7 +200,7 @@ def shop(request: Request,
         store_resp = requests.get(
             f"{servers.TPP}/store",
             params={"page": page, "limit": limit},
-            timeout=10,
+            timeout=30,
             headers={"Accept": "application/json"}
         )
         store_resp.raise_for_status()
@@ -175,53 +212,100 @@ def shop(request: Request,
         all_genres = store_data.get("genres", [])
         all_artists = store_data.get("artists", [])
         
+        print(f"[DEBUG] TPP Response: {len(productos)} productos, {len(all_genres)} géneros, {len(all_artists)} artistas")
+        
     except requests.RequestException as e:
         print(f"Error obteniendo tienda desde TPP: {e}")
         productos = []
         pagination = {}
         all_genres = []
         all_artists = []
+    except Exception as e:
+        print(f"Error inesperado en shop: {e}")
+        import traceback
+        traceback.print_exc()
+        productos = []
+        pagination = {}
+        all_genres = []
+        all_artists = []
 
-    # ===== CREAR MAPEOS para resolver IDs =====
-    artists_map = {a['artistId']: a['artisticName'] for a in all_artists}
-    genres_map = {g['id']: g['name'] for g in all_genres}
+    # ===== CREAR MAPEOS para resolver IDs (manejo seguro) =====
+    artists_map = {}
+    for a in all_artists:
+        if isinstance(a, dict):
+            # Intentar obtener artistId con ambas notaciones
+            artist_id = a.get('artistId') or a.get('artist_id')
+            artist_name = a.get('artisticName') or a.get('artistic_name')
+            if artist_id and artist_name:
+                artists_map[artist_id] = artist_name
+    
+    genres_map = {}
+    for g in all_genres:
+        if isinstance(g, dict):
+            # Obtener id y name del género
+            genre_id = g.get('id') or g.get('genre_id')
+            genre_name = g.get('name') or g.get('genre_name')
+            if genre_id and genre_name:
+                genres_map[genre_id] = genre_name
 
-    # ===== SEPARAR por tipo =====
-    songs = [p for p in productos if p.get('songId', 0) != 0]
-    albums = [p for p in productos if p.get('albumId', 0) != 0 and p.get('songId', 0) == 0]
-    merch = [p for p in productos if p.get('merchId', 0) != 0]
+    # ===== SEPARAR por tipo (usando nombres de campo con guiones bajos) =====
+    songs = [p for p in productos if p.get('song_id', 0) not in [0, None]]
+    albums = [p for p in productos if p.get('album_id', 0) not in [0, None] and p.get('song_id', 0) in [0, None]]
+    merch = [p for p in productos if p.get('merch_id', 0) not in [0, None]]
 
-    print(f"Shop: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
+    print(f"[DEBUG] Shop: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
+    print(f"[DEBUG] Shop: artists_map={len(artists_map)} items, genres_map={len(genres_map)} items")
+    if productos:
+        print(f"[DEBUG] Sample product keys: {list(productos[0].keys())}")
+        print(f"[DEBUG] Sample product artist field: {productos[0].get('artist')} (type: {type(productos[0].get('artist'))})")
+    if artists_map:
+        print(f"[DEBUG] Sample artists_map keys: {list(artists_map.keys())[:5]}")
+    if genres_map:
+        print(f"[DEBUG] Sample genres_map keys: {list(genres_map.keys())[:5]}")
 
     return osv.get_shop_view(
         request, userdata, 
         songs, all_genres, all_artists, albums, merch,
-        artists_map, genres_map, pagination
+        artists_map, genres_map, servers.TYA
     )
 
 @app.get("/cart")
 async def get_cart(request: Request):
     """
-    Obtiene los productos del carrito del usuario autenticado
-    Proxea la llamada a TPP GET /cart
+    Endpoint del carrito que responde con HTML o JSON según el header Accept
+    - Si Accept contiene 'application/json': devuelve JSON con los productos del carrito
+    - Si Accept contiene 'text/html': renderiza la página HTML del carrito
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     
-    if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    # Obtener el header Accept
+    accept_header = request.headers.get("accept", "")
     
-    try:
-        cart_resp = requests.get(
-            f"{servers.TPP}/cart",
-            timeout=5,
-            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
-        )
-        cart_resp.raise_for_status()
-        return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
-    except requests.RequestException as e:
-        print(f"Error obteniendo carrito: {e}")
-        return JSONResponse(content={"error": "No se pudo obtener el carrito"}, status_code=500)
+    # Si la petición espera JSON (llamada desde JavaScript)
+    if "application/json" in accept_header:
+        if not userdata:
+            return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+        
+        try:
+            cart_resp = requests.get(
+                f"{servers.TPP}/cart",
+                timeout=5,
+                headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+            )
+            cart_resp.raise_for_status()
+            return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
+        except requests.RequestException as e:
+            print(f"Error obteniendo carrito: {e}")
+            return JSONResponse(content={"error": "No se pudo obtener el carrito"}, status_code=500)
+    
+    # Si la petición espera HTML (navegación normal)
+    else:
+        if not userdata:
+            return RedirectResponse("/login")
+        
+        # Renderizar la vista del carrito
+        return osv.get_cart_view(request, userdata, servers.TYA)
 
 # ============ ENDPOINTS DE BÚSQUEDA ============
 
@@ -683,13 +767,125 @@ def get_song(request: Request, songId: int):
         tipoUsuario = 0
         if userdata:
             tipoUsuario = 1  # TODO: Implementar lógica para distinguir artista
+
+        metrics = None
+        try:
+            metrics_resp = requests.get(f"{servers.RYE}/statistics/metrics/song/{songId}", timeout=5)
+            metrics_resp.raise_for_status()
+            metrics_data = metrics_resp.json()
+            print(f"[DEBUG] Metrics response data: {metrics_data}")
+            metrics = {
+            "sales": metrics_data.get("sales", 0),
+            "downloads": metrics_data.get("downloads", 0),
+            "playbacks": metrics_data.get("playbacks", 0)
+            }
+        except requests.RequestException as e:
+            print(f"Error obteniendo métricas del artista: {e}")
+            metrics = {"playbacks": 0, "sales": 0, "downloads": 0}
         
-        return osv.get_song_view(request, song_data, tipoUsuario, userdata, isLiked, inCarrito, servers.SYU)
+        return osv.get_song_view(request, song_data, tipoUsuario, userdata, isLiked, inCarrito, servers.SYU, metrics, servers.TYA, servers.RYE, servers.PT)
         
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
         print(e)
         return osv.get_error_view(request, userdata, f"No se pudo cargar la canción", str(e))
+
+
+@app.get("/song/{songId}/edit")
+def get_song_edit_page(request: Request, songId: int):
+    """
+    Ruta para mostrar la página de edición de una canción
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario sea un artista
+    if not userdata.get('artistId'):
+        return osv.get_error_view(request, userdata, "Debes ser un artista para editar canciones", "")
+    
+    try:
+        # Obtener datos de la canción
+        song_resp = requests.get(f"{servers.TYA}/song/{songId}", timeout=5, headers={"Accept": "application/json"})
+        song_resp.raise_for_status()
+        song_data = song_resp.json()
+        
+        # Verificar que el usuario sea el propietario
+        if userdata.get('artistId') != song_data.get('artistId'):
+            return osv.get_error_view(request, userdata, "No tienes permiso para editar esta canción", "")
+        
+        # Obtener géneros disponibles
+        try:
+            genres_resp = requests.get(f"{servers.TYA}/genres", timeout=5, headers={"Accept": "application/json"})
+            genres_resp.raise_for_status()
+            genres = genres_resp.json()
+        except requests.RequestException:
+            genres = []
+        
+        # Obtener artistas para colaboradores
+        try:
+            artists_resp = requests.get(f"{servers.TYA}/artist/list?ids=1", timeout=5, headers={"Accept": "application/json"})
+            artists_resp.raise_for_status()
+            artists = artists_resp.json()
+        except requests.RequestException:
+            artists = []
+        
+        song_data['genres_list'] = genres
+        song_data['artists_list'] = artists
+        
+        return osv.get_song_edit_view(request, userdata, song_data, servers.TYA)
+        
+    except requests.RequestException as e:
+        print(f"Error obteniendo datos de la canción: {e}")
+        return osv.get_error_view(request, userdata, "No se pudo cargar los datos de la canción", str(e))
+
+
+@app.patch("/song/{songId}/edit")
+async def update_song(request: Request, songId: int):
+    """
+    Ruta para actualizar una canción
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if not userdata.get('artistId'):
+        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
+    
+    try:
+        # Primero verificar propiedad
+        song_resp = requests.get(f"{servers.TYA}/song/{songId}", timeout=2, headers={"Accept": "application/json"})
+        song_resp.raise_for_status()
+        song_data = song_resp.json()
+        
+        if userdata.get('artistId') != song_data.get('artistId'):
+            return JSONResponse(content={"error": "No tienes permiso para editar esta canción"}, status_code=403)
+        
+        # Obtener datos del formulario
+        body = await request.json()
+        
+        # Enviar actualización a TYA
+        update_resp = requests.patch(
+            f"{servers.TYA}/song/{songId}",
+            json=body,
+            timeout=5,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        update_resp.raise_for_status()
+        
+        return JSONResponse(content={"message": "Canción actualizada correctamente", "songId": songId}, status_code=200)
+        
+    except requests.RequestException as e:
+        error_msg = str(e)
+        try:
+            error_msg = e.response.json().get('message', str(e))
+        except:
+            pass
+        return JSONResponse(content={"message": error_msg}, status_code=500)
 
 
 @app.delete("/album/{albumId}")
@@ -835,11 +1031,100 @@ def get_album(request: Request, albumId: int):
         if userdata:
             tipoUsuario = 1  # TODO: Implementar lógica para distinguir artista
         
-        return osv.get_album_view(request, album_data, tipoUsuario, isLiked, inCarrito, tiempo_formateado, userdata, servers.SYU)
+        return osv.get_album_view(request, album_data, tipoUsuario, isLiked, inCarrito, tiempo_formateado, userdata, servers.PT)
         
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
         return osv.get_error_view(request, userdata, f"No se pudo cargar el álbum", str(e))
+
+
+@app.get("/album/{albumId}/edit")
+def get_album_edit_page(request: Request, albumId: int):
+    """
+    Ruta para mostrar la página de edición de un álbum
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario sea un artista
+    if not userdata.get('artistId'):
+        return osv.get_error_view(request, userdata, "Debes ser un artista para editar álbumes", "")
+    
+    try:
+        # Obtener datos del álbum
+        album_resp = requests.get(f"{servers.TYA}/album/{albumId}", timeout=5, headers={"Accept": "application/json"})
+        album_resp.raise_for_status()
+        album_data = album_resp.json()
+        
+        # Verificar que el usuario sea el propietario
+        if userdata.get('artistId') != album_data.get('artistId'):
+            return osv.get_error_view(request, userdata, "No tienes permiso para editar este álbum", "")
+        
+        # Obtener canciones disponibles del artista
+        try:
+            songs_resp = requests.get(f"{servers.TYA}/artist/{userdata.get('artistId')}/songs", timeout=5, headers={"Accept": "application/json"})
+            songs_resp.raise_for_status()
+            artist_songs = songs_resp.json()
+        except requests.RequestException:
+            artist_songs = []
+        
+        album_data['artist_songs'] = artist_songs
+        
+        return osv.get_album_edit_view(request, userdata, album_data, servers.TYA)
+        
+    except requests.RequestException as e:
+        print(f"Error obteniendo datos del álbum: {e}")
+        return osv.get_error_view(request, userdata, "No se pudo cargar los datos del álbum", str(e))
+
+
+@app.patch("/album/{albumId}/edit")
+async def update_album(request: Request, albumId: int):
+    """
+    Ruta para actualizar un álbum
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if not userdata.get('artistId'):
+        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
+    
+    try:
+        # Primero verificar propiedad
+        album_resp = requests.get(f"{servers.TYA}/album/{albumId}", timeout=2, headers={"Accept": "application/json"})
+        album_resp.raise_for_status()
+        album_data = album_resp.json()
+        
+        if userdata.get('artistId') != album_data.get('artistId'):
+            return JSONResponse(content={"error": "No tienes permiso para editar este álbum"}, status_code=403)
+        
+        # Obtener datos del formulario
+        body = await request.json()
+        
+        # Enviar actualización a TYA
+        update_resp = requests.patch(
+            f"{servers.TYA}/album/{albumId}",
+            json=body,
+            timeout=5,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        update_resp.raise_for_status()
+        
+        return JSONResponse(content={"message": "Álbum actualizado correctamente", "albumId": albumId}, status_code=200)
+        
+    except requests.RequestException as e:
+        error_msg = str(e)
+        try:
+            error_msg = e.response.json().get('message', str(e))
+        except:
+            pass
+        return JSONResponse(content={"message": error_msg}, status_code=500)
+
 
 @app.delete("/merch/{merchId}")
 async def delete_merch(request: Request, merchId: int):
@@ -939,6 +1224,84 @@ def get_merch(request: Request, merchId: int):
         # En caso de error, mostrar página de error
         print(e)
         return osv.get_error_view(request, userdata, f"No se pudo cargar el producto de merchandising", str(e))
+
+
+@app.get("/merch/{merchId}/edit")
+def get_merch_edit_page(request: Request, merchId: int):
+    """
+    Ruta para mostrar la página de edición de un producto de merchandising
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario sea un artista
+    if not userdata.get('artistId'):
+        return osv.get_error_view(request, userdata, "Debes ser un artista para editar merchandising", "")
+    
+    try:
+        # Obtener datos del merchandising
+        merch_resp = requests.get(f"{servers.TYA}/merch/{merchId}", timeout=5, headers={"Accept": "application/json"})
+        merch_resp.raise_for_status()
+        merch_data = merch_resp.json()
+        
+        # Verificar que el usuario sea el propietario
+        if userdata.get('artistId') != merch_data.get('artistId'):
+            return osv.get_error_view(request, userdata, "No tienes permiso para editar este producto", "")
+        
+        return osv.get_merch_edit_view(request, userdata, merch_data, servers.TYA)
+        
+    except requests.RequestException as e:
+        print(f"Error obteniendo datos del merchandising: {e}")
+        return osv.get_error_view(request, userdata, "No se pudo cargar los datos del producto", str(e))
+
+
+@app.patch("/merch/{merchId}/edit")
+async def update_merch(request: Request, merchId: int):
+    """
+    Ruta para actualizar un producto de merchandising
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if not userdata.get('artistId'):
+        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
+    
+    try:
+        # Primero verificar propiedad
+        merch_resp = requests.get(f"{servers.TYA}/merch/{merchId}", timeout=2, headers={"Accept": "application/json"})
+        merch_resp.raise_for_status()
+        merch_data = merch_resp.json()
+        
+        if userdata.get('artistId') != merch_data.get('artistId'):
+            return JSONResponse(content={"error": "No tienes permiso para editar este producto"}, status_code=403)
+        
+        # Obtener datos del formulario
+        body = await request.json()
+        
+        # Enviar actualización a TYA
+        update_resp = requests.patch(
+            f"{servers.TYA}/merch/{merchId}",
+            json=body,
+            timeout=5,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        update_resp.raise_for_status()
+        
+        return JSONResponse(content={"message": "Producto actualizado correctamente", "merchId": merchId}, status_code=200)
+        
+    except requests.RequestException as e:
+        error_msg = str(e)
+        try:
+            error_msg = e.response.json().get('message', str(e))
+        except:
+            pass
+        return JSONResponse(content={"message": error_msg}, status_code=500)
 
 
 @app.get("/label/{labelId}")
@@ -1324,7 +1687,8 @@ def get_profile(request: Request):
             is_own_profile=True,
             payment_methods=payment_methods,
             syu_server=servers.SYU,
-            tya_server=servers.TYA
+            tya_server=servers.TYA,
+            pt_server=servers.PT
         )
         
     except Exception as e:
@@ -1379,7 +1743,8 @@ def get_user_profile(request: Request, username: str):
             is_own_profile=is_own_profile,
             payment_methods=payment_methods if is_own_profile else [],
             syu_server=servers.SYU,
-            tya_server=servers.TYA
+            tya_server=servers.TYA,
+            pt_server=servers.PT
         )
         
     except requests.RequestException as e:
@@ -1616,10 +1981,10 @@ async def add_to_cart(request: Request):
 
 
 @app.delete("/cart/{product_id}")
-async def remove_from_cart(request: Request, product_id: int):
+async def remove_from_cart(request: Request, product_id: int, type: str = None):
     """
     Elimina un producto del carrito del usuario autenticado
-    Proxea la llamada a TPP DELETE /cart/{productId}
+    Proxea la llamada a TPP DELETE /cart/{productId}?type={type}
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
@@ -1628,9 +1993,14 @@ async def remove_from_cart(request: Request, product_id: int):
         return JSONResponse(content={"error": "No autenticado"}, status_code=401)
     
     try:
+        # Construir URL con parámetro type si existe
+        url = f"{servers.TPP}/cart/{product_id}"
+        if type:
+            url += f"?type={type}"
+        
         # Enviar a TPP
         cart_resp = requests.delete(
-            f"{servers.TPP}/cart/{product_id}",
+            url,
             timeout=2,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
@@ -1725,6 +2095,34 @@ async def add_payment_method(request: Request):
     except requests.RequestException as e:
         print(f"Error añadiendo método de pago: {e}")
         return JSONResponse(content={"error": "No se pudo añadir el método de pago"}, status_code=500)
+
+
+@app.put("/payment/{payment_method_id}")
+async def update_payment_method(request: Request, payment_method_id: int):
+    """
+    Actualiza un método de pago del usuario
+    Proxea la llamada a TPP PUT /payment/{paymentMethodId}
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        body = await request.json()
+        
+        payment_resp = requests.put(
+            f"{servers.TPP}/payment/{payment_method_id}",
+            json=body,
+            timeout=2,
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+        )
+        payment_resp.raise_for_status()
+        return JSONResponse(content=payment_resp.json(), status_code=payment_resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error actualizando método de pago: {e}")
+        return JSONResponse(content={"error": "No se pudo actualizar el método de pago"}, status_code=500)
 
 
 @app.delete("/payment/{payment_method_id}")
@@ -1984,18 +2382,102 @@ def get_artist_profile(request: Request, artistId: int):
             except requests.RequestException as e:
                 print(f"Error obteniendo merchandising del artista: {e}")
                 artist_data['owner_merch'] = []
+
+        metrics = None
+        try:
+            metrics_resp = requests.get(f"{servers.RYE}/statistics/metrics/artist/{artistId}", timeout=5)
+            metrics_resp.raise_for_status()
+            metrics_data = metrics_resp.json()  # Expecting JSON like {"playbacks": 123, "songs": 5, "popularity": 12}
+            metrics = {
+                "playbacks": metrics_data.get("playbacks", 0),
+                "songs": metrics_data.get("songs", 0),
+                "popularity": metrics_data.get("popularity", None)
+            }
+        except requests.RequestException as e:
+            print(f"Error obteniendo métricas del artista: {e}")
+            metrics = {"playbacks": 0, "songs": 0, "popularity": None}
         
-        return osv.get_artist_profile_view(request, artist_data, userdata, is_own_profile, servers.SYU)
+        return osv.get_artist_profile_view(request, artist_data, userdata, is_own_profile, servers.SYU, metrics, servers.TYA, servers.RYE, servers.PT)
         
     except requests.RequestException as e:
         print(f"Error obteniendo perfil del artista: {e}")
         return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del artista", str(e))
 
 
+@app.get("/artist/studio")
+def get_artist_studio_page(request: Request):
+    """
+    Ruta para mostrar la página de estudio del artista con sus canciones, álbumes y merchandising
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario tenga un perfil de artista
+    if not userdata.get('artistId'):
+        return RedirectResponse("/artist/create")
+    
+    try:
+        artist_id = userdata.get('artistId')
+        
+        # Obtener datos del artista
+        artist_resp = requests.get(
+            f"{servers.TYA}/artist/{artist_id}",
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        artist_resp.raise_for_status()
+        artist_data = artist_resp.json()
+        
+        # Obtener canciones del artista
+        try:
+            songs_resp = requests.get(
+                f"{servers.TYA}/artist/{artist_id}/songs",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            songs_resp.raise_for_status()
+            artist_data['songs'] = songs_resp.json()
+        except requests.RequestException:
+            artist_data['songs'] = []
+        
+        # Obtener álbumes del artista
+        try:
+            albums_resp = requests.get(
+                f"{servers.TYA}/artist/{artist_id}/albums",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            albums_resp.raise_for_status()
+            artist_data['albums'] = albums_resp.json()
+        except requests.RequestException:
+            artist_data['albums'] = []
+        
+        # Obtener merchandising del artista
+        try:
+            merch_resp = requests.get(
+                f"{servers.TPP}/artist/{artist_id}/merch",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            merch_resp.raise_for_status()
+            artist_data['merch'] = merch_resp.json()
+        except requests.RequestException:
+            artist_data['merch'] = []
+        
+        return osv.get_artist_studio_view(request, artist_data, userdata, servers.SYU)
+        
+    except requests.RequestException as e:
+        print(f"Error obteniendo datos del estudio del artista: {e}")
+        return osv.get_error_view(request, userdata, "No se pudo cargar el estudio del artista", str(e))
+
+
 @app.get("/artist/edit")
 def get_artist_edit_page(request: Request):
     """
-    Ruta para mostrar la página de edición de perfil de artista
+    Ruta para mostrar la página de edición de perfil de artista (usuario actual)
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
@@ -2024,10 +2506,42 @@ def get_artist_edit_page(request: Request):
         return osv.get_error_view(request, userdata, "No se pudo cargar los datos del artista", str(e))
 
 
+@app.get("/artist/{artistId}/edit")
+def get_specific_artist_edit_page(request: Request, artistId: int):
+    """
+    Ruta para mostrar la página de edición de perfil de un artista específico
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario sea el propietario del perfil del artista
+    if userdata.get('artistId') != artistId:
+        return osv.get_error_view(request, userdata, "No tienes permiso para editar este perfil", "")
+    
+    try:
+        # Obtener datos actuales del artista
+        artist_resp = requests.get(
+            f"{servers.TYA}/artist/{artistId}",
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        artist_resp.raise_for_status()
+        artist_data = artist_resp.json()
+        
+        return osv.get_artist_profile_edit_view(request, userdata, artist_data, servers.TYA)
+        
+    except requests.RequestException as e:
+        print(f"Error obteniendo datos del artista: {e}")
+        return osv.get_error_view(request, userdata, "No se pudo cargar los datos del artista", str(e))
+
+
 @app.patch("/artist/edit")
 async def update_artist_profile(request: Request):
     """
-    Ruta para actualizar el perfil de artista
+    Ruta para actualizar el perfil de artista del usuario actual
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
@@ -2089,8 +2603,71 @@ async def update_artist_profile(request: Request):
         return JSONResponse(content={"message": error_msg}, status_code=500)
 
 
+@app.patch("/artist/{artistId}/edit")
+async def update_specific_artist_profile(request: Request, artistId: int):
+    """
+    Ruta para actualizar el perfil de un artista específico
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    # Verificar que el usuario sea el propietario del perfil
+    if userdata.get('artistId') != artistId:
+        return JSONResponse(content={"error": "No tienes permiso para editar este perfil"}, status_code=403)
+    
+    try:
+        # Obtener los datos del formulario
+        form_data = await request.form()
+        
+        # Preparar los datos para enviar al microservicio
+        update_data = {}
+        
+        # Campos de texto
+        if form_data.get('artisticName'):
+            update_data['artisticName'] = form_data.get('artisticName')
+        if form_data.get('artisticEmail'):
+            update_data['artisticEmail'] = form_data.get('artisticEmail')
+        if form_data.get('artisticBiography'):
+            update_data['artisticBiography'] = form_data.get('artisticBiography')
+        if form_data.get('socialMediaUrl'):
+            update_data['socialMediaUrl'] = form_data.get('socialMediaUrl')
+        
+        # Manejar imagen si se proporciona
+        imagen_file = form_data.get('artisticImage')
+        if imagen_file and hasattr(imagen_file, 'filename') and imagen_file.filename:
+            files = {'artisticImage': (imagen_file.filename, imagen_file.file, imagen_file.content_type)}
+        else:
+            files = None
+        
+        # Hacer PATCH al microservicio TYA
+        resp = requests.patch(
+            f"{servers.TYA}/artist/{artistId}",
+            data=update_data,
+            files=files,
+            timeout=5,
+            headers={"Cookie": f"oversound_auth={token}"}
+        )
+        resp.raise_for_status()
+        
+        return JSONResponse(content={
+            "message": "Perfil de artista actualizado correctamente",
+            "artistId": artistId
+        }, status_code=200)
+        
+    except requests.RequestException as e:
+        error_msg = str(e)
+        try:
+            error_msg = e.response.json().get('message', str(e))
+        except:
+            pass
+        return JSONResponse(content={"message": error_msg}, status_code=500)
+
+
 # ===================== UPLOAD ROUTES =====================
-@app.get("/upload-song")
+@app.get("/song/upload")
 def upload_song_page(request: Request):
     """
     Ruta para mostrar la página de subir canción
@@ -2108,7 +2685,7 @@ def upload_song_page(request: Request):
     return osv.get_upload_song_view(request, userdata)
 
 
-@app.post("/upload-song")
+@app.post("/song/upload")
 async def upload_song(request: Request):
     """
     Ruta para procesar la subida de una canción
@@ -2151,7 +2728,7 @@ async def upload_song(request: Request):
         return JSONResponse(content={"error": "Error al subir la canción"}, status_code=500)
 
 
-@app.get("/upload-album")
+@app.get("/album/upload")
 def upload_album_page(request: Request):
     """
     Ruta para mostrar la página de subir álbum
@@ -2169,7 +2746,7 @@ def upload_album_page(request: Request):
     return osv.get_upload_album_view(request, userdata)
 
 
-@app.post("/upload-album")
+@app.post("/album/upload")
 async def upload_album(request: Request):
     """
     Ruta para procesar la creación de un álbum
@@ -2213,7 +2790,7 @@ async def upload_album(request: Request):
 
 
 # Upload Merchandising Routes
-@app.get("/upload-merch")
+@app.get("/merch/upload")
 def upload_merch_page(request: Request):
     """
     Ruta para mostrar la página de subir merchandising
@@ -2231,7 +2808,7 @@ def upload_merch_page(request: Request):
     return osv.get_upload_merch_view(request, userdata)
 
 
-@app.post("/upload-merch")
+@app.post("/merch/upload")
 async def upload_merch(request: Request):
     """
     Ruta para procesar la subida de merchandising
@@ -2330,6 +2907,61 @@ async def get_track(request: Request, trackId: int):
             content={"error": f"Error al procesar el track: {str(e)}"},
             status_code=500
         )
+
+
+@app.post('/stats/history/songs')
+async def proxy_stats_songs(request: Request):
+    """Proxy para estadísticas de canciones -> reenvía a RYE/history/songs evitando CORS en el navegador"""
+    token = request.cookies.get('oversound_auth')
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse(content={"error": "JSON inválido"}, status_code=400)
+
+    try:
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
+        if token:
+            headers["Cookie"] = f"oversound_auth={token}"
+
+        resp = requests.post(f"{servers.RYE}/history/songs", json=body, timeout=5, headers=headers)
+        resp.raise_for_status()
+        return JSONResponse(content=resp.json(), status_code=resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error proxying song stats to RYE: {e}")
+        # intentar devolver el body de respuesta si existe
+        try:
+            if 'resp' in locals() and resp is not None:
+                return JSONResponse(content=resp.json(), status_code=resp.status_code)
+        except Exception:
+            pass
+        return JSONResponse(content={"error": "No se pudo enviar la estadística"}, status_code=500)
+
+
+@app.post('/stats/history/artists')
+async def proxy_stats_artists(request: Request):
+    """Proxy para estadísticas de artistas -> reenvía a RYE/history/artists evitando CORS en el navegador"""
+    token = request.cookies.get('oversound_auth')
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse(content={"error": "JSON inválido"}, status_code=400)
+
+    try:
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
+        if token:
+            headers["Cookie"] = f"oversound_auth={token}"
+
+        resp = requests.post(f"{servers.RYE}/history/artists", json=body, timeout=5, headers=headers)
+        resp.raise_for_status()
+        return JSONResponse(content=resp.json(), status_code=resp.status_code)
+    except requests.RequestException as e:
+        print(f"Error proxying artist stats to RYE: {e}")
+        try:
+            if 'resp' in locals() and resp is not None:
+                return JSONResponse(content=resp.json(), status_code=resp.status_code)
+        except Exception:
+            pass
+        return JSONResponse(content={"error": "No se pudo enviar la estadística"}, status_code=500)
 
 
 

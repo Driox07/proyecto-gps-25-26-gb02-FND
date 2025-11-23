@@ -44,7 +44,7 @@ paths:
           maximum: 100
       responses:
         "200":
-          description: Products returned successfully with pagination metadata.
+          description: Products returned successfully with pagination metadata, genres catalog, and artists catalog.
           content:
             application/json:
               schema:
@@ -69,6 +69,30 @@ paths:
                       totalPages:
                         type: integer
                         example: 8
+                  genres:
+                    type: array
+                    description: Complete catalog of available genres from TyA
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: "Rock"
+                  artists:
+                    type: array
+                    description: Complete catalog of available artists from TyA
+                    items:
+                      type: object
+                      properties:
+                        artistId:
+                          type: integer
+                          example: 42
+                        artisticName:
+                          type: string
+                          example: "Queen"
                 x-content-type: application/json
         "400":
           description: Bad request.
@@ -151,10 +175,11 @@ paths:
           type: integer
       - name: type
         in: query
-        required: true
+        required: false
         explode: false
         schema:
-          type: string     
+          type: string
+        description: "Product type: 'song'/'0', 'album'/'1', 'merch'/'2'. If not specified, searches all tables."     
       responses:
         "200":
           description: Product removed from cart successfully.
@@ -313,14 +338,17 @@ components:
           type: integer
           description: ID of the Song (NULL if not song)
           example: 0
+          nullable: true
         albumId:
           type: integer
           description: ID of the Album (NULL if not album)
           example: 0
+          nullable: true
         merchId:
           type: integer
           description: ID of the Merch (NULL if not merch)
           example: 0
+          nullable: true
         name:
           type: string
           description: Name of the product
@@ -357,10 +385,12 @@ components:
           description: Duration of song in seconds (null if not a song)
           format: int32
           example: 10
+          nullable: true
         genre:
           type: integer
           description: ID of the primary genre of a song (null if not song or album)
           example: 0
+          nullable: true
         cover:
           type: string
           description: base64 image of the cover
@@ -372,6 +402,7 @@ components:
           - Album 1
           - Album 2
           - Album 3
+          nullable: true
           items:
             type: integer
       description: "A product on the store, that can be either a song, album or merch."
@@ -402,6 +433,10 @@ components:
       - expireYear
       type: object
       properties:
+        id:
+          type: integer
+          description: Unique identifier of the payment method.
+          example: 1
         cardNumber:
           type: string
           description: Masked card number.
@@ -422,6 +457,7 @@ components:
           example: John Doe
       description: A simple Payment Method object for storing card details.
       example:
+        id: 1
         expireMonth: 12
         cardHolder: John Doe
         expireYear: 2030
@@ -489,15 +525,19 @@ components:
         songId:
           type: integer
           description: ID of the song to add.
+          nullable: true
         albumId:
           type: integer
           description: ID of the album to add.
+          nullable: true
         merchId:
           type: integer
-          description: ID of the merch to add. 
+          description: ID of the merch to add.
+          nullable: true
         unidades:
           type: integer
           description: Quantity of items to add (only if merch)
+          nullable: true
 
   securitySchemes:
     oversound_auth:

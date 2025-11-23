@@ -1,7 +1,7 @@
 // Album Page Functionality
 
 // Configuration for the music microservice (defined in config.js)
-const MUSIC_SERVICE_URL = typeof CONFIG !== 'undefined' ? CONFIG.musicService.url : 'http://localhost:8000';
+const MUSIC_SERVICE_URL = PT_URL;
 
 // Global audio player instance for album page
 let audioPlayer = null;
@@ -10,7 +10,6 @@ let albumTracks = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeAlbumPage();
-    checkAlbumFavoriteStatus();
 });
 
 /**
@@ -56,7 +55,11 @@ function setupAlbumEventListeners() {
     // Botón de favoritos
     const favoriteButton = document.getElementById('favorite-album-button');
     if (favoriteButton) {
-        favoriteButton.addEventListener('click', handleToggleFavorite);
+        // Avoid double attaching handlers when favorites.js already handles
+        // buttons with data-fav-album
+        if (!favoriteButton.dataset || !favoriteButton.dataset.favAlbum) {
+            favoriteButton.addEventListener('click', handleToggleFavorite);
+        }
     }
 
     // Botón de play del álbum
@@ -421,28 +424,6 @@ trackItems.forEach(item => {
         this.style.background = 'white';
     });
 });
-
-/**
- * Check if the current album is in favorites and update button state
- */
-async function checkAlbumFavoriteStatus() {
-    const favoriteButton = document.getElementById('favorite-album-button');
-    if (!favoriteButton) return;
-    
-    const albumId = getAlbumIdFromUrl();
-    if (!albumId || albumId === 'unknown') return;
-    
-    try {
-        if (typeof isAlbumFavorited === 'function') {
-            const isFavorited = await isAlbumFavorited(parseInt(albumId));
-            if (typeof updateFavoriteButtonState === 'function') {
-                updateFavoriteButtonState(favoriteButton, isFavorited);
-            }
-        }
-    } catch (error) {
-        console.error('Error checking album favorite status:', error);
-    }
-}
 
 // Agregar estilos para animaciones dinámicas
 const style = document.createElement('style');
