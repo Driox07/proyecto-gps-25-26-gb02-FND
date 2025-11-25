@@ -97,30 +97,58 @@ function initFormValidation() {
  */
 function validateField(field) {
     const formGroup = field.closest('.form-group');
-    
-    if (!field.checkValidity()) {
+
+    // Try using native validity, but guard against engines that may throw
+    let isValid = true;
+    try {
+        isValid = field.checkValidity();
+    } catch (err) {
+        // Fallback: try manual regex validation if a pattern exists
+        const pattern = field.getAttribute && field.getAttribute('pattern');
+        if (pattern) {
+            try {
+                const re = new RegExp('^' + pattern + '$');
+                isValid = re.test(field.value);
+            } catch (err2) {
+                // If pattern construction fails, avoid blocking the user:
+                // assume valid to prevent uncaught exceptions (best-effort)
+                isValid = true;
+            }
+        } else {
+            // No pattern: basic non-empty check for required fields
+            if (field.required) {
+                isValid = field.value.trim() !== '';
+            } else {
+                isValid = true;
+            }
+        }
+    }
+
+    if (!isValid) {
         formGroup.classList.add('error');
-        
+
         let errorMessage = formGroup.querySelector('.error-message');
         if (!errorMessage) {
             errorMessage = document.createElement('span');
             errorMessage.className = 'error-message';
             field.parentNode.appendChild(errorMessage);
         }
-        
-        if (field.validity.valueMissing) {
-            errorMessage.textContent = 'Este campo es obligatorio';
-        } else if (field.validity.patternMismatch) {
+
+        // Try to provide a helpful message
+        const pattern = field.getAttribute && field.getAttribute('pattern');
+        if (pattern && field.value && field.value.trim() !== '') {
             errorMessage.textContent = 'Formato inválido';
-        } else if (field.validity.typeMismatch) {
-            errorMessage.textContent = 'Por favor introduce un valor válido';
+        } else if (field.value.trim() === '') {
+            errorMessage.textContent = 'Este campo es obligatorio';
         } else {
             errorMessage.textContent = 'Valor inválido';
         }
-        
+
         return false;
     } else {
         formGroup.classList.remove('error');
+        const existing = formGroup.querySelector('.error-message');
+        if (existing) existing.remove();
         return true;
     }
 }
@@ -160,7 +188,7 @@ function initFormSubmission() {
             submitBtn.disabled = true;
             
             try {
-                const response = await fetch('/profile/edit', {
+                const response = await fetch('/profiledit', {
                     method: 'PATCH',
                     body: formData,
                     credentials: 'include'

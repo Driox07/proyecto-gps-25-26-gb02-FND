@@ -1915,7 +1915,7 @@ async def add_payment_method(request: Request):
         return JSONResponse(content={"error": "Error al procesar la solicitud"}, status_code=500)
 
 
-@app.get("/profile/edit")
+@app.get("/profiledit")
 def get_profile_edit_page(request: Request):
     """
     Ruta para mostrar la página de edición de perfil de usuario
@@ -1929,7 +1929,7 @@ def get_profile_edit_page(request: Request):
     return osv.get_user_profile_edit_view(request, userdata, servers.SYU)
 
 
-@app.patch("/profile/edit")
+@app.patch("/profiledit")
 async def update_profile(request: Request):
     """
     Ruta para actualizar el perfil de usuario
@@ -1946,6 +1946,7 @@ async def update_profile(request: Request):
         
         # Preparar los datos para enviar al microservicio
         update_data = {}
+        update_data = userdata.copy()
         
         # Campos de texto
         if form_data.get('username'):
@@ -1958,26 +1959,28 @@ async def update_profile(request: Request):
             update_data['secondLastName'] = form_data.get('secondLastName')
         if form_data.get('email'):
             update_data['email'] = form_data.get('email')
-        if form_data.get('biografia'):
-            update_data['biografia'] = form_data.get('biografia')
+        # if form_data.get('biografia'):
+        #     update_data['biografia'] = form_data.get('biografia')
         
         # Manejar imagen si se proporciona
         imagen_file = form_data.get('imagen')
         if imagen_file and hasattr(imagen_file, 'filename') and imagen_file.filename:
             # Aquí deberías subir la imagen a un servicio de almacenamiento
             # Por ahora, asumimos que el microservicio maneja la subida
-            files = {'imagen': (imagen_file.filename, imagen_file.file, imagen_file.content_type)}
+            files = {'image': (imagen_file.filename, imagen_file.file, imagen_file.content_type)}
         else:
             files = None
         
+ 
         # Hacer PATCH al microservicio SYU
         username = userdata.get('username')
         resp = requests.patch(
             f"{servers.SYU}/user/{username}",
-            data=update_data,
-            files=files,
+            json=update_data,
             timeout=5,
-            headers={"Cookie": f"oversound_auth={token}"}
+            headers={"Content-Type": "application/json",
+                "Accept": "application/json",
+                "Cookie": f"oversound_auth={token}"}
         )
         resp.raise_for_status()
         
