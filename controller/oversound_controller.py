@@ -186,126 +186,82 @@ async def register(request: Request):
 
 @app.get("/shop")
 def shop(request: Request, 
-         genres: str = Query(default=None),
-         artists: str = Query(default=None),
-         order: str = Query(default="date"),
-         direction: str = Query(default="desc"),
-         page: int = Query(default=1)):
+         page: int = Query(default=1),
+         limit: int = Query(default=100)):
     """
-    Renderiza la vista de la tienda con filtrado desde TYA.
+    Renderiza la vista de la tienda.
+    Una sola llamada a TPP /store obtiene todo: productos, géneros y artistas.
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
 
     try:
-        # Construir parámetros de filtrado
-        filter_params = {
-            "order": order,
-            "direction": direction,
-            "page": page
-        }
-        
-        if genres:
-            filter_params["genres"] = genres
-        
-        if artists:
-            filter_params["artists"] = artists
-
-        # Obtener IDs filtrados desde TYA
-        song_ids_resp = requests.get(
-            f"{servers.TYA}/song/filter",
-            params=filter_params,
-            timeout=10,
+        # ===== UNA SOLA LLAMADA obtiene todo =====
+        store_resp = requests.get(
+            f"{servers.TPP}/store",
+            params={"page": page, "limit": limit},
+            timeout=30,
             headers={"Accept": "application/json"}
         )
-        song_ids = song_ids_resp.json() if song_ids_resp.ok else []
+        store_resp.raise_for_status()
+        store_data = store_resp.json()
         
-        album_ids_resp = requests.get(
-            f"{servers.TYA}/album/filter",
-            params=filter_params,
-            timeout=10,
-            headers={"Accept": "application/json"}
-        )
-        album_ids = album_ids_resp.json() if album_ids_resp.ok else []
+        # Extraer datos
+        productos = store_data.get("data", [])
+        pagination = store_data.get("pagination", {})
+        all_genres = store_data.get("genres", [])
+        all_artists = store_data.get("artists", [])
         
-        merch_ids_resp = requests.get(
-            f"{servers.TYA}/merch/filter",
-            params=filter_params,
-            timeout=10,
-            headers={"Accept": "application/json"}
-        )
-        merch_ids = merch_ids_resp.json() if merch_ids_resp.ok else []
-
-        # Obtener datos completos de los productos
-        songs = []
-        if song_ids:
-            songs_resp = requests.get(
-                f"{servers.TYA}/song/list",
-                params={"ids": ",".join(map(str, song_ids))},
-                timeout=10,
-                headers={"Accept": "application/json"}
-            )
-            songs = songs_resp.json() if songs_resp.ok else []
-
-        albums = []
-        if album_ids:
-            albums_resp = requests.get(
-                f"{servers.TYA}/album/list",
-                params={"ids": ",".join(map(str, album_ids))},
-                timeout=10,
-                headers={"Accept": "application/json"}
-            )
-            albums = albums_resp.json() if albums_resp.ok else []
-
-        merch = []
-        if merch_ids:
-            merch_resp = requests.get(
-                f"{servers.TYA}/merch/list",
-                params={"ids": ",".join(map(str, merch_ids))},
-                timeout=10,
-                headers={"Accept": "application/json"}
-            )
-            merch = merch_resp.json() if merch_resp.ok else []
-
-        # Obtener géneros y artistas para los filtros
-        genres_resp = requests.get(f"{servers.TYA}/genres", timeout=5, headers={"Accept": "application/json"})
-        all_genres = genres_resp.json() if genres_resp.ok else []
+        print(f"[DEBUG] TPP Response: {len(productos)} productos, {len(all_genres)} géneros, {len(all_artists)} artistas")
         
-        # Obtener todos los artistas (necesitamos un endpoint, por ahora usar búsqueda vacía o todos)
-        artists_resp = requests.get(
-            f"{servers.TYA}/artist/filter",
-            params={"order": "name", "direction": "asc"},
-            timeout=10,
-            headers={"Accept": "application/json"}
-        )
-        if artists_resp.ok:
-            artist_ids = artists_resp.json()
-            if artist_ids:
-                artists_list_resp = requests.get(
-                    f"{servers.TYA}/artist/list",
-                    params={"ids": ",".join(map(str, artist_ids))},
-                    timeout=10,
-                    headers={"Accept": "application/json"}
-                )
-                all_artists = artists_list_resp.json() if artists_list_resp.ok else []
-            else:
-                all_artists = []
-        else:
-            all_artists = []
-
-        # Crear mapeos
-        artists_map = {a.get('artistId'): a.get('artisticName') for a in all_artists if isinstance(a, dict) and a.get('artistId')}
-        genres_map = {g.get('id'): g.get('name') for g in all_genres if isinstance(g, dict) and g.get('id')}
-
-        print(f"[DEBUG] Shop filtered: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
-
+    except requests.RequestException as e:
+        print(f"Error obteniendo tienda desde TPP: {e}")
+        productos = []
+        pagination = {}
+        all_genres = []
+        all_artists = []
     except Exception as e:
-        print(f"Error en shop: {e}")
+        print(f"Error inesperado en shop: {e}")
         import traceback
         traceback.print_exc()
-        songs, albums, merch = [], [], []
-        all_genres, all_artists = [], []
-        artists_map, genres_map = {}, {}
+        productos = []
+        pagination = {}
+        all_genres = []
+        all_artists = []
+
+    # ===== CREAR MAPEOS para resolver IDs (manejo seguro) =====
+    artists_map = {}
+    for a in all_artists:
+        if isinstance(a, dict):
+            # Intentar obtener artistId con ambas notaciones
+            artist_id = a.get('artistId') or a.get('artist_id')
+            artist_name = a.get('artisticName') or a.get('artistic_name')
+            if artist_id and artist_name:
+                artists_map[artist_id] = artist_name
+    
+    genres_map = {}
+    for g in all_genres:
+        if isinstance(g, dict):
+            # Obtener id y name del género
+            genre_id = g.get('id') or g.get('genre_id')
+            genre_name = g.get('name') or g.get('genre_name')
+            if genre_id and genre_name:
+                genres_map[genre_id] = genre_name
+
+    # ===== SEPARAR por tipo (usando camelCase como viene del TPP) =====
+    songs = [p for p in productos if p.get('songId', 0) not in [0, None]]
+    albums = [p for p in productos if p.get('albumId', 0) not in [0, None] and p.get('songId', 0) in [0, None]]
+    merch = [p for p in productos if p.get('merchId', 0) not in [0, None]]
+
+    print(f"[DEBUG] Shop: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
+    print(f"[DEBUG] Shop: artists_map={len(artists_map)} items, genres_map={len(genres_map)} items")
+    if productos:
+        print(f"[DEBUG] Sample product keys: {list(productos[0].keys())}")
+        print(f"[DEBUG] Sample product: {productos[0]}")
+    if artists_map:
+        print(f"[DEBUG] Sample artists_map: {list(artists_map.items())[:3]}")
+    if genres_map:
+        print(f"[DEBUG] Sample genres_map: {list(genres_map.items())[:3]}")
 
     return osv.get_shop_view(
         request, userdata, 
@@ -349,7 +305,7 @@ async def get_cart(request: Request):
             return RedirectResponse("/login")
         
         # Renderizar la vista del carrito
-        return osv.get_cart_view(request, userdata, servers.TYA, servers.PT)
+        return osv.get_cart_view(request, userdata, servers.TYA)
 
 # ============ ENDPOINTS DE BÚSQUEDA ============
 
@@ -1915,7 +1871,7 @@ async def add_payment_method(request: Request):
         return JSONResponse(content={"error": "Error al procesar la solicitud"}, status_code=500)
 
 
-@app.get("/profiledit")
+@app.get("/profile/edit")
 def get_profile_edit_page(request: Request):
     """
     Ruta para mostrar la página de edición de perfil de usuario
@@ -1929,7 +1885,7 @@ def get_profile_edit_page(request: Request):
     return osv.get_user_profile_edit_view(request, userdata, servers.SYU)
 
 
-@app.patch("/profiledit")
+@app.patch("/profile/edit")
 async def update_profile(request: Request):
     """
     Ruta para actualizar el perfil de usuario
@@ -1946,7 +1902,6 @@ async def update_profile(request: Request):
         
         # Preparar los datos para enviar al microservicio
         update_data = {}
-        update_data = userdata.copy()
         
         # Campos de texto
         if form_data.get('username'):
@@ -1959,28 +1914,26 @@ async def update_profile(request: Request):
             update_data['secondLastName'] = form_data.get('secondLastName')
         if form_data.get('email'):
             update_data['email'] = form_data.get('email')
-        # if form_data.get('biografia'):
-        #     update_data['biografia'] = form_data.get('biografia')
+        if form_data.get('biografia'):
+            update_data['biografia'] = form_data.get('biografia')
         
         # Manejar imagen si se proporciona
         imagen_file = form_data.get('imagen')
         if imagen_file and hasattr(imagen_file, 'filename') and imagen_file.filename:
             # Aquí deberías subir la imagen a un servicio de almacenamiento
             # Por ahora, asumimos que el microservicio maneja la subida
-            files = {'image': (imagen_file.filename, imagen_file.file, imagen_file.content_type)}
+            files = {'imagen': (imagen_file.filename, imagen_file.file, imagen_file.content_type)}
         else:
             files = None
         
- 
         # Hacer PATCH al microservicio SYU
         username = userdata.get('username')
         resp = requests.patch(
             f"{servers.SYU}/user/{username}",
-            json=update_data,
+            data=update_data,
+            files=files,
             timeout=5,
-            headers={"Content-Type": "application/json",
-                "Accept": "application/json",
-                "Cookie": f"oversound_auth={token}"}
+            headers={"Cookie": f"oversound_auth={token}"}
         )
         resp.raise_for_status()
         
