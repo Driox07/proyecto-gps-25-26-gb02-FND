@@ -22,6 +22,32 @@ def obtain_user_data(token: str):
     except requests.RequestException:
         return None
 
+def normalize_image_url(image_path: str, tya_server: str = None) -> str:
+    """
+    Normaliza las URLs de imágenes:
+    - Si es base64 (data:image), lo devuelve tal cual
+    - Si es una ruta relativa (/images/..., /static/...), la convierte a URL completa del servidor TYA
+    - Si es una URL completa (http://...), la devuelve tal cual
+    """
+    if not image_path:
+        return ""
+    
+    # Si ya es base64, devolverlo tal cual
+    if image_path.startswith("data:image"):
+        return image_path
+    
+    # Si ya es una URL completa, devolverla tal cual
+    if image_path.startswith("http://") or image_path.startswith("https://"):
+        return image_path
+    
+    # Si es una ruta relativa, convertirla a URL del servidor TYA
+    if tya_server and (image_path.startswith("/") or image_path.startswith("images/")):
+        # Eliminar /static si está presente, ya que lo añadiremos nosotros
+        clean_path = image_path.replace("/static", "")
+        return f"{tya_server}/static{clean_path if clean_path.startswith('/') else '/' + clean_path}"
+    
+    return image_path
+
 # Configuración de CORS
 origins = [
     "http://localhost:8000",
@@ -186,82 +212,186 @@ async def register(request: Request):
 
 @app.get("/shop")
 def shop(request: Request, 
-         page: int = Query(default=1),
-         limit: int = Query(default=100)):
+         genres: str = Query(default=None),
+         artists: str = Query(default=None),
+         order: str = Query(default="date"),
+         direction: str = Query(default="desc"),
+         page: int = Query(default=1)):
     """
-    Renderiza la vista de la tienda.
-    Una sola llamada a TPP /store obtiene todo: productos, géneros y artistas.
+    Renderiza la vista de la tienda con filtrado desde TYA.
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
 
     try:
-        # ===== UNA SOLA LLAMADA obtiene todo =====
-        store_resp = requests.get(
-            f"{servers.TPP}/store",
-            params={"page": page, "limit": limit},
-            timeout=30,
+        # Construir parámetros de filtrado para TYA
+        filter_params = {
+            "order": order,
+            "direction": direction,
+            "page": page
+        }
+        
+        if genres:
+            filter_params["genres"] = genres
+        
+        if artists:
+            filter_params["artists"] = artists
+
+        # Obtener IDs filtrados desde TYA
+        song_ids_resp = requests.get(
+            f"{servers.TYA}/song/filter",
+            params=filter_params,
+            timeout=10,
             headers={"Accept": "application/json"}
         )
-        store_resp.raise_for_status()
-        store_data = store_resp.json()
+        song_ids = song_ids_resp.json() if song_ids_resp.ok else []
         
-        # Extraer datos
-        productos = store_data.get("data", [])
-        pagination = store_data.get("pagination", {})
-        all_genres = store_data.get("genres", [])
-        all_artists = store_data.get("artists", [])
+        album_ids_resp = requests.get(
+            f"{servers.TYA}/album/filter",
+            params=filter_params,
+            timeout=10,
+            headers={"Accept": "application/json"}
+        )
+        album_ids = album_ids_resp.json() if album_ids_resp.ok else []
         
-        print(f"[DEBUG] TPP Response: {len(productos)} productos, {len(all_genres)} géneros, {len(all_artists)} artistas")
+        merch_ids_resp = requests.get(
+            f"{servers.TYA}/merch/filter",
+            params=filter_params,
+            timeout=10,
+            headers={"Accept": "application/json"}
+        )
+        merch_ids = merch_ids_resp.json() if merch_ids_resp.ok else []
+
+        # Obtener datos completos de los productos
+        songs = []
+        if song_ids:
+            songs_resp = requests.get(
+                f"{servers.TYA}/song/list",
+                params={"ids": ",".join(map(str, song_ids))},
+                timeout=10,
+                headers={"Accept": "application/json"}
+            )
+            songs = songs_resp.json() if songs_resp.ok else []
+
+        albums = []
+        if album_ids:
+            albums_resp = requests.get(
+                f"{servers.TYA}/album/list",
+                params={"ids": ",".join(map(str, album_ids))},
+                timeout=10,
+                headers={"Accept": "application/json"}
+            )
+            albums = albums_resp.json() if albums_resp.ok else []
+
+        merch = []
+        if merch_ids:
+            merch_resp = requests.get(
+                f"{servers.TYA}/merch/list",
+                params={"ids": ",".join(map(str, merch_ids))},
+                timeout=10,
+                headers={"Accept": "application/json"}
+            )
+            merch = merch_resp.json() if merch_resp.ok else []
+
+        # Normalizar URLs de imágenes para todos los productos
+        for song in songs:
+            if song.get('cover'):
+                song['cover'] = normalize_image_url(song['cover'], servers.TYA)
         
-    except requests.RequestException as e:
-        print(f"Error obteniendo tienda desde TPP: {e}")
-        productos = []
-        pagination = {}
-        all_genres = []
-        all_artists = []
+        for album in albums:
+            if album.get('cover'):
+                album['cover'] = normalize_image_url(album['cover'], servers.TYA)
+        
+        for item in merch:
+            if item.get('cover'):
+                item['cover'] = normalize_image_url(item['cover'], servers.TYA)
+
+        # POST-FILTRADO: Validar que los productos realmente coincidan con los filtros seleccionados
+        # Esto es necesario porque algunos productos pueden no tener todos los campos
+        selected_genres = [int(g) for g in genres.split(',')] if genres else []
+        selected_artists = [int(a) for a in artists.split(',')] if artists else []
+        
+        if selected_genres or selected_artists:
+            # Filtrar canciones
+            filtered_songs = []
+            for song in songs:
+                # Verificar artista
+                if selected_artists and song.get('artistId') not in selected_artists:
+                    continue
+                # Verificar géneros (la canción debe tener al menos uno de los géneros seleccionados)
+                if selected_genres:
+                    song_genres = song.get('genres', [])
+                    if not song_genres or not any(g in selected_genres for g in song_genres):
+                        continue
+                filtered_songs.append(song)
+            songs = filtered_songs
+            
+            # Filtrar álbumes
+            filtered_albums = []
+            for album in albums:
+                # Verificar artista
+                if selected_artists and album.get('artistId') not in selected_artists:
+                    continue
+                # Verificar géneros (el álbum debe tener al menos uno de los géneros seleccionados)
+                if selected_genres:
+                    album_genres = album.get('genres', [])
+                    if not album_genres or not any(g in selected_genres for g in album_genres):
+                        continue
+                filtered_albums.append(album)
+            albums = filtered_albums
+            
+            # Filtrar merchandising (solo por artista, merch NO tiene géneros según YAML)
+            filtered_merch = []
+            for item in merch:
+                # Verificar artista
+                if selected_artists and item.get('artistId') not in selected_artists:
+                    continue
+                # Si se seleccionaron géneros pero merch no tiene géneros, ocultar el merch
+                if selected_genres:
+                    # Merchandising no tiene campo genres, así que lo ocultamos si hay filtro de género activo
+                    continue
+                filtered_merch.append(item)
+            merch = filtered_merch
+
+        # Obtener géneros y artistas para los filtros
+        genres_resp = requests.get(f"{servers.TYA}/genres", timeout=5, headers={"Accept": "application/json"})
+        all_genres = genres_resp.json() if genres_resp.ok else []
+        
+        # Obtener todos los artistas
+        artists_resp = requests.get(
+            f"{servers.TYA}/artist/filter",
+            params={"order": "name", "direction": "asc"},
+            timeout=10,
+            headers={"Accept": "application/json"}
+        )
+        if artists_resp.ok:
+            artist_ids = artists_resp.json()
+            if artist_ids:
+                artists_list_resp = requests.get(
+                    f"{servers.TYA}/artist/list",
+                    params={"ids": ",".join(map(str, artist_ids))},
+                    timeout=10,
+                    headers={"Accept": "application/json"}
+                )
+                all_artists = artists_list_resp.json() if artists_list_resp.ok else []
+            else:
+                all_artists = []
+        else:
+            all_artists = []
+
+        # Crear mapeos
+        artists_map = {a.get('artistId'): a.get('artisticName') for a in all_artists if isinstance(a, dict) and a.get('artistId')}
+        genres_map = {g.get('id'): g.get('name') for g in all_genres if isinstance(g, dict) and g.get('id')}
+
+        print(f"[DEBUG] Shop filtered: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
+
     except Exception as e:
-        print(f"Error inesperado en shop: {e}")
+        print(f"Error en shop: {e}")
         import traceback
         traceback.print_exc()
-        productos = []
-        pagination = {}
-        all_genres = []
-        all_artists = []
-
-    # ===== CREAR MAPEOS para resolver IDs (manejo seguro) =====
-    artists_map = {}
-    for a in all_artists:
-        if isinstance(a, dict):
-            # Intentar obtener artistId con ambas notaciones
-            artist_id = a.get('artistId') or a.get('artist_id')
-            artist_name = a.get('artisticName') or a.get('artistic_name')
-            if artist_id and artist_name:
-                artists_map[artist_id] = artist_name
-    
-    genres_map = {}
-    for g in all_genres:
-        if isinstance(g, dict):
-            # Obtener id y name del género
-            genre_id = g.get('id') or g.get('genre_id')
-            genre_name = g.get('name') or g.get('genre_name')
-            if genre_id and genre_name:
-                genres_map[genre_id] = genre_name
-
-    # ===== SEPARAR por tipo (usando camelCase como viene del TPP) =====
-    songs = [p for p in productos if p.get('songId', 0) not in [0, None]]
-    albums = [p for p in productos if p.get('albumId', 0) not in [0, None] and p.get('songId', 0) in [0, None]]
-    merch = [p for p in productos if p.get('merchId', 0) not in [0, None]]
-
-    print(f"[DEBUG] Shop: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
-    print(f"[DEBUG] Shop: artists_map={len(artists_map)} items, genres_map={len(genres_map)} items")
-    if productos:
-        print(f"[DEBUG] Sample product keys: {list(productos[0].keys())}")
-        print(f"[DEBUG] Sample product: {productos[0]}")
-    if artists_map:
-        print(f"[DEBUG] Sample artists_map: {list(artists_map.items())[:3]}")
-    if genres_map:
-        print(f"[DEBUG] Sample genres_map: {list(genres_map.items())[:3]}")
+        songs, albums, merch = [], [], []
+        all_genres, all_artists = [], []
+        artists_map, genres_map = {}, {}
 
     return osv.get_shop_view(
         request, userdata, 
@@ -305,7 +435,7 @@ async def get_cart(request: Request):
             return RedirectResponse("/login")
         
         # Renderizar la vista del carrito
-        return osv.get_cart_view(request, userdata, servers.TYA)
+        return osv.get_cart_view(request, userdata, servers.TYA, servers.PT)
 
 # ============ ENDPOINTS DE BÚSQUEDA ============
 
@@ -664,6 +794,191 @@ def get_help(request: Request):
     return osv.get_help_view(request, userdata, servers.SYU)
 
 
+# ===================== UPLOAD ROUTES =====================
+@app.get("/song/upload")
+def upload_song_page(request: Request):
+    """
+    Ruta para mostrar la página de subir canción
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario sea un artista
+    if not userdata.get('artistId'):
+        return osv.get_error_view(request, userdata, "Debes ser un artista para subir canciones", "")
+    
+    return osv.get_upload_song_view(request, userdata)
+
+
+@app.post("/song/upload")
+async def upload_song(request: Request):
+    """
+    Ruta para procesar la subida de una canción
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if not userdata.get('artistId'):
+        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
+    
+    try:
+        body = await request.json()
+        
+        # Agregar el ID del artista
+        body['artistId'] = userdata.get('artistId')
+        
+        # Enviar a TYA para crear la canción
+        song_resp = requests.post(
+            f"{servers.TYA}/song/upload",
+            json=body,
+            timeout=15,
+            headers={"Accept": "application/json"}
+        )
+        
+        if song_resp.ok:
+            song_data = song_resp.json()
+            return JSONResponse(content={
+                "message": "Canción subida exitosamente",
+                "songId": song_data.get('songId')
+            })
+        else:
+            error_data = song_resp.json() if song_resp.text else {"error": "Error desconocido"}
+            return JSONResponse(content=error_data, status_code=song_resp.status_code)
+    
+    except Exception as e:
+        print(f"Error subiendo canción: {e}")
+        return JSONResponse(content={"error": "Error al subir la canción"}, status_code=500)
+
+
+@app.get("/album/upload")
+def upload_album_page(request: Request):
+    """
+    Ruta para mostrar la página de subir álbum
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario sea un artista
+    if not userdata.get('artistId'):
+        return osv.get_error_view(request, userdata, "Debes ser un artista para crear álbumes", "")
+    
+    return osv.get_upload_album_view(request, userdata)
+
+
+@app.post("/album/upload")
+async def upload_album(request: Request):
+    """
+    Ruta para procesar la creación de un álbum
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if not userdata.get('artistId'):
+        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
+    
+    try:
+        body = await request.json()
+        
+        # Agregar el ID del artista
+        body['artistId'] = userdata.get('artistId')
+        
+        # Enviar a TYA para crear el álbum
+        album_resp = requests.post(
+            f"{servers.TYA}/album/upload",
+            json=body,
+            timeout=15,
+            headers={"Accept": "application/json"}
+        )
+        
+        if album_resp.ok:
+            album_data = album_resp.json()
+            return JSONResponse(content={
+                "message": "Álbum creado exitosamente",
+                "albumId": album_data.get('albumId')
+            })
+        else:
+            error_data = album_resp.json() if album_resp.text else {"error": "Error desconocido"}
+            return JSONResponse(content=error_data, status_code=album_resp.status_code)
+    
+    except Exception as e:
+        print(f"Error creando álbum: {e}")
+        return JSONResponse(content={"error": "Error al crear el álbum"}, status_code=500)
+
+
+# Upload Merchandising Routes
+@app.get("/merch/upload")
+def upload_merch_page(request: Request):
+    """
+    Ruta para mostrar la página de subir merchandising
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario sea un artista
+    if not userdata.get('artistId'):
+        return osv.get_error_view(request, userdata, "Debes ser un artista para subir merchandising", "")
+    
+    return osv.get_upload_merch_view(request, userdata)
+
+
+@app.post("/merch/upload")
+async def upload_merch(request: Request):
+    """
+    Ruta para procesar la subida de merchandising
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if not userdata.get('artistId'):
+        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
+    
+    try:
+        body = await request.json()
+        
+        # Agregar el ID del artista
+        body['artistId'] = userdata.get('artistId')
+        
+        # Enviar a TYA para crear el merchandising
+        merch_resp = requests.post(
+            f"{servers.TYA}/merch/upload",
+            json=body,
+            timeout=15,
+            headers={"Accept": "application/json"}
+        )
+        
+        if merch_resp.ok:
+            merch_data = merch_resp.json()
+            return JSONResponse(content={
+                "message": "Merchandising subido exitosamente",
+                "merchId": merch_data.get('merchId')
+            })
+        else:
+            error_data = merch_resp.json() if merch_resp.text else {"error": "Error desconocido"}
+            return JSONResponse(content=error_data, status_code=merch_resp.status_code)
+    
+    except Exception as e:
+        print(f"Error subiendo merchandising: {e}")
+        return JSONResponse(content={"error": "Error al subir el merchandising"}, status_code=500)
+
+
 @app.get("/user/{username}")
 def register(request: Request, username: str):
     token = request.cookies.get("session")
@@ -796,6 +1111,15 @@ def get_song(request: Request, songId: int):
                 except requests.RequestException:
                     pass  # Ignorar álbumes que no se puedan cargar
         song_data['linked_albums_data'] = linked_albums_data
+        
+        # Normalizar URLs de imágenes
+        if song_data.get('cover'):
+            song_data['cover'] = normalize_image_url(song_data['cover'], servers.TYA)
+        if song_data.get('original_album') and song_data['original_album'].get('cover'):
+            song_data['original_album']['cover'] = normalize_image_url(song_data['original_album']['cover'], servers.TYA)
+        for linked_album in song_data.get('linked_albums_data', []):
+            if linked_album.get('cover'):
+                linked_album['cover'] = normalize_image_url(linked_album['cover'], servers.TYA)
         
         # Asegurarse de que el precio sea un número
         try:
@@ -1046,6 +1370,16 @@ def get_album(request: Request, albumId: int):
                 pass  # Si no se pueden cargar, dejar vacío
         album_data['related_albums'] = related_albums
         
+        # Normalizar URLs de imágenes
+        if album_data.get('cover'):
+            album_data['cover'] = normalize_image_url(album_data['cover'], servers.TYA)
+        for song in album_data.get('songs_data', []):
+            if song.get('cover'):
+                song['cover'] = normalize_image_url(song['cover'], servers.TYA)
+        for related in album_data.get('related_albums', []):
+            if related.get('cover'):
+                related['cover'] = normalize_image_url(related['cover'], servers.TYA)
+        
         # Asegurarse de que el precio sea un número
         try:
             album_data['price'] = float(album_data.get('price', 0))
@@ -1245,6 +1579,13 @@ def get_merch(request: Request, merchId: int):
             except requests.RequestException:
                 pass  # Si no se pueden cargar, dejar vacío
         merch_data['related_merch'] = related_merch
+        
+        # Normalizar URLs de imágenes
+        if merch_data.get('cover'):
+            merch_data['cover'] = normalize_image_url(merch_data['cover'], servers.TYA)
+        for related in merch_data.get('related_merch', []):
+            if related.get('cover'):
+                related['cover'] = normalize_image_url(related['cover'], servers.TYA)
         
         # Asegurarse de que el precio sea un número
         try:
@@ -1844,45 +2185,47 @@ async def add_payment_method(request: Request):
         # Obtener datos del body
         data = await request.json()
         
-        # Extraer y validar los datos
-        card_holder = data.get('card_holder')
-        card_number = data.get('card_number', '').replace(' ', '')  # Remover espacios
-        expiry = data.get('expiry')  # Formato MM/YY
+        # Extraer y validar los datos (el frontend envía camelCase)
+        card_holder = data.get('cardHolder')  # camelCase del frontend
+        card_number = data.get('cardNumber', '').replace(' ', '')  # camelCase del frontend
+        expire_month = data.get('expireMonth')  # Ya viene como número entero
+        expire_year = data.get('expireYear')  # Ya viene como año completo (ej: 2025)
         
-        if not card_holder or not card_number or not expiry:
+        print(f"[DEBUG] Payment data received: cardHolder={card_holder}, cardNumber={'*'*12 + card_number[-4:] if len(card_number) >= 4 else card_number}, expireMonth={expire_month}, expireYear={expire_year}")
+        
+        if not card_holder or not card_number or expire_month is None or expire_year is None:
             return JSONResponse(content={"error": "Datos incompletos"}, status_code=400)
         
-        # Parsear fecha de vencimiento MM/YY
+        # Validar mes y año
         try:
-            expiry_parts = expiry.split('/')
-            if len(expiry_parts) != 2:
-                raise ValueError("Formato de vencimiento inválido")
-            
-            expire_month = int(expiry_parts[0])
-            expire_year = int(expiry_parts[1])
-            
-            # Convertir año de 2 dígitos a 4 dígitos (asumiendo 20XX)
-            if expire_year < 100:
-                expire_year = 2000 + expire_year
+            expire_month = int(expire_month)
+            expire_year = int(expire_year)
             
             # Validar mes
             if expire_month < 1 or expire_month > 12:
-                raise ValueError("Mes inválido")
+                raise ValueError("Mes inválido (debe estar entre 1 y 12)")
+            
+            # Validar año (debe ser año completo, ej: 2025)
+            if expire_year < 2024 or expire_year > 2099:
+                raise ValueError("Año inválido")
                 
-        except (ValueError, IndexError) as e:
+        except (ValueError, TypeError) as e:
             return JSONResponse(content={"error": f"Formato de vencimiento inválido: {str(e)}"}, status_code=400)
         
-        # Obtener últimos 4 dígitos de la tarjeta para enviar enmascarados
-        last_four = card_number[-4:] if len(card_number) >= 4 else card_number
-        masked_card = f"**** **** **** {last_four}"
-        
-        # Preparar payload para TPP según el formato especificado
+        # Preparar payload para TPP según el formato especificado (camelCase)
+        # Nota: Enviamos el número de tarjeta completo (TPP lo enmascarará internamente)
         payment_data = {
-            "expireMonth": expire_month,
             "cardHolder": card_holder,
-            "expireYear": expire_year,
-            "cardNumber": masked_card
+            "cardNumber": card_number,  # Enviar número completo, no enmascarado
+            "expireMonth": expire_month,
+            "expireYear": expire_year
         }
+        
+        # Log enmascarado para seguridad
+        masked_data = payment_data.copy()
+        if len(card_number) >= 4:
+            masked_data["cardNumber"] = "**** **** **** " + card_number[-4:]
+        print(f"[DEBUG] Sending to TPP: {masked_data}")
         
         # Enviar al microservicio TPP
         response = requests.post(
@@ -1896,14 +2239,19 @@ async def add_payment_method(request: Request):
             }
         )
         
+        print(f"[DEBUG] TPP response status: {response.status_code}")
+        print(f"[DEBUG] TPP response body: {response.text}")
+        
         if response.ok:
             return JSONResponse(content=response.json(), status_code=200)
         else:
             error_msg = "No se pudo agregar el método de pago"
             try:
                 error_data = response.json()
-                error_msg = error_data.get('error', error_msg)
-            except:
+                error_msg = error_data.get('detail', error_data.get('error', error_data.get('message', error_msg)))
+                print(f"[DEBUG] TPP error: {error_data}")
+            except Exception as e:
+                print(f"[DEBUG] Could not parse TPP error response: {e}")
                 pass
             return JSONResponse(content={"error": error_msg}, status_code=response.status_code)
             
@@ -2010,6 +2358,8 @@ async def add_to_cart(request: Request):
         # Agregar ID de usuario al body
         body['userId'] = userdata.get('userId')
         
+        print(f"[DEBUG] Add to cart request body: {body}")
+        
         # Enviar a TPP
         cart_resp = requests.post(
             f"{servers.TPP}/cart",
@@ -2017,11 +2367,20 @@ async def add_to_cart(request: Request):
             timeout=2,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
+        
+        print(f"[DEBUG] TPP cart response status: {cart_resp.status_code}")
+        print(f"[DEBUG] TPP cart response body: {cart_resp.text}")
+        
         cart_resp.raise_for_status()
         return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
     except requests.RequestException as e:
         print(f"Error añadiendo al carrito: {e}")
-        return JSONResponse(content={"error": "No se pudo añadir al carrito"}, status_code=500)
+        try:
+            error_detail = e.response.json() if hasattr(e, 'response') and e.response else {}
+            print(f"[DEBUG] TPP cart error detail: {error_detail}")
+            return JSONResponse(content={"error": error_detail.get('detail', error_detail.get('message', 'No se pudo añadir al carrito'))}, status_code=500)
+        except:
+            return JSONResponse(content={"error": "No se pudo añadir al carrito"}, status_code=500)
 
 
 @app.delete("/cart/{product_id}")
@@ -2073,6 +2432,8 @@ async def process_purchase(request: Request):
         # Agregar ID de usuario al body
         body['userId'] = userdata.get('userId')
         
+        print(f"[DEBUG] Purchase request body: {body}")
+        
         # Enviar a TPP
         purchase_resp = requests.post(
             f"{servers.TPP}/purchase",
@@ -2080,11 +2441,20 @@ async def process_purchase(request: Request):
             timeout=5,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
+        
+        print(f"[DEBUG] TPP purchase response status: {purchase_resp.status_code}")
+        print(f"[DEBUG] TPP purchase response body: {purchase_resp.text}")
+        
         purchase_resp.raise_for_status()
         return JSONResponse(content=purchase_resp.json(), status_code=purchase_resp.status_code)
     except requests.RequestException as e:
         print(f"Error procesando compra: {e}")
-        return JSONResponse(content={"error": "No se pudo procesar la compra"}, status_code=500)
+        try:
+            error_detail = e.response.json() if hasattr(e, 'response') and e.response else {}
+            print(f"[DEBUG] TPP error detail: {error_detail}")
+            return JSONResponse(content={"error": error_detail.get('detail', error_detail.get('message', 'No se pudo procesar la compra'))}, status_code=500)
+        except:
+            return JSONResponse(content={"error": "No se pudo procesar la compra"}, status_code=500)
 
 
 # ===================== PAYMENT METHODS ENDPOINTS =====================
@@ -2360,6 +2730,75 @@ async def create_artist(request: Request):
         return JSONResponse(content={"error": "Error al crear el perfil de artista"}, status_code=500)
 
 
+@app.get("/artist/studio")
+def get_artist_studio_page(request: Request):
+    """
+    Ruta para mostrar la página de estudio del artista con sus canciones, álbumes y merchandising
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario tenga un perfil de artista
+    if not userdata.get('artistId'):
+        return RedirectResponse("/artist/create")
+    
+    try:
+        artist_id = userdata.get('artistId')
+        
+        # Obtener datos del artista
+        artist_resp = requests.get(
+            f"{servers.TYA}/artist/{artist_id}",
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        artist_resp.raise_for_status()
+        artist_data = artist_resp.json()
+        
+        # Obtener canciones del artista
+        try:
+            songs_resp = requests.get(
+                f"{servers.TYA}/artist/{artist_id}/songs",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            songs_resp.raise_for_status()
+            artist_data['songs'] = songs_resp.json()
+        except requests.RequestException:
+            artist_data['songs'] = []
+        
+        # Obtener álbumes del artista
+        try:
+            albums_resp = requests.get(
+                f"{servers.TYA}/artist/{artist_id}/albums",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            albums_resp.raise_for_status()
+            artist_data['albums'] = albums_resp.json()
+        except requests.RequestException:
+            artist_data['albums'] = []
+        
+        # Obtener merchandising del artista
+        try:
+            merch_resp = requests.get(
+                f"{servers.TPP}/artist/{artist_id}/merch",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            merch_resp.raise_for_status()
+            artist_data['merch'] = merch_resp.json()
+        except requests.RequestException:
+            artist_data['merch'] = []
+        
+        return osv.get_artist_studio_view(request, artist_data, userdata, servers.SYU)
+        
+    except requests.RequestException as e:
+        print(f"Error obteniendo datos del estudio del artista: {e}")
+        return osv.get_error_view(request, userdata, "No se pudo cargar el estudio del artista", str(e))
+
 # ===================== ARTIST PROFILE ROUTES =====================
 @app.get("/artist/{artistId}")
 def get_artist_profile(request: Request, artistId: int):
@@ -2446,76 +2885,6 @@ def get_artist_profile(request: Request, artistId: int):
     except requests.RequestException as e:
         print(f"Error obteniendo perfil del artista: {e}")
         return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del artista", str(e))
-
-
-@app.get("/artist/studio")
-def get_artist_studio_page(request: Request):
-    """
-    Ruta para mostrar la página de estudio del artista con sus canciones, álbumes y merchandising
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return RedirectResponse("/login")
-    
-    # Verificar que el usuario tenga un perfil de artista
-    if not userdata.get('artistId'):
-        return RedirectResponse("/artist/create")
-    
-    try:
-        artist_id = userdata.get('artistId')
-        
-        # Obtener datos del artista
-        artist_resp = requests.get(
-            f"{servers.TYA}/artist/{artist_id}",
-            timeout=5,
-            headers={"Accept": "application/json"}
-        )
-        artist_resp.raise_for_status()
-        artist_data = artist_resp.json()
-        
-        # Obtener canciones del artista
-        try:
-            songs_resp = requests.get(
-                f"{servers.TYA}/artist/{artist_id}/songs",
-                timeout=5,
-                headers={"Accept": "application/json"}
-            )
-            songs_resp.raise_for_status()
-            artist_data['songs'] = songs_resp.json()
-        except requests.RequestException:
-            artist_data['songs'] = []
-        
-        # Obtener álbumes del artista
-        try:
-            albums_resp = requests.get(
-                f"{servers.TYA}/artist/{artist_id}/albums",
-                timeout=5,
-                headers={"Accept": "application/json"}
-            )
-            albums_resp.raise_for_status()
-            artist_data['albums'] = albums_resp.json()
-        except requests.RequestException:
-            artist_data['albums'] = []
-        
-        # Obtener merchandising del artista
-        try:
-            merch_resp = requests.get(
-                f"{servers.TPP}/artist/{artist_id}/merch",
-                timeout=5,
-                headers={"Accept": "application/json"}
-            )
-            merch_resp.raise_for_status()
-            artist_data['merch'] = merch_resp.json()
-        except requests.RequestException:
-            artist_data['merch'] = []
-        
-        return osv.get_artist_studio_view(request, artist_data, userdata, servers.SYU)
-        
-    except requests.RequestException as e:
-        print(f"Error obteniendo datos del estudio del artista: {e}")
-        return osv.get_error_view(request, userdata, "No se pudo cargar el estudio del artista", str(e))
 
 
 @app.get("/artist/edit")
@@ -2708,191 +3077,6 @@ async def update_specific_artist_profile(request: Request, artistId: int):
         except:
             pass
         return JSONResponse(content={"message": error_msg}, status_code=500)
-
-
-# ===================== UPLOAD ROUTES =====================
-@app.get("/song/upload")
-def upload_song_page(request: Request):
-    """
-    Ruta para mostrar la página de subir canción
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return RedirectResponse("/login")
-    
-    # Verificar que el usuario sea un artista
-    if not userdata.get('artistId'):
-        return osv.get_error_view(request, userdata, "Debes ser un artista para subir canciones", "")
-    
-    return osv.get_upload_song_view(request, userdata)
-
-
-@app.post("/song/upload")
-async def upload_song(request: Request):
-    """
-    Ruta para procesar la subida de una canción
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
-    
-    if not userdata.get('artistId'):
-        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
-    
-    try:
-        body = await request.json()
-        
-        # Agregar el ID del artista
-        body['artistId'] = userdata.get('artistId')
-        
-        # Enviar a TYA para crear la canción
-        song_resp = requests.post(
-            f"{servers.TYA}/song/upload",
-            json=body,
-            timeout=15,
-            headers={"Accept": "application/json"}
-        )
-        
-        if song_resp.ok:
-            song_data = song_resp.json()
-            return JSONResponse(content={
-                "message": "Canción subida exitosamente",
-                "songId": song_data.get('songId')
-            })
-        else:
-            error_data = song_resp.json() if song_resp.text else {"error": "Error desconocido"}
-            return JSONResponse(content=error_data, status_code=song_resp.status_code)
-    
-    except Exception as e:
-        print(f"Error subiendo canción: {e}")
-        return JSONResponse(content={"error": "Error al subir la canción"}, status_code=500)
-
-
-@app.get("/album/upload")
-def upload_album_page(request: Request):
-    """
-    Ruta para mostrar la página de subir álbum
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return RedirectResponse("/login")
-    
-    # Verificar que el usuario sea un artista
-    if not userdata.get('artistId'):
-        return osv.get_error_view(request, userdata, "Debes ser un artista para crear álbumes", "")
-    
-    return osv.get_upload_album_view(request, userdata)
-
-
-@app.post("/album/upload")
-async def upload_album(request: Request):
-    """
-    Ruta para procesar la creación de un álbum
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
-    
-    if not userdata.get('artistId'):
-        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
-    
-    try:
-        body = await request.json()
-        
-        # Agregar el ID del artista
-        body['artistId'] = userdata.get('artistId')
-        
-        # Enviar a TYA para crear el álbum
-        album_resp = requests.post(
-            f"{servers.TYA}/album/upload",
-            json=body,
-            timeout=15,
-            headers={"Accept": "application/json"}
-        )
-        
-        if album_resp.ok:
-            album_data = album_resp.json()
-            return JSONResponse(content={
-                "message": "Álbum creado exitosamente",
-                "albumId": album_data.get('albumId')
-            })
-        else:
-            error_data = album_resp.json() if album_resp.text else {"error": "Error desconocido"}
-            return JSONResponse(content=error_data, status_code=album_resp.status_code)
-    
-    except Exception as e:
-        print(f"Error creando álbum: {e}")
-        return JSONResponse(content={"error": "Error al crear el álbum"}, status_code=500)
-
-
-# Upload Merchandising Routes
-@app.get("/merch/upload")
-def upload_merch_page(request: Request):
-    """
-    Ruta para mostrar la página de subir merchandising
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return RedirectResponse("/login")
-    
-    # Verificar que el usuario sea un artista
-    if not userdata.get('artistId'):
-        return osv.get_error_view(request, userdata, "Debes ser un artista para subir merchandising", "")
-    
-    return osv.get_upload_merch_view(request, userdata)
-
-
-@app.post("/merch/upload")
-async def upload_merch(request: Request):
-    """
-    Ruta para procesar la subida de merchandising
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
-    
-    if not userdata.get('artistId'):
-        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
-    
-    try:
-        body = await request.json()
-        
-        # Agregar el ID del artista
-        body['artistId'] = userdata.get('artistId')
-        
-        # Enviar a TYA para crear el merchandising
-        merch_resp = requests.post(
-            f"{servers.TYA}/merch/upload",
-            json=body,
-            timeout=15,
-            headers={"Accept": "application/json"}
-        )
-        
-        if merch_resp.ok:
-            merch_data = merch_resp.json()
-            return JSONResponse(content={
-                "message": "Merchandising subido exitosamente",
-                "merchId": merch_data.get('merchId')
-            })
-        else:
-            error_data = merch_resp.json() if merch_resp.text else {"error": "Error desconocido"}
-            return JSONResponse(content=error_data, status_code=merch_resp.status_code)
-    
-    except Exception as e:
-        print(f"Error subiendo merchandising: {e}")
-        return JSONResponse(content={"error": "Error al subir el merchandising"}, status_code=500)
 
 
 # ===================== TRACK PROVIDER ROUTES =====================
