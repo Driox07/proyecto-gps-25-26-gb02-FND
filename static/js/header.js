@@ -301,25 +301,25 @@ function initSearch() {
         let url, title, subtitle, image;
         
         if (type === 'song') {
-            url = `/song/${item.id}`;
-            title = item.nombre || item.title || 'Sin título';
-            subtitle = item.artista?.nombre || item.artist?.nombre || 'Artista desconocido';
-            image = item.imagen || item.cover;
+            url = `/song/${item.songId}`;
+            title = item.title;
+            subtitle = item.artistName || 'Artista desconocido';
+            image = getServerConfig() + "/static" + item.cover;
         } else if (type === 'album') {
-            url = `/album/${item.id}`;
-            title = item.nombre || item.title || 'Sin título';
-            subtitle = item.artista?.nombre || item.artist?.nombre || 'Artista desconocido';
-            image = item.imagen || item.cover;
+            url = `/album/${item.albumId}`;
+            title = item.title;
+            subtitle = item.artistName || 'Artista desconocido';
+            image = getServerConfig() + "/static" + item.cover;
         } else if (type === 'artist') {
-            url = `/artist/${item.id}`;
-            title = item.nombre || item.artisticName || 'Sin nombre';
+            url = `/artist/${item.artistId}`;
+            title = item.artisticName || 'Sin nombre';
             subtitle = 'Artista';
-            image = item.imagen || item.artisticImage;
+            image = getServerConfig() + "/static" + item.artisticImage;
         } else if (type === 'merch') {
-            url = `/merch/${item.id}`;
-            title = item.nombre || item.title || 'Sin título';
-            subtitle = item.artista?.nombre || 'Merchandising';
-            image = item.imagen || item.cover;
+            url = `/merch/${item.merchId}`;
+            title = item.title || 'Sin título';
+            subtitle = item.artistName || 'Merchandising';
+            image = getServerConfig() + "/static" + item.cover;
         }
 
         link.href = url;
