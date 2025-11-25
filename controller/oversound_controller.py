@@ -668,6 +668,191 @@ def get_help(request: Request):
     return osv.get_help_view(request, userdata, servers.SYU)
 
 
+# ===================== UPLOAD ROUTES =====================
+@app.get("/song/upload")
+def upload_song_page(request: Request):
+    """
+    Ruta para mostrar la página de subir canción
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario sea un artista
+    if not userdata.get('artistId'):
+        return osv.get_error_view(request, userdata, "Debes ser un artista para subir canciones", "")
+    
+    return osv.get_upload_song_view(request, userdata)
+
+
+@app.post("/song/upload")
+async def upload_song(request: Request):
+    """
+    Ruta para procesar la subida de una canción
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if not userdata.get('artistId'):
+        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
+    
+    try:
+        body = await request.json()
+        
+        # Agregar el ID del artista
+        body['artistId'] = userdata.get('artistId')
+        
+        # Enviar a TYA para crear la canción
+        song_resp = requests.post(
+            f"{servers.TYA}/song/upload",
+            json=body,
+            timeout=15,
+            headers={"Accept": "application/json"}
+        )
+        
+        if song_resp.ok:
+            song_data = song_resp.json()
+            return JSONResponse(content={
+                "message": "Canción subida exitosamente",
+                "songId": song_data.get('songId')
+            })
+        else:
+            error_data = song_resp.json() if song_resp.text else {"error": "Error desconocido"}
+            return JSONResponse(content=error_data, status_code=song_resp.status_code)
+    
+    except Exception as e:
+        print(f"Error subiendo canción: {e}")
+        return JSONResponse(content={"error": "Error al subir la canción"}, status_code=500)
+
+
+@app.get("/album/upload")
+def upload_album_page(request: Request):
+    """
+    Ruta para mostrar la página de subir álbum
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario sea un artista
+    if not userdata.get('artistId'):
+        return osv.get_error_view(request, userdata, "Debes ser un artista para crear álbumes", "")
+    
+    return osv.get_upload_album_view(request, userdata)
+
+
+@app.post("/album/upload")
+async def upload_album(request: Request):
+    """
+    Ruta para procesar la creación de un álbum
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if not userdata.get('artistId'):
+        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
+    
+    try:
+        body = await request.json()
+        
+        # Agregar el ID del artista
+        body['artistId'] = userdata.get('artistId')
+        
+        # Enviar a TYA para crear el álbum
+        album_resp = requests.post(
+            f"{servers.TYA}/album/upload",
+            json=body,
+            timeout=15,
+            headers={"Accept": "application/json"}
+        )
+        
+        if album_resp.ok:
+            album_data = album_resp.json()
+            return JSONResponse(content={
+                "message": "Álbum creado exitosamente",
+                "albumId": album_data.get('albumId')
+            })
+        else:
+            error_data = album_resp.json() if album_resp.text else {"error": "Error desconocido"}
+            return JSONResponse(content=error_data, status_code=album_resp.status_code)
+    
+    except Exception as e:
+        print(f"Error creando álbum: {e}")
+        return JSONResponse(content={"error": "Error al crear el álbum"}, status_code=500)
+
+
+# Upload Merchandising Routes
+@app.get("/merch/upload")
+def upload_merch_page(request: Request):
+    """
+    Ruta para mostrar la página de subir merchandising
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario sea un artista
+    if not userdata.get('artistId'):
+        return osv.get_error_view(request, userdata, "Debes ser un artista para subir merchandising", "")
+    
+    return osv.get_upload_merch_view(request, userdata)
+
+
+@app.post("/merch/upload")
+async def upload_merch(request: Request):
+    """
+    Ruta para procesar la subida de merchandising
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if not userdata.get('artistId'):
+        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
+    
+    try:
+        body = await request.json()
+        
+        # Agregar el ID del artista
+        body['artistId'] = userdata.get('artistId')
+        
+        # Enviar a TYA para crear el merchandising
+        merch_resp = requests.post(
+            f"{servers.TYA}/merch/upload",
+            json=body,
+            timeout=15,
+            headers={"Accept": "application/json"}
+        )
+        
+        if merch_resp.ok:
+            merch_data = merch_resp.json()
+            return JSONResponse(content={
+                "message": "Merchandising subido exitosamente",
+                "merchId": merch_data.get('merchId')
+            })
+        else:
+            error_data = merch_resp.json() if merch_resp.text else {"error": "Error desconocido"}
+            return JSONResponse(content=error_data, status_code=merch_resp.status_code)
+    
+    except Exception as e:
+        print(f"Error subiendo merchandising: {e}")
+        return JSONResponse(content={"error": "Error al subir el merchandising"}, status_code=500)
+
+
 @app.get("/user/{username}")
 def register(request: Request, username: str):
     token = request.cookies.get("session")
@@ -2382,6 +2567,75 @@ async def create_artist(request: Request):
         return JSONResponse(content={"error": "Error al crear el perfil de artista"}, status_code=500)
 
 
+@app.get("/artist/studio")
+def get_artist_studio_page(request: Request):
+    """
+    Ruta para mostrar la página de estudio del artista con sus canciones, álbumes y merchandising
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return RedirectResponse("/login")
+    
+    # Verificar que el usuario tenga un perfil de artista
+    if not userdata.get('artistId'):
+        return RedirectResponse("/artist/create")
+    
+    try:
+        artist_id = userdata.get('artistId')
+        
+        # Obtener datos del artista
+        artist_resp = requests.get(
+            f"{servers.TYA}/artist/{artist_id}",
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        artist_resp.raise_for_status()
+        artist_data = artist_resp.json()
+        
+        # Obtener canciones del artista
+        try:
+            songs_resp = requests.get(
+                f"{servers.TYA}/artist/{artist_id}/songs",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            songs_resp.raise_for_status()
+            artist_data['songs'] = songs_resp.json()
+        except requests.RequestException:
+            artist_data['songs'] = []
+        
+        # Obtener álbumes del artista
+        try:
+            albums_resp = requests.get(
+                f"{servers.TYA}/artist/{artist_id}/albums",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            albums_resp.raise_for_status()
+            artist_data['albums'] = albums_resp.json()
+        except requests.RequestException:
+            artist_data['albums'] = []
+        
+        # Obtener merchandising del artista
+        try:
+            merch_resp = requests.get(
+                f"{servers.TPP}/artist/{artist_id}/merch",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            merch_resp.raise_for_status()
+            artist_data['merch'] = merch_resp.json()
+        except requests.RequestException:
+            artist_data['merch'] = []
+        
+        return osv.get_artist_studio_view(request, artist_data, userdata, servers.SYU)
+        
+    except requests.RequestException as e:
+        print(f"Error obteniendo datos del estudio del artista: {e}")
+        return osv.get_error_view(request, userdata, "No se pudo cargar el estudio del artista", str(e))
+
 # ===================== ARTIST PROFILE ROUTES =====================
 @app.get("/artist/{artistId}")
 def get_artist_profile(request: Request, artistId: int):
@@ -2468,76 +2722,6 @@ def get_artist_profile(request: Request, artistId: int):
     except requests.RequestException as e:
         print(f"Error obteniendo perfil del artista: {e}")
         return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del artista", str(e))
-
-
-@app.get("/artist/studio")
-def get_artist_studio_page(request: Request):
-    """
-    Ruta para mostrar la página de estudio del artista con sus canciones, álbumes y merchandising
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return RedirectResponse("/login")
-    
-    # Verificar que el usuario tenga un perfil de artista
-    if not userdata.get('artistId'):
-        return RedirectResponse("/artist/create")
-    
-    try:
-        artist_id = userdata.get('artistId')
-        
-        # Obtener datos del artista
-        artist_resp = requests.get(
-            f"{servers.TYA}/artist/{artist_id}",
-            timeout=5,
-            headers={"Accept": "application/json"}
-        )
-        artist_resp.raise_for_status()
-        artist_data = artist_resp.json()
-        
-        # Obtener canciones del artista
-        try:
-            songs_resp = requests.get(
-                f"{servers.TYA}/artist/{artist_id}/songs",
-                timeout=5,
-                headers={"Accept": "application/json"}
-            )
-            songs_resp.raise_for_status()
-            artist_data['songs'] = songs_resp.json()
-        except requests.RequestException:
-            artist_data['songs'] = []
-        
-        # Obtener álbumes del artista
-        try:
-            albums_resp = requests.get(
-                f"{servers.TYA}/artist/{artist_id}/albums",
-                timeout=5,
-                headers={"Accept": "application/json"}
-            )
-            albums_resp.raise_for_status()
-            artist_data['albums'] = albums_resp.json()
-        except requests.RequestException:
-            artist_data['albums'] = []
-        
-        # Obtener merchandising del artista
-        try:
-            merch_resp = requests.get(
-                f"{servers.TPP}/artist/{artist_id}/merch",
-                timeout=5,
-                headers={"Accept": "application/json"}
-            )
-            merch_resp.raise_for_status()
-            artist_data['merch'] = merch_resp.json()
-        except requests.RequestException:
-            artist_data['merch'] = []
-        
-        return osv.get_artist_studio_view(request, artist_data, userdata, servers.SYU)
-        
-    except requests.RequestException as e:
-        print(f"Error obteniendo datos del estudio del artista: {e}")
-        return osv.get_error_view(request, userdata, "No se pudo cargar el estudio del artista", str(e))
 
 
 @app.get("/artist/edit")
@@ -2730,191 +2914,6 @@ async def update_specific_artist_profile(request: Request, artistId: int):
         except:
             pass
         return JSONResponse(content={"message": error_msg}, status_code=500)
-
-
-# ===================== UPLOAD ROUTES =====================
-@app.get("/song/upload")
-def upload_song_page(request: Request):
-    """
-    Ruta para mostrar la página de subir canción
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return RedirectResponse("/login")
-    
-    # Verificar que el usuario sea un artista
-    if not userdata.get('artistId'):
-        return osv.get_error_view(request, userdata, "Debes ser un artista para subir canciones", "")
-    
-    return osv.get_upload_song_view(request, userdata)
-
-
-@app.post("/song/upload")
-async def upload_song(request: Request):
-    """
-    Ruta para procesar la subida de una canción
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
-    
-    if not userdata.get('artistId'):
-        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
-    
-    try:
-        body = await request.json()
-        
-        # Agregar el ID del artista
-        body['artistId'] = userdata.get('artistId')
-        
-        # Enviar a TYA para crear la canción
-        song_resp = requests.post(
-            f"{servers.TYA}/song/upload",
-            json=body,
-            timeout=15,
-            headers={"Accept": "application/json"}
-        )
-        
-        if song_resp.ok:
-            song_data = song_resp.json()
-            return JSONResponse(content={
-                "message": "Canción subida exitosamente",
-                "songId": song_data.get('songId')
-            })
-        else:
-            error_data = song_resp.json() if song_resp.text else {"error": "Error desconocido"}
-            return JSONResponse(content=error_data, status_code=song_resp.status_code)
-    
-    except Exception as e:
-        print(f"Error subiendo canción: {e}")
-        return JSONResponse(content={"error": "Error al subir la canción"}, status_code=500)
-
-
-@app.get("/album/upload")
-def upload_album_page(request: Request):
-    """
-    Ruta para mostrar la página de subir álbum
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return RedirectResponse("/login")
-    
-    # Verificar que el usuario sea un artista
-    if not userdata.get('artistId'):
-        return osv.get_error_view(request, userdata, "Debes ser un artista para crear álbumes", "")
-    
-    return osv.get_upload_album_view(request, userdata)
-
-
-@app.post("/album/upload")
-async def upload_album(request: Request):
-    """
-    Ruta para procesar la creación de un álbum
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
-    
-    if not userdata.get('artistId'):
-        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
-    
-    try:
-        body = await request.json()
-        
-        # Agregar el ID del artista
-        body['artistId'] = userdata.get('artistId')
-        
-        # Enviar a TYA para crear el álbum
-        album_resp = requests.post(
-            f"{servers.TYA}/album/upload",
-            json=body,
-            timeout=15,
-            headers={"Accept": "application/json"}
-        )
-        
-        if album_resp.ok:
-            album_data = album_resp.json()
-            return JSONResponse(content={
-                "message": "Álbum creado exitosamente",
-                "albumId": album_data.get('albumId')
-            })
-        else:
-            error_data = album_resp.json() if album_resp.text else {"error": "Error desconocido"}
-            return JSONResponse(content=error_data, status_code=album_resp.status_code)
-    
-    except Exception as e:
-        print(f"Error creando álbum: {e}")
-        return JSONResponse(content={"error": "Error al crear el álbum"}, status_code=500)
-
-
-# Upload Merchandising Routes
-@app.get("/merch/upload")
-def upload_merch_page(request: Request):
-    """
-    Ruta para mostrar la página de subir merchandising
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return RedirectResponse("/login")
-    
-    # Verificar que el usuario sea un artista
-    if not userdata.get('artistId'):
-        return osv.get_error_view(request, userdata, "Debes ser un artista para subir merchandising", "")
-    
-    return osv.get_upload_merch_view(request, userdata)
-
-
-@app.post("/merch/upload")
-async def upload_merch(request: Request):
-    """
-    Ruta para procesar la subida de merchandising
-    """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
-    
-    if not userdata.get('artistId'):
-        return JSONResponse(content={"error": "Debes ser un artista"}, status_code=403)
-    
-    try:
-        body = await request.json()
-        
-        # Agregar el ID del artista
-        body['artistId'] = userdata.get('artistId')
-        
-        # Enviar a TYA para crear el merchandising
-        merch_resp = requests.post(
-            f"{servers.TYA}/merch/upload",
-            json=body,
-            timeout=15,
-            headers={"Accept": "application/json"}
-        )
-        
-        if merch_resp.ok:
-            merch_data = merch_resp.json()
-            return JSONResponse(content={
-                "message": "Merchandising subido exitosamente",
-                "merchId": merch_data.get('merchId')
-            })
-        else:
-            error_data = merch_resp.json() if merch_resp.text else {"error": "Error desconocido"}
-            return JSONResponse(content=error_data, status_code=merch_resp.status_code)
-    
-    except Exception as e:
-        print(f"Error subiendo merchandising: {e}")
-        return JSONResponse(content={"error": "Error al subir el merchandising"}, status_code=500)
 
 
 # ===================== TRACK PROVIDER ROUTES =====================
