@@ -2021,6 +2021,8 @@ async def add_to_cart(request: Request):
         # Agregar ID de usuario al body
         body['userId'] = userdata.get('userId')
         
+        print(f"[DEBUG] Add to cart request body: {body}")
+        
         # Enviar a TPP
         cart_resp = requests.post(
             f"{servers.TPP}/cart",
@@ -2028,11 +2030,20 @@ async def add_to_cart(request: Request):
             timeout=2,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
+        
+        print(f"[DEBUG] TPP cart response status: {cart_resp.status_code}")
+        print(f"[DEBUG] TPP cart response body: {cart_resp.text}")
+        
         cart_resp.raise_for_status()
         return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
     except requests.RequestException as e:
         print(f"Error añadiendo al carrito: {e}")
-        return JSONResponse(content={"error": "No se pudo añadir al carrito"}, status_code=500)
+        try:
+            error_detail = e.response.json() if hasattr(e, 'response') and e.response else {}
+            print(f"[DEBUG] TPP cart error detail: {error_detail}")
+            return JSONResponse(content={"error": error_detail.get('detail', error_detail.get('message', 'No se pudo añadir al carrito'))}, status_code=500)
+        except:
+            return JSONResponse(content={"error": "No se pudo añadir al carrito"}, status_code=500)
 
 
 @app.delete("/cart/{product_id}")
