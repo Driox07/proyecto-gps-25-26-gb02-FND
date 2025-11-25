@@ -439,17 +439,34 @@ async function processPay() {
 
         // Extraer IDs según tipo de producto
         // Soportar tanto camelCase como snake_case
-        window.currentCart.forEach(item => {
+        console.log('Cart.js: Current cart before extracting IDs:', window.currentCart);
+        console.log('Cart.js: Cart length:', window.currentCart ? window.currentCart.length : 0);
+        
+        if (!window.currentCart || window.currentCart.length === 0) {
+            console.error('Cart.js: ERROR - currentCart is empty or undefined!');
+            showNotification('El carrito está vacío');
+            return;
+        }
+        
+        window.currentCart.forEach((item, index) => {
+            console.log(`Cart.js: Item ${index}:`, item);
             const songId = item.songId || item.song_id;
             const albumId = item.albumId || item.album_id;
             const merchId = item.merchId || item.merch_id;
             
+            console.log(`Cart.js: Item ${index} IDs - songId: ${songId}, albumId: ${albumId}, merchId: ${merchId}`);
+            
             if (songId) {
                 purchaseData.songIds.push(songId);
+                console.log(`Cart.js: Added songId ${songId} to purchaseData`);
             } else if (albumId) {
                 purchaseData.albumIds.push(albumId);
+                console.log(`Cart.js: Added albumId ${albumId} to purchaseData`);
             } else if (merchId) {
                 purchaseData.merchIds.push(merchId);
+                console.log(`Cart.js: Added merchId ${merchId} to purchaseData`);
+            } else {
+                console.warn(`Cart.js: Item ${index} has no valid ID`, item);
             }
         });
         
