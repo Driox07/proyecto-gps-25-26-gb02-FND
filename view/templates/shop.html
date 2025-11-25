@@ -175,21 +175,21 @@
                             <div class="product-card" data-type="album" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
                                     <img src="{{ tya_server }}/static{{ album.cover if album.cover else 'img/utils/default-album.svg' }}" 
-                                         alt="{{ album.title if album.title else 'Álbum' }}"
+                                         alt="{{ album.name if album.name else 'Álbum' }}"
                                          loading="lazy">
                                     <div class="product-overlay">
                                         <a href="/album/{{ album.albumId }}" class="btn-view">Ver Detalles</a>
                                     </div>
                                 </div>
                                 <div class="product-info">
-                                    <h3 class="product-name">{{ album.title if album.title else 'Sin título' }}</h3>
+                                    <h3 class="product-name">{{ album.name if album.name else 'Sin título' }}</h3>
                                     <p class="product-artist">
                                         {{ artists_map.get(album.artist, 'Artista desconocido') if album.artist else 'Artista desconocido' }}
                                     </p>
-                                    {% if album.songs %}
-                                    <p class="product-meta">{{ album.songs|length }} canciones</p>
+                                    {% if album.songList %}
+                                    <p class="product-meta">{{ album.songList|length }} canciones</p>
                                     {% endif %}
-                                    {% if album.genres and genres_map.get(album.genres) %}
+                                    {% if album.genre and genres_map.get(album.genre) %}
                                     <p class="product-genre">{{ genres_map.get(album.genre) }}</p>
                                     {% endif %}
                                     <div class="product-footer">
@@ -228,14 +228,14 @@
                             <div class="product-card" data-type="merch" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
                                     <img src="{{ tya_server }}/static{{ item.cover if item.cover else 'img/utils/default-merch.svg' }}" 
-                                         alt="{{ item.title if item.title else 'Merchandising' }}"
+                                         alt="{{ item.name if item.name else 'Producto' }}"
                                          loading="lazy">
                                     <div class="product-overlay">
                                         <a href="/merch/{{ item.merchId }}" class="btn-view">Ver Detalles</a>
                                     </div>
                                 </div>
                                 <div class="product-info">
-                                    <h3 class="product-name">{{ item.title if item.title else 'Sin título' }}</h3>
+                                    <h3 class="product-name">{{ item.name if item.name else 'Sin título' }}</h3>
                                     <p class="product-artist">
                                         {{ artists_map.get(item.artist, 'Artista desconocido') if item.artist else 'Artista desconocido' }}
                                     </p>

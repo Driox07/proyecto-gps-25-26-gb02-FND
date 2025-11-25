@@ -438,15 +438,22 @@ async function processPay() {
         };
 
         // Extraer IDs según tipo de producto
+        // Soportar tanto camelCase como snake_case
         window.currentCart.forEach(item => {
-            if (item.songId) {
-                purchaseData.songIds.push(item.songId);
-            } else if (item.albumId) {
-                purchaseData.albumIds.push(item.albumId);
-            } else if (item.merchId) {
-                purchaseData.merchIds.push(item.merchId);
+            const songId = item.songId || item.song_id;
+            const albumId = item.albumId || item.album_id;
+            const merchId = item.merchId || item.merch_id;
+            
+            if (songId) {
+                purchaseData.songIds.push(songId);
+            } else if (albumId) {
+                purchaseData.albumIds.push(albumId);
+            } else if (merchId) {
+                purchaseData.merchIds.push(merchId);
             }
         });
+        
+        console.log('Cart.js: Purchase data prepared:', purchaseData);
 
         // Realizar la compra mediante POST /purchase
         const response = await fetch('/purchase', {

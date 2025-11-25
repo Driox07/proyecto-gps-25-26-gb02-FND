@@ -249,9 +249,13 @@ def shop(request: Request,
                 genres_map[genre_id] = genre_name
 
     # ===== SEPARAR por tipo (usando camelCase como viene del TPP) =====
-    songs = [p for p in productos if p.get('songId', 0) not in [0, None]]
-    albums = [p for p in productos if p.get('albumId', 0) not in [0, None] and p.get('songId', 0) in [0, None]]
-    merch = [p for p in productos if p.get('merchId', 0) not in [0, None]]
+    print(f"[DEBUG] Filtrando productos. Total: {len(productos)}")
+    if productos:
+        print(f"[DEBUG] Primer producto tiene songId={productos[0].get('songId')}, albumId={productos[0].get('albumId')}, merchId={productos[0].get('merchId')}")
+    
+    songs = [p for p in productos if p.get('songId') is not None and p.get('songId') != 0]
+    albums = [p for p in productos if p.get('albumId') is not None and p.get('albumId') != 0 and (p.get('songId') is None or p.get('songId') == 0)]
+    merch = [p for p in productos if p.get('merchId') is not None and p.get('merchId') != 0]
 
     print(f"[DEBUG] Shop: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
     print(f"[DEBUG] Shop: artists_map={len(artists_map)} items, genres_map={len(genres_map)} items")
@@ -1844,45 +1848,47 @@ async def add_payment_method(request: Request):
         # Obtener datos del body
         data = await request.json()
         
-        # Extraer y validar los datos
-        card_holder = data.get('card_holder')
-        card_number = data.get('card_number', '').replace(' ', '')  # Remover espacios
-        expiry = data.get('expiry')  # Formato MM/YY
+        # Extraer y validar los datos (el frontend envía camelCase)
+        card_holder = data.get('cardHolder')  # camelCase del frontend
+        card_number = data.get('cardNumber', '').replace(' ', '')  # camelCase del frontend
+        expire_month = data.get('expireMonth')  # Ya viene como número entero
+        expire_year = data.get('expireYear')  # Ya viene como año completo (ej: 2025)
         
-        if not card_holder or not card_number or not expiry:
+        print(f"[DEBUG] Payment data received: cardHolder={card_holder}, cardNumber={'*'*12 + card_number[-4:] if len(card_number) >= 4 else card_number}, expireMonth={expire_month}, expireYear={expire_year}")
+        
+        if not card_holder or not card_number or expire_month is None or expire_year is None:
             return JSONResponse(content={"error": "Datos incompletos"}, status_code=400)
         
-        # Parsear fecha de vencimiento MM/YY
+        # Validar mes y año
         try:
-            expiry_parts = expiry.split('/')
-            if len(expiry_parts) != 2:
-                raise ValueError("Formato de vencimiento inválido")
-            
-            expire_month = int(expiry_parts[0])
-            expire_year = int(expiry_parts[1])
-            
-            # Convertir año de 2 dígitos a 4 dígitos (asumiendo 20XX)
-            if expire_year < 100:
-                expire_year = 2000 + expire_year
+            expire_month = int(expire_month)
+            expire_year = int(expire_year)
             
             # Validar mes
             if expire_month < 1 or expire_month > 12:
-                raise ValueError("Mes inválido")
+                raise ValueError("Mes inválido (debe estar entre 1 y 12)")
+            
+            # Validar año (debe ser año completo, ej: 2025)
+            if expire_year < 2024 or expire_year > 2099:
+                raise ValueError("Año inválido")
                 
-        except (ValueError, IndexError) as e:
+        except (ValueError, TypeError) as e:
             return JSONResponse(content={"error": f"Formato de vencimiento inválido: {str(e)}"}, status_code=400)
         
-        # Obtener últimos 4 dígitos de la tarjeta para enviar enmascarados
-        last_four = card_number[-4:] if len(card_number) >= 4 else card_number
-        masked_card = f"**** **** **** {last_four}"
-        
-        # Preparar payload para TPP según el formato especificado
+        # Preparar payload para TPP según el formato especificado (camelCase)
+        # Nota: Enviamos el número de tarjeta completo (TPP lo enmascarará internamente)
         payment_data = {
-            "expireMonth": expire_month,
             "cardHolder": card_holder,
-            "expireYear": expire_year,
-            "cardNumber": masked_card
+            "cardNumber": card_number,  # Enviar número completo, no enmascarado
+            "expireMonth": expire_month,
+            "expireYear": expire_year
         }
+        
+        # Log enmascarado para seguridad
+        masked_data = payment_data.copy()
+        if len(card_number) >= 4:
+            masked_data["cardNumber"] = "**** **** **** " + card_number[-4:]
+        print(f"[DEBUG] Sending to TPP: {masked_data}")
         
         # Enviar al microservicio TPP
         response = requests.post(
@@ -1896,14 +1902,19 @@ async def add_payment_method(request: Request):
             }
         )
         
+        print(f"[DEBUG] TPP response status: {response.status_code}")
+        print(f"[DEBUG] TPP response body: {response.text}")
+        
         if response.ok:
             return JSONResponse(content=response.json(), status_code=200)
         else:
             error_msg = "No se pudo agregar el método de pago"
             try:
                 error_data = response.json()
-                error_msg = error_data.get('error', error_msg)
-            except:
+                error_msg = error_data.get('detail', error_data.get('error', error_data.get('message', error_msg)))
+                print(f"[DEBUG] TPP error: {error_data}")
+            except Exception as e:
+                print(f"[DEBUG] Could not parse TPP error response: {e}")
                 pass
             return JSONResponse(content={"error": error_msg}, status_code=response.status_code)
             
@@ -2073,6 +2084,8 @@ async def process_purchase(request: Request):
         # Agregar ID de usuario al body
         body['userId'] = userdata.get('userId')
         
+        print(f"[DEBUG] Purchase request body: {body}")
+        
         # Enviar a TPP
         purchase_resp = requests.post(
             f"{servers.TPP}/purchase",
@@ -2080,11 +2093,20 @@ async def process_purchase(request: Request):
             timeout=5,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
+        
+        print(f"[DEBUG] TPP purchase response status: {purchase_resp.status_code}")
+        print(f"[DEBUG] TPP purchase response body: {purchase_resp.text}")
+        
         purchase_resp.raise_for_status()
         return JSONResponse(content=purchase_resp.json(), status_code=purchase_resp.status_code)
     except requests.RequestException as e:
         print(f"Error procesando compra: {e}")
-        return JSONResponse(content={"error": "No se pudo procesar la compra"}, status_code=500)
+        try:
+            error_detail = e.response.json() if hasattr(e, 'response') and e.response else {}
+            print(f"[DEBUG] TPP error detail: {error_detail}")
+            return JSONResponse(content={"error": error_detail.get('detail', error_detail.get('message', 'No se pudo procesar la compra'))}, status_code=500)
+        except:
+            return JSONResponse(content={"error": "No se pudo procesar la compra"}, status_code=500)
 
 
 # ===================== PAYMENT METHODS ENDPOINTS =====================
