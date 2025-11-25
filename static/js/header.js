@@ -128,7 +128,7 @@ function initSearch() {
             return window.SERVER_CONFIG.TYA;
         }
         // Fallback a la configuración en la página
-        return 'http://10.1.1.2:8081';
+        return 'http://localhost:8081';
     }
 
     // Input handler con debounce
