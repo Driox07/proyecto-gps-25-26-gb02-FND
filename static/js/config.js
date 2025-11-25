@@ -5,10 +5,6 @@ const CONFIG = {
     // Music Service (Track Provider Microservice)
     musicService: {
         url: 'http://localhost:8000',
-        // Alternative URLs:
-        // Development: 'http://localhost:8000' (frontend proxy)
-        // Production: 'http://api.oversound.com:8000'
-        // Direct PT: 'http://10.1.1.21:8083' (not recommended, use frontend proxy)
     },
     
     // Audio player settings
