@@ -345,9 +345,30 @@ def search_songs(q: str = Query(..., min_length=3)):
             timeout=5,
             headers={"Accept": "application/json"}
         )
+
+        # Para el autor, resolver su nombre artístico
+        fix_list = list_resp.json()
+        for song in fix_list:
+            artist_id = song.get('artistId')
+            if artist_id:
+                try:
+                    artist_resp = requests.get(
+                    f"{servers.TYA}/artist/{artist_id}",
+                    timeout=5,
+                    headers={"Accept": "application/json"}
+                    )
+                    if artist_resp.ok:
+                        artist_data = artist_resp.json()
+                        song['artistName'] = artist_data.get('artisticName', 'Artista desconocido')
+                    else:
+                        song['artistName'] = 'Artista desconocido'
+                    
+                except requests.RequestException:
+                    song['artistName'] = 'Artista desconocido'
         
         if list_resp.ok:
-            return JSONResponse(content=list_resp.json(), status_code=200)
+            print(fix_list)
+            return JSONResponse(content=fix_list, status_code=200)
         else:
             return JSONResponse(content=[], status_code=200)
             
@@ -392,8 +413,29 @@ def search_albums(q: str = Query(..., min_length=3)):
             headers={"Accept": "application/json"}
         )
         
+        # Para el autor, resolver su nombre artístico
+        fix_list = list_resp.json()
+        for album in fix_list:
+            artist_id = album.get('artistId')
+            if artist_id:
+                try:
+                    artist_resp = requests.get(
+                    f"{servers.TYA}/artist/{artist_id}",
+                    timeout=5,
+                    headers={"Accept": "application/json"}
+                    )
+                    if artist_resp.ok:
+                        artist_data = artist_resp.json()
+                        album['artistName'] = artist_data.get('artisticName', 'Artista desconocido')
+                    else:
+                        album['artistName'] = 'Artista desconocido'
+                    
+                except requests.RequestException:
+                    album['artistName'] = 'Artista desconocido'
+
         if list_resp.ok:
-            return JSONResponse(content=list_resp.json(), status_code=200)
+            print(fix_list)
+            return JSONResponse(content=fix_list, status_code=200)
         else:
             return JSONResponse(content=[], status_code=200)
             
@@ -439,6 +481,7 @@ def search_artists(q: str = Query(..., min_length=3)):
         )
         
         if list_resp.ok:
+            print(list_resp.json())            
             return JSONResponse(content=list_resp.json(), status_code=200)
         else:
             return JSONResponse(content=[], status_code=200)
@@ -485,6 +528,7 @@ def search_merch(q: str = Query(..., min_length=3)):
         )
         
         if list_resp.ok:
+            print(list_resp.json())            
             return JSONResponse(content=list_resp.json(), status_code=200)
         else:
             return JSONResponse(content=[], status_code=200)
@@ -2287,20 +2331,20 @@ async def create_artist(request: Request):
             artist_data = artist_resp.json()
             artist_id = artist_data.get('artistId')
             
-            # Actualizar el usuario en SYU con el relatedArtist
+            # Actualizar el usuario en SYU con el artistId
             try:
                 user_update_resp = requests.patch(
                     f"{servers.SYU}/user/{userdata.get('username')}",
-                    json={"relatedArtist": artist_id},
+                    json={"artistId": artist_id},
                     timeout=5,
                     headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
                 )
                 
                 if not user_update_resp.ok:
-                    print(f"Advertencia: No se pudo actualizar el usuario con relatedArtist. Status: {user_update_resp.status_code}")
+                    print(f"Advertencia: No se pudo actualizar el usuario con artistId. Status: {user_update_resp.status_code}")
                     # No fallar la operación, el artista ya fue creado
             except requests.RequestException as e:
-                print(f"Advertencia: Error al actualizar usuario con relatedArtist: {e}")
+                print(f"Advertencia: Error al actualizar usuario con artistId: {e}")
                 # No fallar la operación, el artista ya fue creado
             
             return JSONResponse(content={
