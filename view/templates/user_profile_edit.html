@@ -69,7 +69,7 @@
                             name="username" 
                             value="{{ data.userdata.username if data.userdata.username else '' }}"
                             required
-                            pattern="[a-zA-Z0-9_-]{3,20}"
+                            pattern="^[A-Za-z0-9_\-]{3,20}$"
                             title="Entre 3-20 caracteres, solo letras, números, guiones y guiones bajos"
                         >
                         <span class="field-hint">Este será tu identificador único en la plataforma</span>
@@ -163,13 +163,13 @@
     <script>
         // Pass user data to JavaScript
         window.userData = {
-            username: "{{ user.username if user.username else '' }}",
-            name: "{{ user.name if user.name else '' }}",
-            firstLastName: "{{ user.firstLastName if user.firstLastName else '' }}",
-            secondLastName: "{{ user.secondLastName if user.secondLastName else '' }}",
-            email: "{{ user.email if user.email else '' }}",
-            biografia: "{{ user.biografia if user.biografia else '' }}",
-            imagen: "{{ user.imagen if user.imagen else '' }}"
+            username: "{{ data.userdata.username if data.userdata.username else '' }}",
+            name: "{{ data.userdata.name if data.userdata.name else '' }}",
+            firstLastName: "{{ data.userdata.firstLastName if data.userdata.firstLastName else '' }}",
+            secondLastName: "{{ data.userdata.secondLastName if data.userdata.secondLastName else '' }}",
+            email: "{{ data.userdata.email if data.userdata.email else '' }}",
+            biografia: "{{ data.userdata.biografia if data.userdata.biografia else '' }}",
+            imagen: "{{ data.userdata.imagen if data.userdata.imagen else '' }}"
         };
     </script>
     <script src="{{ url_for('static', path='js/UserProfileEdit.js') }}"></script>
