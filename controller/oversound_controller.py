@@ -2378,20 +2378,20 @@ async def create_artist(request: Request):
             artist_data = artist_resp.json()
             artist_id = artist_data.get('artistId')
             
-            # Actualizar el usuario en SYU con el relatedArtist
+            # Actualizar el usuario en SYU con el artistId
             try:
                 user_update_resp = requests.patch(
                     f"{servers.SYU}/user/{userdata.get('username')}",
-                    json={"relatedArtist": artist_id},
+                    json={"artistId": artist_id},
                     timeout=5,
                     headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
                 )
                 
                 if not user_update_resp.ok:
-                    print(f"Advertencia: No se pudo actualizar el usuario con relatedArtist. Status: {user_update_resp.status_code}")
+                    print(f"Advertencia: No se pudo actualizar el usuario con artistId. Status: {user_update_resp.status_code}")
                     # No fallar la operación, el artista ya fue creado
             except requests.RequestException as e:
-                print(f"Advertencia: Error al actualizar usuario con relatedArtist: {e}")
+                print(f"Advertencia: Error al actualizar usuario con artistId: {e}")
                 # No fallar la operación, el artista ya fue creado
             
             return JSONResponse(content={
