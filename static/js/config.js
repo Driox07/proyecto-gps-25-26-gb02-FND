@@ -4,7 +4,7 @@
 const CONFIG = {
     // Music Service (Track Provider Microservice)
     musicService: {
-        url: 'http://localhost:8000',
+        url: typeof PT_SERVER !== 'undefined' ? PT_SERVER : 'http://localhost:8083',
     },
     
     // Audio player settings

@@ -247,8 +247,8 @@ class View():
         return templates.TemplateResponse("merch.html", {"request": request, "data": data, "tipoUsuario": tipoUsuario, "isLiked": isLiked, "inCarrito": inCarrito})
     
     # Renderizar la template cart.html
-    def get_cart_view(self, request: Request, userdata: dict = None, tya_server: str = None):
-        data = {"userdata": userdata, "tya_server": tya_server}
+    def get_cart_view(self, request: Request, userdata: dict = None, tya_server: str = None, pt_server: str = None):
+        data = {"userdata": userdata, "tya_server": tya_server, "pt_server": pt_server}
         return templates.TemplateResponse("cart.html", {"request": request, "data": data})
     
     # Renderizar la template label.html

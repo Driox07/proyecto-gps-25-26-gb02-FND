@@ -349,7 +349,7 @@ async def get_cart(request: Request):
             return RedirectResponse("/login")
         
         # Renderizar la vista del carrito
-        return osv.get_cart_view(request, userdata, servers.TYA)
+        return osv.get_cart_view(request, userdata, servers.TYA, servers.PT)
 
 # ============ ENDPOINTS DE BÚSQUEDA ============
 
