@@ -124,21 +124,32 @@
                         {% for song in songs %}
                             <div class="product-card" data-type="song" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
-                                    <img src="{{ tya_server }}/static{{ song.cover if song.cover else 'img/utils/default-song.svg' }}" 
-                                         alt="{{ song.name if song.name else 'Canción' }}"
+                                    <img src="{{ song.cover if song.cover else '/static/img/utils/default-song.svg' }}" 
+                                         alt="{{ song.title if song.title else 'Canción' }}"
                                          loading="lazy">
                                     <div class="product-overlay">
                                         <a href="/song/{{ song.songId }}" class="btn-view">Ver Detalles</a>
                                     </div>
                                 </div>
                                 <div class="product-info">
-                                    <h3 class="product-name">{{ song.name if song.name else 'Sin título' }}</h3>
+                                    <h3 class="product-name">{{ song.title if song.title else 'Sin título' }}</h3>
                                     <p class="product-artist">
-                                        {{ artists_map.get(song.artist, 'Artista desconocido') if song.artist else 'Artista desconocido' }}
+                                        {{ artists_map.get(song.artistId, 'Artista desconocido') if song.artistId else 'Artista desconocido' }}
                                     </p>
-                                    {% if song.genre and genres_map.get(song.genre) %}
-                                    <p class="product-genre">{{ genres_map.get(song.genre) }}</p>
+                                    {% if song.description %}
+                                    <p class="product-description" title="{{ song.description }}">{{ song.description }}</p>
                                     {% endif %}
+                                    <div class="product-meta-container">
+                                        {% if song.genres and song.genres|length > 0 %}
+                                        <span class="product-badge badge-genre">{{ genres_map.get(song.genres[0], 'Sin género') }}</span>
+                                        {% endif %}
+                                        {% if song.duration %}
+                                        {% set duration_int = song.duration|int if song.duration else 0 %}
+                                        {% if duration_int > 0 %}
+                                        <span class="product-badge badge-duration">{{ (duration_int // 60)|int }}:{{ '%02d'|format(duration_int % 60) }}</span>
+                                        {% endif %}
+                                        {% endif %}
+                                    </div>
                                     <div class="product-footer">
                                         <span class="product-price">€{{ "%.2f"|format(song.price|float) if song.price else '0.99' }}</span>
                                         <button class="btn-add-cart" data-product-id="{{ song.songId }}" data-product-type="song">
@@ -174,24 +185,29 @@
                         {% for album in albums %}
                             <div class="product-card" data-type="album" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
-                                    <img src="{{ tya_server }}/static{{ album.cover if album.cover else 'img/utils/default-album.svg' }}" 
-                                         alt="{{ album.name if album.name else 'Álbum' }}"
+                                    <img src="{{ album.cover if album.cover else '/static/img/utils/default-album.svg' }}" 
+                                         alt="{{ album.title if album.title else 'Álbum' }}"
                                          loading="lazy">
                                     <div class="product-overlay">
                                         <a href="/album/{{ album.albumId }}" class="btn-view">Ver Detalles</a>
                                     </div>
                                 </div>
                                 <div class="product-info">
-                                    <h3 class="product-name">{{ album.name if album.name else 'Sin título' }}</h3>
+                                    <h3 class="product-name">{{ album.title if album.title else 'Sin título' }}</h3>
                                     <p class="product-artist">
-                                        {{ artists_map.get(album.artist, 'Artista desconocido') if album.artist else 'Artista desconocido' }}
+                                        {{ artists_map.get(album.artistId, 'Artista desconocido') if album.artistId else 'Artista desconocido' }}
                                     </p>
-                                    {% if album.songList %}
-                                    <p class="product-meta">{{ album.songList|length }} canciones</p>
+                                    {% if album.description %}
+                                    <p class="product-description" title="{{ album.description }}">{{ album.description }}</p>
                                     {% endif %}
-                                    {% if album.genre and genres_map.get(album.genre) %}
-                                    <p class="product-genre">{{ genres_map.get(album.genre) }}</p>
-                                    {% endif %}
+                                    <div class="product-meta-container">
+                                        {% if album.songs %}
+                                        <span class="product-badge badge-songs">{{ album.songs|length }} canciones</span>
+                                        {% endif %}
+                                        {% if album.genres and album.genres|length > 0 %}
+                                        <span class="product-badge badge-genre">{{ genres_map.get(album.genres[0], 'Sin género') }}</span>
+                                        {% endif %}
+                                    </div>
                                     <div class="product-footer">
                                         <span class="product-price">€{{ "%.2f"|format(album.price|float) if album.price else '9.99' }}</span>
                                         <button class="btn-add-cart" data-product-id="{{ album.albumId }}" data-product-type="album">
@@ -227,21 +243,24 @@
                         {% for item in merch %}
                             <div class="product-card" data-type="merch" data-index="{{ loop.index0 }}">
                                 <div class="product-image">
-                                    <img src="{{ tya_server }}/static{{ item.cover if item.cover else 'img/utils/default-merch.svg' }}" 
-                                         alt="{{ item.name if item.name else 'Producto' }}"
+                                    <img src="{{ item.cover if item.cover else '/static/img/utils/default-merch.svg' }}" 
+                                         alt="{{ item.title if item.title else 'Producto' }}"
                                          loading="lazy">
                                     <div class="product-overlay">
                                         <a href="/merch/{{ item.merchId }}" class="btn-view">Ver Detalles</a>
                                     </div>
                                 </div>
                                 <div class="product-info">
-                                    <h3 class="product-name">{{ item.name if item.name else 'Sin título' }}</h3>
+                                    <h3 class="product-name">{{ item.title if item.title else 'Sin título' }}</h3>
                                     <p class="product-artist">
-                                        {{ artists_map.get(item.artist, 'Artista desconocido') if item.artist else 'Artista desconocido' }}
+                                        {{ artists_map.get(item.artistId, 'Artista desconocido') if item.artistId else 'Artista desconocido' }}
                                     </p>
                                     {% if item.description %}
-                                    <p class="product-description">{{ item.description[:100] }}...</p>
+                                    <p class="product-description" title="{{ item.description }}">{{ item.description }}</p>
                                     {% endif %}
+                                    <div class="product-meta-container">
+                                        <span class="product-badge badge-merch">🛒 Merchandising</span>
+                                    </div>
                                     <div class="product-footer">
                                         <span class="product-price">€{{ "%.2f"|format(item.price|float) if item.price else '19.99' }}</span>
                                         <button class="btn-add-cart" data-product-id="{{ item.merchId }}" data-product-type="merch">

@@ -22,6 +22,32 @@ def obtain_user_data(token: str):
     except requests.RequestException:
         return None
 
+def normalize_image_url(image_path: str, tya_server: str = None) -> str:
+    """
+    Normaliza las URLs de imágenes:
+    - Si es base64 (data:image), lo devuelve tal cual
+    - Si es una ruta relativa (/images/..., /static/...), la convierte a URL completa del servidor TYA
+    - Si es una URL completa (http://...), la devuelve tal cual
+    """
+    if not image_path:
+        return ""
+    
+    # Si ya es base64, devolverlo tal cual
+    if image_path.startswith("data:image"):
+        return image_path
+    
+    # Si ya es una URL completa, devolverla tal cual
+    if image_path.startswith("http://") or image_path.startswith("https://"):
+        return image_path
+    
+    # Si es una ruta relativa, convertirla a URL del servidor TYA
+    if tya_server and (image_path.startswith("/") or image_path.startswith("images/")):
+        # Eliminar /static si está presente, ya que lo añadiremos nosotros
+        clean_path = image_path.replace("/static", "")
+        return f"{tya_server}/static{clean_path if clean_path.startswith('/') else '/' + clean_path}"
+    
+    return image_path
+
 # Configuración de CORS
 origins = [
     "http://localhost:8000",
@@ -186,86 +212,186 @@ async def register(request: Request):
 
 @app.get("/shop")
 def shop(request: Request, 
-         page: int = Query(default=1),
-         limit: int = Query(default=100)):
+         genres: str = Query(default=None),
+         artists: str = Query(default=None),
+         order: str = Query(default="date"),
+         direction: str = Query(default="desc"),
+         page: int = Query(default=1)):
     """
-    Renderiza la vista de la tienda.
-    Una sola llamada a TPP /store obtiene todo: productos, géneros y artistas.
+    Renderiza la vista de la tienda con filtrado desde TYA.
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
 
     try:
-        # ===== UNA SOLA LLAMADA obtiene todo =====
-        store_resp = requests.get(
-            f"{servers.TPP}/store",
-            params={"page": page, "limit": limit},
-            timeout=30,
+        # Construir parámetros de filtrado para TYA
+        filter_params = {
+            "order": order,
+            "direction": direction,
+            "page": page
+        }
+        
+        if genres:
+            filter_params["genres"] = genres
+        
+        if artists:
+            filter_params["artists"] = artists
+
+        # Obtener IDs filtrados desde TYA
+        song_ids_resp = requests.get(
+            f"{servers.TYA}/song/filter",
+            params=filter_params,
+            timeout=10,
             headers={"Accept": "application/json"}
         )
-        store_resp.raise_for_status()
-        store_data = store_resp.json()
+        song_ids = song_ids_resp.json() if song_ids_resp.ok else []
         
-        # Extraer datos
-        productos = store_data.get("data", [])
-        pagination = store_data.get("pagination", {})
-        all_genres = store_data.get("genres", [])
-        all_artists = store_data.get("artists", [])
+        album_ids_resp = requests.get(
+            f"{servers.TYA}/album/filter",
+            params=filter_params,
+            timeout=10,
+            headers={"Accept": "application/json"}
+        )
+        album_ids = album_ids_resp.json() if album_ids_resp.ok else []
         
-        print(f"[DEBUG] TPP Response: {len(productos)} productos, {len(all_genres)} géneros, {len(all_artists)} artistas")
+        merch_ids_resp = requests.get(
+            f"{servers.TYA}/merch/filter",
+            params=filter_params,
+            timeout=10,
+            headers={"Accept": "application/json"}
+        )
+        merch_ids = merch_ids_resp.json() if merch_ids_resp.ok else []
+
+        # Obtener datos completos de los productos
+        songs = []
+        if song_ids:
+            songs_resp = requests.get(
+                f"{servers.TYA}/song/list",
+                params={"ids": ",".join(map(str, song_ids))},
+                timeout=10,
+                headers={"Accept": "application/json"}
+            )
+            songs = songs_resp.json() if songs_resp.ok else []
+
+        albums = []
+        if album_ids:
+            albums_resp = requests.get(
+                f"{servers.TYA}/album/list",
+                params={"ids": ",".join(map(str, album_ids))},
+                timeout=10,
+                headers={"Accept": "application/json"}
+            )
+            albums = albums_resp.json() if albums_resp.ok else []
+
+        merch = []
+        if merch_ids:
+            merch_resp = requests.get(
+                f"{servers.TYA}/merch/list",
+                params={"ids": ",".join(map(str, merch_ids))},
+                timeout=10,
+                headers={"Accept": "application/json"}
+            )
+            merch = merch_resp.json() if merch_resp.ok else []
+
+        # Normalizar URLs de imágenes para todos los productos
+        for song in songs:
+            if song.get('cover'):
+                song['cover'] = normalize_image_url(song['cover'], servers.TYA)
         
-    except requests.RequestException as e:
-        print(f"Error obteniendo tienda desde TPP: {e}")
-        productos = []
-        pagination = {}
-        all_genres = []
-        all_artists = []
+        for album in albums:
+            if album.get('cover'):
+                album['cover'] = normalize_image_url(album['cover'], servers.TYA)
+        
+        for item in merch:
+            if item.get('cover'):
+                item['cover'] = normalize_image_url(item['cover'], servers.TYA)
+
+        # POST-FILTRADO: Validar que los productos realmente coincidan con los filtros seleccionados
+        # Esto es necesario porque algunos productos pueden no tener todos los campos
+        selected_genres = [int(g) for g in genres.split(',')] if genres else []
+        selected_artists = [int(a) for a in artists.split(',')] if artists else []
+        
+        if selected_genres or selected_artists:
+            # Filtrar canciones
+            filtered_songs = []
+            for song in songs:
+                # Verificar artista
+                if selected_artists and song.get('artistId') not in selected_artists:
+                    continue
+                # Verificar géneros (la canción debe tener al menos uno de los géneros seleccionados)
+                if selected_genres:
+                    song_genres = song.get('genres', [])
+                    if not song_genres or not any(g in selected_genres for g in song_genres):
+                        continue
+                filtered_songs.append(song)
+            songs = filtered_songs
+            
+            # Filtrar álbumes
+            filtered_albums = []
+            for album in albums:
+                # Verificar artista
+                if selected_artists and album.get('artistId') not in selected_artists:
+                    continue
+                # Verificar géneros (el álbum debe tener al menos uno de los géneros seleccionados)
+                if selected_genres:
+                    album_genres = album.get('genres', [])
+                    if not album_genres or not any(g in selected_genres for g in album_genres):
+                        continue
+                filtered_albums.append(album)
+            albums = filtered_albums
+            
+            # Filtrar merchandising (solo por artista, merch NO tiene géneros según YAML)
+            filtered_merch = []
+            for item in merch:
+                # Verificar artista
+                if selected_artists and item.get('artistId') not in selected_artists:
+                    continue
+                # Si se seleccionaron géneros pero merch no tiene géneros, ocultar el merch
+                if selected_genres:
+                    # Merchandising no tiene campo genres, así que lo ocultamos si hay filtro de género activo
+                    continue
+                filtered_merch.append(item)
+            merch = filtered_merch
+
+        # Obtener géneros y artistas para los filtros
+        genres_resp = requests.get(f"{servers.TYA}/genres", timeout=5, headers={"Accept": "application/json"})
+        all_genres = genres_resp.json() if genres_resp.ok else []
+        
+        # Obtener todos los artistas
+        artists_resp = requests.get(
+            f"{servers.TYA}/artist/filter",
+            params={"order": "name", "direction": "asc"},
+            timeout=10,
+            headers={"Accept": "application/json"}
+        )
+        if artists_resp.ok:
+            artist_ids = artists_resp.json()
+            if artist_ids:
+                artists_list_resp = requests.get(
+                    f"{servers.TYA}/artist/list",
+                    params={"ids": ",".join(map(str, artist_ids))},
+                    timeout=10,
+                    headers={"Accept": "application/json"}
+                )
+                all_artists = artists_list_resp.json() if artists_list_resp.ok else []
+            else:
+                all_artists = []
+        else:
+            all_artists = []
+
+        # Crear mapeos
+        artists_map = {a.get('artistId'): a.get('artisticName') for a in all_artists if isinstance(a, dict) and a.get('artistId')}
+        genres_map = {g.get('id'): g.get('name') for g in all_genres if isinstance(g, dict) and g.get('id')}
+
+        print(f"[DEBUG] Shop filtered: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
+
     except Exception as e:
-        print(f"Error inesperado en shop: {e}")
+        print(f"Error en shop: {e}")
         import traceback
         traceback.print_exc()
-        productos = []
-        pagination = {}
-        all_genres = []
-        all_artists = []
-
-    # ===== CREAR MAPEOS para resolver IDs (manejo seguro) =====
-    artists_map = {}
-    for a in all_artists:
-        if isinstance(a, dict):
-            # Intentar obtener artistId con ambas notaciones
-            artist_id = a.get('artistId') or a.get('artist_id')
-            artist_name = a.get('artisticName') or a.get('artistic_name')
-            if artist_id and artist_name:
-                artists_map[artist_id] = artist_name
-    
-    genres_map = {}
-    for g in all_genres:
-        if isinstance(g, dict):
-            # Obtener id y name del género
-            genre_id = g.get('id') or g.get('genre_id')
-            genre_name = g.get('name') or g.get('genre_name')
-            if genre_id and genre_name:
-                genres_map[genre_id] = genre_name
-
-    # ===== SEPARAR por tipo (usando camelCase como viene del TPP) =====
-    print(f"[DEBUG] Filtrando productos. Total: {len(productos)}")
-    if productos:
-        print(f"[DEBUG] Primer producto tiene songId={productos[0].get('songId')}, albumId={productos[0].get('albumId')}, merchId={productos[0].get('merchId')}")
-    
-    songs = [p for p in productos if p.get('songId') is not None and p.get('songId') != 0]
-    albums = [p for p in productos if p.get('albumId') is not None and p.get('albumId') != 0 and (p.get('songId') is None or p.get('songId') == 0)]
-    merch = [p for p in productos if p.get('merchId') is not None and p.get('merchId') != 0]
-
-    print(f"[DEBUG] Shop: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
-    print(f"[DEBUG] Shop: artists_map={len(artists_map)} items, genres_map={len(genres_map)} items")
-    if productos:
-        print(f"[DEBUG] Sample product keys: {list(productos[0].keys())}")
-        print(f"[DEBUG] Sample product: {productos[0]}")
-    if artists_map:
-        print(f"[DEBUG] Sample artists_map: {list(artists_map.items())[:3]}")
-    if genres_map:
-        print(f"[DEBUG] Sample genres_map: {list(genres_map.items())[:3]}")
+        songs, albums, merch = [], [], []
+        all_genres, all_artists = [], []
+        artists_map, genres_map = {}, {}
 
     return osv.get_shop_view(
         request, userdata, 
@@ -309,7 +435,7 @@ async def get_cart(request: Request):
             return RedirectResponse("/login")
         
         # Renderizar la vista del carrito
-        return osv.get_cart_view(request, userdata, servers.TYA)
+        return osv.get_cart_view(request, userdata, servers.TYA, servers.PT)
 
 # ============ ENDPOINTS DE BÚSQUEDA ============
 
@@ -986,6 +1112,15 @@ def get_song(request: Request, songId: int):
                     pass  # Ignorar álbumes que no se puedan cargar
         song_data['linked_albums_data'] = linked_albums_data
         
+        # Normalizar URLs de imágenes
+        if song_data.get('cover'):
+            song_data['cover'] = normalize_image_url(song_data['cover'], servers.TYA)
+        if song_data.get('original_album') and song_data['original_album'].get('cover'):
+            song_data['original_album']['cover'] = normalize_image_url(song_data['original_album']['cover'], servers.TYA)
+        for linked_album in song_data.get('linked_albums_data', []):
+            if linked_album.get('cover'):
+                linked_album['cover'] = normalize_image_url(linked_album['cover'], servers.TYA)
+        
         # Asegurarse de que el precio sea un número
         try:
             song_data['price'] = float(song_data.get('price', 0))
@@ -1235,6 +1370,16 @@ def get_album(request: Request, albumId: int):
                 pass  # Si no se pueden cargar, dejar vacío
         album_data['related_albums'] = related_albums
         
+        # Normalizar URLs de imágenes
+        if album_data.get('cover'):
+            album_data['cover'] = normalize_image_url(album_data['cover'], servers.TYA)
+        for song in album_data.get('songs_data', []):
+            if song.get('cover'):
+                song['cover'] = normalize_image_url(song['cover'], servers.TYA)
+        for related in album_data.get('related_albums', []):
+            if related.get('cover'):
+                related['cover'] = normalize_image_url(related['cover'], servers.TYA)
+        
         # Asegurarse de que el precio sea un número
         try:
             album_data['price'] = float(album_data.get('price', 0))
@@ -1434,6 +1579,13 @@ def get_merch(request: Request, merchId: int):
             except requests.RequestException:
                 pass  # Si no se pueden cargar, dejar vacío
         merch_data['related_merch'] = related_merch
+        
+        # Normalizar URLs de imágenes
+        if merch_data.get('cover'):
+            merch_data['cover'] = normalize_image_url(merch_data['cover'], servers.TYA)
+        for related in merch_data.get('related_merch', []):
+            if related.get('cover'):
+                related['cover'] = normalize_image_url(related['cover'], servers.TYA)
         
         # Asegurarse de que el precio sea un número
         try:
