@@ -17,14 +17,14 @@
             <div class="artist-header-background">
                 <div class="background-gradient"></div>
                 {% if artist.artisticImage %}
-                    <img src="{{ artist.artisticImage }}" alt="{{ artist.artisticName }}" class="background-image" style="opacity: 0.1;">
+                    <img src="{{ tya_server }}/static{{ artist.artisticImage }}" alt="{{ artist.artisticName }}" class="background-image" style="opacity: 0.1;">
                 {% endif %}
             </div>
             
             <div class="artist-header-content">
                 <div class="artist-image-container">
                     {% if artist.artisticImage %}
-                        <img src="{{ artist.artisticImage }}" alt="{{ artist.artisticName }}" class="artist-image">
+                        <img src="{{ tya_server }}/static{{ artist.artisticImage }}" alt="{{ artist.artisticName }}" class="artist-image">
                     {% else %}
                         <div class="artist-image-placeholder">
                             {{ artist.artisticName[0].upper() }}
@@ -176,7 +176,7 @@
                                 <div class="song-card" data-track-id="{{ song.trackId }}">
                                     <div class="card-image">
                                         {% if song.cover %}
-                                            <img src="{{ song.cover }}" alt="{{ song.title }}">
+                                            <img src="{{ tya_server }}/static{{ song.cover }}" alt="{{ song.title }}">
                                         {% else %}
                                             <div class="card-image-placeholder">
                                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -247,7 +247,7 @@
                                 <div class="album-card">
                                     <div class="card-image">
                                         {% if album.cover %}
-                                            <img src="{{ album.cover }}" alt="{{ album.title }}">
+                                            <img src="{{ tya_server }}/static{{ album.cover }}" alt="{{ album.title }}">
                                         {% else %}
                                             <div class="card-image-placeholder">
                                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -320,7 +320,7 @@
                                 <div class="merch-card">
                                     <div class="card-image">
                                         {% if merch.cover %}
-                                            <img src="{{ merch.cover }}" alt="{{ merch.title }}">
+                                            <img src="{{ tya_server }}/static{{ merch.cover }}" alt="{{ merch.title }}">
                                         {% else %}
                                             <div class="card-image-placeholder">
                                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
