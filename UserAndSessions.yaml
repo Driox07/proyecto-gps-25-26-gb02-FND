@@ -550,7 +550,7 @@ components:
           description: Path to the profile image (stored in SYU service)
           nullable: true
           example: '/pfp/driox.png'
-        relatedArtist:
+        artistId:
           type: integer
           description: ID of the artist associated with this user account, if applicable (null if not artist)
           example: 381734
@@ -591,7 +591,7 @@ components:
           format: byte
           description: Base64 encoded profile image that will be stored in SYU service
           nullable: true
-        relatedArtist:
+        artistId:
           type: integer
           description: ID of the artist associated with this user account, if applicable (null if not artist)
           example: 381734
