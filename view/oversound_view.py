@@ -69,19 +69,17 @@ class View():
             "tya_server": tya_server
         })
 
-    # Esta función se va a usar para renderizar la template music/upload-song.html (versión más reciente/completa de 'get_upload_song_view')
-    def get_upload_song_view(self, request: Request):
-        return templates.TemplateResponse("music/upload-song.html", {"request": request})
-    
-    def get_songs_view(self, request: Request, songs):
-        return templates.TemplateResponse("main/index.html", {"request" :request, "songs" : songs})
+    # Esta función se va a usar para renderizar la template music/upload_song.html (versión más reciente/completa de 'get_upload_song_view')
+    def get_upload_song_view(self, request: Request, userdata: dict):
+        data = {"userdata": userdata}
+        return templates.TemplateResponse("upload_song.html", {"request": request, "data": data})
     
     def get_song_view(self, request: Request, song_info : dict, tipoUsuario: int, user : dict, isLiked: bool, inCarrito: bool, syu_server: str = None, metrics: dict = None, tya_server: str = None, rye_server: str = None, pt_server: str = None):
         data = {"userdata": user, "syu_server": syu_server, "pt_server": pt_server, "song": song_info}
         return templates.TemplateResponse("song.html", {"request": request, "data": data, "tipoUsuario": tipoUsuario, "user": user, "isLiked": isLiked, "inCarrito": inCarrito, "stats": metrics, "syu_server": syu_server, "tya_server": tya_server, "rye_server": rye_server})
 
     def get_edit_song_view(self, request: Request, song_info):
-        return templates.TemplateResponse("music/song-edit.html", {"request": request, "song": song_info})     
+        return templates.TemplateResponse("song_edit.html", {"request": request, "song": song_info})     
 
     # Renderizar la template logut.html
     def get_logout_view(self, request: Request):
@@ -109,9 +107,9 @@ class View():
     def get_faqs_view(self, request: Request, faqs):
         return templates.TemplateResponse("main/faqs.html", {"request": request, "faqs": faqs })
     
-    # Renderizar la template upload-album.html (versión más reciente/completa de 'get_upload_album_view')
+    # Renderizar la template upload_album.html (versión más reciente/completa de 'get_upload_album_view')
     def get_upload_album_view(self, request: Request, songs: list[dict]):
-        return templates.TemplateResponse("music/upload-album.html", {"request": request , "songs": songs}) 
+        return templates.TemplateResponse("upload_album.html", {"request": request , "songs": songs}) 
     
     # Renderizar la template album.html
     def get_album_view(self, request: Request, album_info : dict, tipoUsuario : int, isLiked: bool, inCarrito: bool, tiempo_formateado: str, userdata: dict = None, pt_server: str = None):
@@ -247,8 +245,8 @@ class View():
         return templates.TemplateResponse("merch.html", {"request": request, "data": data, "tipoUsuario": tipoUsuario, "isLiked": isLiked, "inCarrito": inCarrito})
     
     # Renderizar la template cart.html
-    def get_cart_view(self, request: Request, userdata: dict = None, tya_server: str = None):
-        data = {"userdata": userdata, "tya_server": tya_server}
+    def get_cart_view(self, request: Request, userdata: dict = None, tya_server: str = None, pt_server: str = None):
+        data = {"userdata": userdata, "tya_server": tya_server, "pt_server": pt_server}
         return templates.TemplateResponse("cart.html", {"request": request, "data": data})
     
     # Renderizar la template label.html

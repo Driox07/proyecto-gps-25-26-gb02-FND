@@ -101,7 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ------------------------------
     loadTop10();
-    loadRecommendations();
     // ------------------------------
 });
 
@@ -137,11 +136,11 @@ function renderTopSongs(songs) {
         return;
     }
     container.innerHTML = songs.map(s => `
-        <div class="top-card">
+        <a class="top-card" href="/song/${s.songId || s.id}">
             <img src="${s.image || '/static/default-cover.png'}" />
-            <p>${s.name}</p>
-            <span>${s.genre}</span>
-        </div>
+            <p class="top-name">${s.name || s.title || 'Título desconocido'}</p>
+            <span class="top-meta">${s.genre || s.genreName || ''}</span>
+        </a>
     `).join('');
 }
 
@@ -189,11 +188,11 @@ function renderRecommendedSongs(songs) {
         return;
     }
     container.innerHTML = songs.map(s => `
-        <div class="top-card">
+        <a class="top-card" href="/song/${s.songId || s.id}">
             <img src="${s.image || '/static/default-cover.png'}" />
-            <p>${s.name}</p>
-            <span>${s.genre}</span>
-        </div>
+            <p class="top-name">${s.name || s.title || 'Título desconocido'}</p>
+            <span class="top-meta">${s.genre || s.genreName || ''}</span>
+        </a>
     `).join('');
 }
 

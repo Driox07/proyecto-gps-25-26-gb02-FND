@@ -50,8 +50,6 @@
         <nav class="header-nav">
             <a href="/shop" class="nav-link">Tienda</a>
             <a href="/giftcard" class="nav-link">Tarjetas Regalo</a>
-            <a href="/library" class="nav-link">Mi Biblioteca</a>
-            <a href="/playlists" class="nav-link">Merch</a>
         </nav>
 
         <!-- Carrito a la derecha -->
@@ -84,7 +82,7 @@
                             </svg>
                             Mi Perfil
                         </a>
-                        {% if data.userdata.relatedArtist %}
+                        {% if data.userdata.artistId %}
                         <a href="/artist/{{ data.userdata.artistId }}" class="dropdown-item">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                                 <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"/>
