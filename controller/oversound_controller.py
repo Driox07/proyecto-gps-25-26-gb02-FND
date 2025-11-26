@@ -1127,8 +1127,19 @@ def get_song(request: Request, songId: int):
         except ValueError:
             song_data['price'] = 0.0
         
-        # Determinar si está en favoritos y carrito (por ahora False, implementar después)
+        # Determinar si está en favoritos
         isLiked = False
+        if userdata:
+            try:
+                fav_resp = requests.get(f"{servers.SYU}/favs/songs", timeout=2, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+                if fav_resp.ok:
+                    fav_songs = fav_resp.json()
+                    # fav_songs puede ser lista de ids (integers) o objetos con id
+                    isLiked = songId in [item if isinstance(item, int) else item.get('id', 0) for item in fav_songs]
+            except requests.RequestException:
+                pass
+        
+        # Determinar si está en carrito (por ahora False, implementar después)
         inCarrito = False
         
         # Determinar tipo de usuario (0: no autenticado, 1: usuario, 2: artista)
@@ -1402,6 +1413,21 @@ def get_album(request: Request, albumId: int):
         
         # Determinar si está en favoritos y carrito (por ahora False, implementar después)
         isLiked = False
+        if userdata:
+            try:
+                fav_resp = requests.get(f"{servers.SYU}/favs/albums", timeout=2, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+                if fav_resp.ok:
+                    fav_albums = fav_resp.json()
+                    # Manejar tanto listas de objetos como listas de IDs
+                    if fav_albums and len(fav_albums) > 0:
+                        if isinstance(fav_albums[0], dict):
+                            # Lista de objetos con 'albumId'
+                            isLiked = albumId in [fav.get('albumId') for fav in fav_albums]
+                        else:
+                            # Lista de IDs directamente
+                            isLiked = albumId in fav_albums
+            except requests.RequestException:
+                pass  # Si no se pueden cargar favoritos, asumir False
         inCarrito = False
         
         # Determinar tipo de usuario (0: no autenticado, 1: usuario, 2: artista)
