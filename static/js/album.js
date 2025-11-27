@@ -163,7 +163,7 @@ async function handleAddAlbumToCart(event) {
         showNotification(`${albumTitle} añadido al carrito`, 'success');
         
         // Animar el botón
-        animateButton(event.currentTarget);
+        animateButton(event.currentTarget || document.getElementById('add-to-cart-album-button'));
 
         // Emitir evento para actualizar el header
         window.dispatchEvent(new CustomEvent('cartUpdated'));
@@ -201,7 +201,7 @@ function handleToggleFavorite(event) {
             button.style.fill = 'none';
             button.style.color = 'white';
         }
-        animateButton(button);
+        animateButton(button || document.getElementById('favorite-album-button'));
     }
 }
 
@@ -368,6 +368,10 @@ function getAlbumIdFromUrl() {
  * Anima el botón
  */
 function animateButton(button) {
+    if (!button || !button.style) {
+        console.warn('animateButton: button is null or has no style property');
+        return;
+    }
     const originalScale = button.style.transform;
     button.style.transform = 'scale(0.95)';
     setTimeout(() => {
