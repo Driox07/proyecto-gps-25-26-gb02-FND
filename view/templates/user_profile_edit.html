@@ -130,16 +130,16 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="biografia">Biografía</label>
+                        <label for="bio">Biografía</label>
                         <textarea 
-                            id="biografia" 
-                            name="biografia" 
+                            id="bio" 
+                            name="bio" 
                             rows="5"
                             placeholder="Cuéntanos algo sobre ti..."
                             maxlength="500"
-                        >{{ data.userdata.biografia if data.userdata.biografia else '' }}</textarea>
+                        >{{ data.userdata.bio if data.userdata.bio else '' }}</textarea>
                         <span class="field-hint character-count">
-                            <span id="char-count">{{ data.userdata.biografia|length if data.userdata.biografia else 0 }}</span>/500 caracteres
+                            <span id="char-count">{{ data.userdata.bio|length if data.userdata.bio else 0 }}</span>/500 caracteres
                         </span>
                     </div>
                 </div>
@@ -168,7 +168,7 @@
             firstLastName: "{{ data.userdata.firstLastName if data.userdata.firstLastName else '' }}",
             secondLastName: "{{ data.userdata.secondLastName if data.userdata.secondLastName else '' }}",
             email: "{{ data.userdata.email if data.userdata.email else '' }}",
-            biografia: "{{ data.userdata.biografia if data.userdata.biografia else '' }}",
+            bio: "{{ data.userdata.bio if data.userdata.bio else '' }}",
             imagen: "{{ data.userdata.imagen if data.userdata.imagen else '' }}"
         };
     </script>

@@ -55,7 +55,7 @@ function initCharacterCounters() {
         biografia.addEventListener('input', function() {
             const current = this.value.length;
             const max = this.maxLength;
-            bioCounter.textContent = `${current}/${max}`;
+            bioCounter.textContent = `${current}`;
             
             if (current > max * 0.9) {
                 bioCounter.style.color = '#ff6b6b';
@@ -180,17 +180,24 @@ function initFormSubmission() {
                 return;
             }
             
-            // Prepare form data
+            // Prepare JSON with form data
             const formData = new FormData(form);
+            const jsonData = {};
+            formData.forEach((value, key) => {
+                jsonData[key] = value;
+            });
             
             // Show loading state
             submitBtn.classList.add('loading');
             submitBtn.disabled = true;
             
             try {
-                const response = await fetch('/profiledit', {
+                const response = await fetch('/profile-edit', {
                     method: 'PATCH',
-                    body: formData,
+                    body: JSON.stringify(jsonData),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     credentials: 'include'
                 });
                 
