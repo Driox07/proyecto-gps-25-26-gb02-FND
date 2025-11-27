@@ -2627,7 +2627,7 @@ async def update_profile(request: Request):
         form_data = await request.json()
 
         resp = requests.patch(
-            f"{servers.SYU}/user/{userdata.get("username")}",
+            f"{servers.SYU}/user/{userdata.get('username')}",
             json=form_data,
             timeout=5,
             headers={"Cookie": f"oversound_auth={token}"}
