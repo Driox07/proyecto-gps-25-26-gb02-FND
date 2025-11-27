@@ -185,7 +185,7 @@
         <!-- Favorites Section -->
         <section class="favorites-section">
             <div class="favorites-container">
-                
+
                 <!-- Canciones Favoritas -->
                 <div class="favorites-category">
                     <div class="category-header">
@@ -195,45 +195,59 @@
                             </svg>
                             Canciones Favoritas
                         </h2>
-                        <span class="category-count">{{ canciones_favoritas|length if canciones_favoritas else 0 }}</span>
+                        <span class="category-count">{{ favorite_songs|length if favorite_songs else 0 }}</span>
                     </div>
-                    
-                    <div class="favorites-grid">
-                        {% if canciones_favoritas %}
-                            {% for cancion in canciones_favoritas %}
-                                <div class="favorite-card">
-                                    <div class="card-image">
-                                        {% if cancion.cover %}
-                                            <img src="{{ cancion.cover }}" alt="{{ cancion.title }}">
-                                        {% else %}
-                                            <div class="card-image-placeholder">
-                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                    <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"/>
-                                                </svg>
+
+                    <div class="favorites-row-container">
+                        <button class="nav-arrow nav-arrow-left" id="songs-left-arrow">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polyline points="15 18 9 12 15 6" stroke-width="2"/>
+                            </svg>
+                        </button>
+
+                        <div class="favorites-row" id="songs-row">
+                            {% if favorite_songs %}
+                                {% for song in favorite_songs %}
+                                    <a href="/song/{{ song.songId }}" class="favorite-card">
+                                        <div class="card-image">
+                                            {% if song.cover %}
+                                                <img src="{{ song.cover }}" alt="{{ song.title }}">
+                                            {% else %}
+                                                <div class="card-image-placeholder">
+                                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                        <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"/>
+                                                    </svg>
+                                                </div>
+                                            {% endif %}
+                                            <div class="card-overlay">
+                                                <button class="play-button" data-track-id="{{ song.trackId }}">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                    </svg>
+                                                </button>
                                             </div>
-                                        {% endif %}
-                                        <div class="card-overlay">
-                                            <button class="play-button">
-                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                                </svg>
-                                            </button>
                                         </div>
-                                    </div>
-                                    <div class="card-content">
-                                        <h3 class="card-title">{{ cancion.title }}</h3>
-                                        <p class="card-subtitle">{{ cancion.artist.artisticName if cancion.artist else 'Artista Desconocido' }}</p>
-                                    </div>
+                                        <div class="card-content">
+                                            <h3 class="card-title">{{ song.title }}</h3>
+                                            <p class="card-subtitle">{{ song.artist.artisticName if song.artist else 'Artista Desconocido' }}</p>
+                                        </div>
+                                    </a>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-state">
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"/>
+                                    </svg>
+                                    <p>No tienes canciones favoritas aún</p>
                                 </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="empty-state">
-                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z" stroke-width="2"/>
-                                </svg>
-                                <p>No tienes canciones favoritas aún</p>
-                            </div>
-                        {% endif %}
+                            {% endif %}
+                        </div>
+
+                        <button class="nav-arrow nav-arrow-right" id="songs-right-arrow">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polyline points="9 18 15 12 9 6" stroke-width="2"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
@@ -247,47 +261,61 @@
                             </svg>
                             Álbumes Favoritos
                         </h2>
-                        <span class="category-count">{{ albumes_favoritos|length if albumes_favoritos else 0 }}</span>
+                        <span class="category-count">{{ favorite_albums|length if favorite_albums else 0 }}</span>
                     </div>
-                    
-                    <div class="favorites-grid">
-                        {% if albumes_favoritos %}
-                            {% for album in albumes_favoritos %}
-                                <div class="favorite-card">
-                                    <div class="card-image">
-                                        {% if album.cover %}
-                                            <img src="{{ album.cover }}" alt="{{ album.title }}">
-                                        {% else %}
-                                            <div class="card-image-placeholder">
-                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                    <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
-                                                    <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
-                                                </svg>
+
+                    <div class="favorites-row-container">
+                        <button class="nav-arrow nav-arrow-left" id="albums-left-arrow">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polyline points="15 18 9 12 15 6" stroke-width="2"/>
+                            </svg>
+                        </button>
+
+                        <div class="favorites-row" id="albums-row">
+                            {% if favorite_albums %}
+                                {% for album in favorite_albums %}
+                                    <a href="/album/{{ album.albumId }}" class="favorite-card">
+                                        <div class="card-image">
+                                            {% if album.cover %}
+                                                <img src="{{ album.cover }}" alt="{{ album.title }}">
+                                            {% else %}
+                                                <div class="card-image-placeholder">
+                                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                        <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                                        <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                                                    </svg>
+                                                </div>
+                                            {% endif %}
+                                            <div class="card-overlay">
+                                                <button class="play-button" data-track-id="{{ album.trackId }}">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                    </svg>
+                                                </button>
                                             </div>
-                                        {% endif %}
-                                        <div class="card-overlay">
-                                            <button class="play-button">
-                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                                </svg>
-                                            </button>
                                         </div>
-                                    </div>
-                                    <div class="card-content">
-                                        <h3 class="card-title">{{ album.title }}</h3>
-                                        <p class="card-subtitle">{{ album.artist.artisticName if album.artist else 'Artista Desconocido' }}</p>
-                                    </div>
+                                        <div class="card-content">
+                                            <h3 class="card-title">{{ album.title }}</h3>
+                                            <p class="card-subtitle">{{ album.artist.artisticName if album.artist else 'Artista Desconocido' }}</p>
+                                        </div>
+                                    </a>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-state">
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                        <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                                    </svg>
+                                    <p>No tienes álbumes favoritos aún</p>
                                 </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="empty-state">
-                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
-                                    <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
-                                </svg>
-                                <p>No tienes álbumes favoritos aún</p>
-                            </div>
-                        {% endif %}
+                            {% endif %}
+                        </div>
+
+                        <button class="nav-arrow nav-arrow-right" id="albums-right-arrow">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polyline points="9 18 15 12 9 6" stroke-width="2"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
@@ -301,40 +329,54 @@
                             </svg>
                             Artistas Favoritos
                         </h2>
-                        <span class="category-count">{{ artistas_favoritos|length if artistas_favoritos else 0 }}</span>
+                        <span class="category-count">{{ favorite_artists|length if favorite_artists else 0 }}</span>
                     </div>
-                    
-                    <div class="favorites-grid">
-                        {% if artistas_favoritos %}
-                            {% for artista in artistas_favoritos %}
-                                <div class="favorite-card artist-card">
-                                    <div class="card-image artist-image">
-                                        {% if artista.artisticImage %}
-                                            <img src="{{ artista.artisticImage }}" alt="{{ artista.artisticName }}">
-                                        {% else %}
-                                            <div class="card-image-placeholder">
-                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke-width="2"></path>
-                                                    <circle cx="12" cy="7" r="4" stroke-width="2"></circle>
-                                                </svg>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="card-content">
-                                        <h3 class="card-title">{{ artista.artisticName }}</h3>
-                                        <p class="card-subtitle">Artista</p>
-                                    </div>
+
+                    <div class="favorites-row-container">
+                        <button class="nav-arrow nav-arrow-left" id="artists-left-arrow">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polyline points="15 18 9 12 15 6" stroke-width="2"/>
+                            </svg>
+                        </button>
+
+                        <div class="favorites-row" id="artists-row">
+                            {% if favorite_artists %}
+                                {% for artist in favorite_artists %}
+                                    <a href="/artist/{{ artist.artistId }}" class="favorite-card">
+                                        <div class="card-image">
+                                            {% if artist.artisticImage %}
+                                                <img src="{{ artist.artisticImage }}" alt="{{ artist.artisticName }}">
+                                            {% else %}
+                                                <div class="card-image-placeholder">
+                                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke-width="2"></path>
+                                                        <circle cx="12" cy="7" r="4" stroke-width="2"></circle>
+                                                    </svg>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="card-content">
+                                            <h3 class="card-title">{{ artist.artisticName }}</h3>
+                                            <p class="card-subtitle">Artista</p>
+                                        </div>
+                                    </a>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-state">
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke-width="2"></path>
+                                        <circle cx="12" cy="7" r="4" stroke-width="2"></circle>
+                                    </svg>
+                                    <p>No tienes artistas favoritos aún</p>
                                 </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="empty-state">
-                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke-width="2"></path>
-                                    <circle cx="12" cy="7" r="4" stroke-width="2"></circle>
-                                </svg>
-                                <p>No tienes artistas favoritos aún</p>
-                            </div>
-                        {% endif %}
+                            {% endif %}
+                        </div>
+
+                        <button class="nav-arrow nav-arrow-right" id="artists-right-arrow">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polyline points="9 18 15 12 9 6" stroke-width="2"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
