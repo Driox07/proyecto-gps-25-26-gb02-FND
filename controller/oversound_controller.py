@@ -2416,6 +2416,20 @@ def get_profile(request: Request):
                     )
                     if songs_data_resp.ok:
                         favorite_songs = songs_data_resp.json()
+                        # Resolver artistas de las canciones
+                        for song in favorite_songs:
+                            try:
+                                artist_resp = requests.get(
+                                    f"{servers.TYA}/artist/{song['artistId']}",
+                                    timeout=2,
+                                    headers={"Accept": "application/json"}
+                                )
+                                if artist_resp.ok:
+                                    song['artist'] = artist_resp.json()
+                                else:
+                                    song['artist'] = {"artistId": song['artistId'], "artisticName": "Artista Desconocido"}
+                            except requests.RequestException:
+                                song['artist'] = {"artistId": song['artistId'], "artisticName": "Artista Desconocido"}
                         # Normalizar URLs de imágenes para canciones
                         for song in favorite_songs:
                             if song.get('cover'):
@@ -2442,6 +2456,20 @@ def get_profile(request: Request):
                     )
                     if albums_data_resp.ok:
                         favorite_albums = albums_data_resp.json()
+                        # Resolver artistas de los albums
+                        for album in favorite_albums:
+                            try:
+                                artist_resp = requests.get(
+                                    f"{servers.TYA}/artist/{album['artistId']}",
+                                    timeout=2,
+                                    headers={"Accept": "application/json"}
+                                )
+                                if artist_resp.ok:
+                                    album['artist'] = artist_resp.json()
+                                else:
+                                    album['artist'] = {"artistId": album['artistId'], "artisticName": "Artista Desconocido"}
+                            except requests.RequestException:
+                                album['artist'] = {"artistId": album['artistId'], "artisticName": "Artista Desconocido"}
                         # Normalizar URLs de imágenes para álbumes
                         for album in favorite_albums:
                             if album.get('cover'):
@@ -2560,6 +2588,20 @@ def get_user_profile(request: Request, username: str):
                         )
                         if songs_data_resp.ok:
                             favorite_songs = songs_data_resp.json()
+                            # Resolver artistas de las canciones
+                            for song in favorite_songs:
+                                try:
+                                    artist_resp = requests.get(
+                                        f"{servers.TYA}/artist/{song['artistId']}",
+                                        timeout=2,
+                                        headers={"Accept": "application/json"}
+                                    )
+                                    if artist_resp.ok:
+                                        song['artist'] = artist_resp.json()
+                                    else:
+                                        song['artist'] = {"artistId": song['artistId'], "artisticName": "Artista Desconocido"}
+                                except requests.RequestException:
+                                    song['artist'] = {"artistId": song['artistId'], "artisticName": "Artista Desconocido"}
                             # Normalizar URLs de imágenes para canciones
                             for song in favorite_songs:
                                 if song.get('cover'):
@@ -2586,6 +2628,20 @@ def get_user_profile(request: Request, username: str):
                         )
                         if albums_data_resp.ok:
                             favorite_albums = albums_data_resp.json()
+                            # Resolver artistas de los albums
+                            for album in favorite_albums:
+                                try:
+                                    artist_resp = requests.get(
+                                        f"{servers.TYA}/artist/{album['artistId']}",
+                                        timeout=2,
+                                        headers={"Accept": "application/json"}
+                                    )
+                                    if artist_resp.ok:
+                                        album['artist'] = artist_resp.json()
+                                    else:
+                                        album['artist'] = {"artistId": album['artistId'], "artisticName": "Artista Desconocido"}
+                                except requests.RequestException:
+                                    album['artist'] = {"artistId": album['artistId'], "artisticName": "Artista Desconocido"}
                             # Normalizar URLs de imágenes para álbumes
                             for album in favorite_albums:
                                 if album.get('cover'):
