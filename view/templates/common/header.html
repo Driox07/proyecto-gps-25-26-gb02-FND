@@ -69,7 +69,11 @@
             {% if data and data.userdata %}
                 <div class="user-menu">
                     <button class="user-button">
-                        <span class="user-avatar">{{ data.userdata.username[0].upper() }}</span>
+                        {% if data.userdata.image %}
+                            <img src="{{ data.userdata.image }}" alt="{{ data.userdata.username }}" class="user-avatar">
+                        {% else %}
+                            <span class="user-avatar">{{ data.userdata.username[0].upper() }}</span>
+                        {% endif %}
                         <span class="user-name">{{ data.userdata.username }}</span>
                         <svg class="user-dropdown-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>

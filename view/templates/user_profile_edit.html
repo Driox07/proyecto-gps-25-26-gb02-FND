@@ -31,8 +31,8 @@
                     <h2 class="section-title">Imagen de Perfil</h2>
                     <div class="image-upload-container">
                         <div class="image-preview">
-                            {% if data.userdata.imagen %}
-                                <img src="{{ data.userdata.imagen }}" alt="Imagen de perfil" id="image-preview">
+                            {% if data.userdata.image %}
+                                <img src="{{ data.userdata.image }}" alt="Imagen de perfil" id="image-preview">
                             {% else %}
                                 <div class="image-placeholder" id="image-placeholder">
                                     {{ data.userdata.username[0].upper() if data.userdata.username else 'U' }}
@@ -169,7 +169,7 @@
             secondLastName: "{{ data.userdata.secondLastName if data.userdata.secondLastName else '' }}",
             email: "{{ data.userdata.email if data.userdata.email else '' }}",
             bio: "{{ data.userdata.bio if data.userdata.bio else '' }}",
-            imagen: "{{ data.userdata.imagen if data.userdata.imagen else '' }}"
+            image: "{{ data.userdata.image if data.userdata.image else '' }}"
         };
     </script>
     <script src="{{ url_for('static', path='js/UserProfileEdit.js') }}"></script>

@@ -21,16 +21,20 @@ def obtain_user_data(token: str):
     try:
         resp = requests.get(f"{servers.SYU}/auth", timeout=2, headers={"Accept": "application/json", "Cookie":f"oversound_auth={token}"})
         resp.raise_for_status()
-        return resp.json()
+        user_data = resp.json()
+        # Normalizar URL de imagen de perfil del usuario
+        if user_data and user_data.get('image'):
+            user_data['image'] = normalize_image_url(user_data['image'], servers.SYU)
+        return user_data
     except requests.RequestException:
         return None
 
-def normalize_image_url(image_path: str, tya_server: str = None) -> str:
+def normalize_image_url(image_path: str, server_url: str) -> str:
     """
     Normaliza las URLs de imágenes:
     - Si es base64 (data:image), lo devuelve tal cual
-    - Si es una ruta relativa (/images/..., /static/...), la convierte a URL completa del servidor TYA
     - Si es una URL completa (http://...), la devuelve tal cual
+    - Si es una ruta relativa (/images/..., /static/..., o solo el nombre del archivo), la convierte a URL completa del servidor especificado
     """
     if not image_path:
         return ""
@@ -43,11 +47,14 @@ def normalize_image_url(image_path: str, tya_server: str = None) -> str:
     if image_path.startswith("http://") or image_path.startswith("https://"):
         return image_path
     
-    # Si es una ruta relativa, convertirla a URL del servidor TYA
-    if tya_server and (image_path.startswith("/") or image_path.startswith("images/")):
-        # Eliminar /static si está presente, ya que lo añadiremos nosotros
+    # Si es una ruta relativa o solo el nombre del archivo, convertirla a URL del servidor especificado
+    if server_url:
+        # Eliminar /static si está presente, ya que lo añadiremos nosotros para consistencia
         clean_path = image_path.replace("/static", "")
-        return f"{tya_server}/static{clean_path if clean_path.startswith('/') else '/' + clean_path}"
+        # Si no empieza con /, añadirlo
+        if not clean_path.startswith("/"):
+            clean_path = "/" + clean_path
+        return f"{server_url}{clean_path}"
     
     return image_path
 
@@ -2586,6 +2593,10 @@ def get_user_profile(request: Request, username: str):
         user_resp.raise_for_status()
         user_data = user_resp.json()
         
+        # Normalizar URL de imagen de perfil del usuario
+        if user_data.get('imagen'):
+            user_data['imagen'] = normalize_image_url(user_data['imagen'], servers.SYU)
+        
         # Determinar si es el perfil del usuario autenticado
         is_own_profile = userdata and userdata.get('username') == username
         
@@ -2875,6 +2886,10 @@ def get_profile_edit_page(request: Request):
     
     if not userdata:
         return RedirectResponse("/login")
+    
+    # Normalizar URL de imagen de perfil del usuario
+    if userdata and userdata.get('imagen'):
+        userdata['imagen'] = normalize_image_url(userdata['imagen'], servers.SYU)
     
     return osv.get_user_profile_edit_view(request, userdata, servers.SYU)
 

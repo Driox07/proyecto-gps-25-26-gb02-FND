@@ -16,8 +16,8 @@
         <section class="profile-header">
             <div class="profile-header-content">
                 <div class="profile-image-container">
-                    {% if user.imagen %}
-                        <img src="{{ user.imagen }}" alt="{{ user.username }}" class="profile-image">
+                    {% if user.image %}
+                        <img src="{{ user.image }}" alt="{{ user.username }}" class="profile-image">
                     {% else %}
                         <div class="profile-image-placeholder">
                             {{ user.username[0].upper() }}
