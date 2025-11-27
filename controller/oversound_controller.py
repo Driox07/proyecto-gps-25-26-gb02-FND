@@ -98,14 +98,14 @@ def index(request: Request):
         print(f"Error fetching top artists from RYE: {e}")
 
     try:
-        rs = requests.get(f"{servers.RYE}/recommendations/song", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+        rs = requests.get(f"{servers.RYE}/recommendations/song", timeout=20, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
         if rs.ok:
             rec_songs = rs.json()
     except requests.RequestException as e:
         print(f"Error fetching recommended songs from RYE: {e}")
 
     try:
-        ra = requests.get(f"{servers.RYE}/recommendations/artist", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+        ra = requests.get(f"{servers.RYE}/recommendations/artist", timeout=10, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
         if ra.ok:
             rec_artists = ra.json()
     except requests.RequestException as e:
@@ -1841,8 +1841,9 @@ def get_merch_edit_page(request: Request, merchId: int):
         merch_resp.raise_for_status()
         merch_data = merch_resp.json()
         
+        print(userdata.get('artistId'), merch_data.get('artistId'))
         # Verificar que el usuario sea el propietario
-        if userdata.get('artistId') != merch_data.get('artistId'):
+        if int(userdata.get('artistId')) != int(merch_data.get('artistId')):
             return osv.get_error_view(request, userdata, "No tienes permiso para editar este producto", "")
         
         return osv.get_merch_edit_view(request, userdata, merch_data, servers.TYA)
@@ -2993,12 +2994,17 @@ def get_artist_studio_page(request: Request):
         # Obtener merchandising del artista
         try:
             merch_resp = requests.get(
-                f"{servers.TPP}/artist/{artist_id}/merch",
+                f"{servers.TYA}/merch/filter",
+                params={"artists": artist_id},
                 timeout=5,
                 headers={"Accept": "application/json"}
             )
             merch_resp.raise_for_status()
-            artist_data['merch'] = merch_resp.json()
+            merch_data = requests.get(
+                f"{servers.TYA}/merch/list?ids={','.join(map(str, merch_resp.json()))}",)
+
+            artist_data['merch'] = merch_data.json()
+            print(f"[DEBUG] Merch data: {artist_data['merch']}")
         except requests.RequestException:
             artist_data['merch'] = []
         
@@ -3071,6 +3077,7 @@ def get_artist_profile(request: Request, artistId: int):
                 )
                 if merch_resp.ok:
                     artist_data['owner_merch'] = merch_resp.json()
+                    print(f"[DEBUG] Merch data for artist profile: {artist_data['owner_merch']}")
             except requests.RequestException as e:
                 print(f"Error obteniendo merchandising del artista: {e}")
                 artist_data['owner_merch'] = []
