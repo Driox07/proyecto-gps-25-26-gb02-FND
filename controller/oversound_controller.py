@@ -1125,26 +1125,12 @@ async def upload_song(request: Request):
             'genres': [int(g) for g in genres],
             'collaborators': [int(c) for c in collaborators] if collaborators else []
         }
-        if album_id:
-            # Obtener el álbum para calcular albumOrder
-            album_resp = requests.get(
-                f"{servers.TYA}/album/{album_id}",
-                timeout=5,
-                headers={"Accept": "application/json"}
-            )
-            if album_resp.ok:
-                album_data = album_resp.json()
-                songs_in_album = album_data.get('songs', [])
-                album_order = len(songs_in_album) + 1
-            else:
-                album_order = 1  # Fallback
-            body_tya['albumOrder'] = album_order
         
         # Enviar a TYA para crear la canción
         song_resp = requests.post(
             f"{servers.TYA}/song/upload",
             json=body_tya,
-            timeout=15,
+            timeout=20,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
         
@@ -1198,13 +1184,29 @@ async def upload_album(request: Request):
     try:
         body = await request.json()
         
-        # Agregar el ID del artista
-        body['artistId'] = userdata.get('artistId')
+        # Procesar cover
+        cover_base64 = body.get('coverFile')
+        cover_extension = body.get('coverExtension')
+        if cover_base64 and cover_extension:
+            cover_base64_full = f"data:image/{cover_extension};base64,{cover_base64}"
+        else:
+            cover_base64_full = None
+        
+        # Preparar datos para TYA
+        tya_body = {
+            'title': body.get('title'),
+            'price': body.get('price'),
+            'description': body.get('description'),
+            'releaseDate': body.get('releaseDate'),
+            'cover': cover_base64_full,
+            'songs': body.get('songs', []),
+            'artistId': userdata.get('artistId')
+        }
         
         # Enviar a TYA para crear el álbum
         album_resp = requests.post(
             f"{servers.TYA}/album/upload",
-            json=body,
+            json=tya_body,
             timeout=15,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
@@ -1212,16 +1214,16 @@ async def upload_album(request: Request):
         if album_resp.ok:
             album_data = album_resp.json()
             return JSONResponse(content={
+                "success": True,
                 "message": "Álbum creado exitosamente",
                 "albumId": album_data.get('albumId')
             })
         else:
-            error_data = album_resp.json() if album_resp.text else {"error": "Error desconocido"}
-            return JSONResponse(content=error_data, status_code=album_resp.status_code)
+            return JSONResponse(content={"success": False, "message": f"Error en TYA: {album_resp.text}"}, status_code=album_resp.status_code)
     
     except Exception as e:
         print(f"Error creando álbum: {e}")
-        return JSONResponse(content={"error": "Error al crear el álbum"}, status_code=500)
+        return JSONResponse(content={"success": False, "message": "Error al crear el álbum"}, status_code=500)
 
 
 # Upload Merchandising Routes
