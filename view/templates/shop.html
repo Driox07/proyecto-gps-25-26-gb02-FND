@@ -141,7 +141,9 @@
                                     {% endif %}
                                     <div class="product-meta-container">
                                         {% if song.genres and song.genres|length > 0 %}
-                                        <span class="product-badge badge-genre">{{ genres_map.get(song.genres[0], 'Sin género') }}</span>
+                                        {% for genre_id in song.genres %}
+                                        <span class="product-badge badge-genre">{{ genres_map.get(genre_id, 'Sin género') }}</span>
+                                        {% endfor %}
                                         {% endif %}
                                         {% if song.duration %}
                                         {% set duration_int = song.duration|int if song.duration else 0 %}
@@ -205,7 +207,9 @@
                                         <span class="product-badge badge-songs">{{ album.songs|length }} canciones</span>
                                         {% endif %}
                                         {% if album.genres and album.genres|length > 0 %}
-                                        <span class="product-badge badge-genre">{{ genres_map.get(album.genres[0], 'Sin género') }}</span>
+                                        {% for genre_id in album.genres %}
+                                        <span class="product-badge badge-genre">{{ genres_map.get(genre_id, 'Sin género') }}</span>
+                                        {% endfor %}
                                         {% endif %}
                                     </div>
                                     <div class="product-footer">

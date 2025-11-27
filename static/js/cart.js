@@ -96,8 +96,8 @@ function setupEventListeners() {
 /**
  * Carga el carrito desde el servidor
  */
-async function loadCartFromServer() {
-    console.log('Cart.js: Loading cart from server...');
+async function loadCartFromServer(retryCount = 0) {
+    console.log('Cart.js: Loading cart from server... (attempt', retryCount + 1, ')');
     try {
         const response = await fetch('/cart', {
             method: 'GET',
@@ -109,12 +109,20 @@ async function loadCartFromServer() {
 
         console.log('Cart.js: Cart response status:', response.status);
 
-        if (response.ok) {
-            window.currentCart = await response.json();
-            console.log('Cart.js: Cart loaded:', window.currentCart);
+        if (response.ok || response.status === 202) {
+            const data = await response.json();
+            
+            // Si el carrito está cargando (status 202), reintentar después de 1 segundo
+            if (response.status === 202 && data.loading && retryCount < 3) {
+                console.log('Cart.js: Cart still loading, retrying...');
+                setTimeout(() => loadCartFromServer(retryCount + 1), 1000);
+                window.currentCart = [];
+            } else {
+                window.currentCart = data;
+                console.log('Cart.js: Cart loaded:', window.currentCart);
+            }
         } else if (response.status === 401) {
             console.log('Cart.js: User not authenticated, cart empty');
-            // No autenticado, carrito vacío
             window.currentCart = [];
         } else {
             console.error('Cart.js: Error loading cart from server');
