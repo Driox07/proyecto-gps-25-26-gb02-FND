@@ -342,8 +342,8 @@
                         <div class="favorites-row" id="artists-row">
                             {% if favorite_artists %}
                                 {% for artist in favorite_artists %}
-                                    <a href="/artist/{{ artist.artistId }}" class="favorite-card artist-card">
-                                        <div class="card-image artist-image">
+                                    <a href="/artist/{{ artist.artistId }}" class="favorite-card">
+                                        <div class="card-image">
                                             {% if artist.artisticImage %}
                                                 <img src="{{ artist.artisticImage }}" alt="{{ artist.artisticName }}">
                                             {% else %}
