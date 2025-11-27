@@ -389,10 +389,17 @@ body {
 }
 
 /* Artist Card - Circular images */
-.artist-card .card-image,
+.artist-card .card-image {
+    height: 140px; /* Square aspect ratio for circular images */
+}
+
 .artist-card .card-image img,
 .artist-card .card-image-placeholder {
     border-radius: 50%;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto; /* Center the circular image */
+    object-fit: cover;
 }
 
 /* Empty State */

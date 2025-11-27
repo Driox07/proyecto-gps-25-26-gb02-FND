@@ -2416,6 +2416,10 @@ def get_profile(request: Request):
                     )
                     if songs_data_resp.ok:
                         favorite_songs = songs_data_resp.json()
+                        # Normalizar URLs de imágenes para canciones
+                        for song in favorite_songs:
+                            if song.get('cover'):
+                                song['cover'] = normalize_image_url(song['cover'], servers.TYA)
         except requests.RequestException:
             favorite_songs = []
         
@@ -2438,6 +2442,10 @@ def get_profile(request: Request):
                     )
                     if albums_data_resp.ok:
                         favorite_albums = albums_data_resp.json()
+                        # Normalizar URLs de imágenes para álbumes
+                        for album in favorite_albums:
+                            if album.get('cover'):
+                                album['cover'] = normalize_image_url(album['cover'], servers.TYA)
         except requests.RequestException:
             favorite_albums = []
         
@@ -2460,6 +2468,10 @@ def get_profile(request: Request):
                     )
                     if artists_data_resp.ok:
                         favorite_artists = artists_data_resp.json()
+                        # Normalizar URLs de imágenes para artistas
+                        for artist in favorite_artists:
+                            if artist.get('artisticImage'):
+                                artist['artisticImage'] = normalize_image_url(artist['artisticImage'], servers.TYA)
         except requests.RequestException:
             favorite_artists = []
         
@@ -2548,6 +2560,10 @@ def get_user_profile(request: Request, username: str):
                         )
                         if songs_data_resp.ok:
                             favorite_songs = songs_data_resp.json()
+                            # Normalizar URLs de imágenes para canciones
+                            for song in favorite_songs:
+                                if song.get('cover'):
+                                    song['cover'] = normalize_image_url(song['cover'], servers.TYA)
             except requests.RequestException:
                 favorite_songs = []
             
@@ -2570,6 +2586,10 @@ def get_user_profile(request: Request, username: str):
                         )
                         if albums_data_resp.ok:
                             favorite_albums = albums_data_resp.json()
+                            # Normalizar URLs de imágenes para álbumes
+                            for album in favorite_albums:
+                                if album.get('cover'):
+                                    album['cover'] = normalize_image_url(album['cover'], servers.TYA)
             except requests.RequestException:
                 favorite_albums = []
             
@@ -2592,6 +2612,10 @@ def get_user_profile(request: Request, username: str):
                         )
                         if artists_data_resp.ok:
                             favorite_artists = artists_data_resp.json()
+                            # Normalizar URLs de imágenes para artistas
+                            for artist in favorite_artists:
+                                if artist.get('artisticImage'):
+                                    artist['artisticImage'] = normalize_image_url(artist['artisticImage'], servers.TYA)
             except requests.RequestException:
                 favorite_artists = []
         
