@@ -107,11 +107,38 @@ def index(request: Request):
     try:
         ra = requests.get(f"{servers.RYE}/recommendations/artist", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
         if ra.ok:
-            rec_artists = ra.json()
+            rec_artists_ids = ra.json()
+            # Enriquecer con datos completos de TYA
+            rec_artists = []
+            for artist_data in rec_artists_ids:
+                artist_id = artist_data.get('artistId') or artist_data.get('id') or artist_data
+                if artist_id and isinstance(artist_id, (int, str)):
+                    try:
+                        artist_resp = requests.get(f"{servers.TYA}/artists/{artist_id}", timeout=2, headers={"Accept": "application/json"})
+                        if artist_resp.ok:
+                            artist_full = artist_resp.json()
+                            rec_artists.append(artist_full)
+                        else:
+                            # Si TYA no tiene el artista, usar los datos de RYE
+                            rec_artists.append(artist_data)
+                    except Exception as ex:
+                        rec_artists.append(artist_data)
+                else:
+                    rec_artists.append(artist_data)
     except requests.RequestException as e:
         print(f"Error fetching recommended artists from RYE: {e}")
 
-    return osv.get_home_view(request, userdata, servers.SYU, servers.RYE, servers.TYA, top_songs, top_artists, rec_songs, rec_artists)
+    # Obtener géneros para mapeo
+    genres_map = {}
+    try:
+        genres_resp = requests.get(f"{servers.TYA}/genres", timeout=3, headers={"Accept": "application/json"})
+        if genres_resp.ok:
+            all_genres = genres_resp.json()
+            genres_map = {g.get('id'): g.get('name') for g in all_genres if isinstance(g, dict) and g.get('id')}
+    except requests.RequestException as e:
+        print(f"Error fetching genres from TYA: {e}")
+
+    return osv.get_home_view(request, userdata, servers.SYU, servers.RYE, servers.TYA, top_songs, top_artists, rec_songs, rec_artists, genres_map)
 
 @app.get("/login")
 def login_page(request: Request):

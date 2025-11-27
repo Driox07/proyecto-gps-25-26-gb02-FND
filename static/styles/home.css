@@ -422,130 +422,353 @@ body {
     }
 }
 
-/* Top Songs and Artists Section */
-/* Top Section - Top Songs & Top Artists */
+/* ===================================
+   TOP 10 & RECOMENDACIONES SECTIONS
+   =================================== */
+
 .top-section {
     padding: 80px 40px;
-    background: #f9f9f9;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
 }
 
 .top-section h2 {
-    font-size: 36px;
+    font-size: 42px;
     font-weight: 700;
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 50px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
 }
 
-.top-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 30px;
+.top-section h3 {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 60px 0 30px;
+    text-align: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* TOP 10 GRID - Grid fijo de 10 elementos (5x2) con centrado automático */
+#top-songs,
+#top-artists {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 25px;
     margin-bottom: 60px;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
+#top-songs .top-card,
+#top-artists .top-card {
+    flex: 0 0 calc(20% - 20px);
+    max-width: 250px;
+    min-width: 200px;
+}
+
+/* RECOMENDACIONES GRID - Grid con tamaño fijo para evitar estiramiento */
+#recommended-songs,
+#recommended-artists {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 25px;
+    margin-bottom: 40px;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#recommended-songs .top-card,
+#recommended-artists .top-card {
+    flex: 0 0 auto;
+    width: 220px;
+}
+
+/* CARD STYLING */
 .top-card {
     background: white;
-    border-radius: 20px;
+    border-radius: 16px;
     overflow: hidden;
-    text-align: center;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     cursor: pointer;
-    border: 2px solid #f0f0f0;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    position: relative;
 }
 
 .top-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15);
-    border-color: #667eea;
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.25);
 }
 
+/* Image Styling - Proporción cuadrada fija */
 .top-card img {
     width: 100%;
-    height: 180px;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: transform 0.3s ease;
 }
 
-.top-card .top-card-content {
-    padding: 20px;
+.top-card:hover img {
+    transform: scale(1.08);
 }
 
-.top-card .top-card-content h3 {
-    font-size: 20px;
+/* Text Content */
+.top-name {
+    padding: 16px;
+    font-size: 15px;
     font-weight: 600;
-    margin-bottom: 8px;
     color: #333;
-}
-
-.top-card .top-card-content p {
-    font-size: 16px;
-    color: #666;
+    margin: 0;
     line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 50px;
 }
 
-/* Optional ranking badge */
-.top-card .rank-badge {
+.top-meta {
+    padding: 0 16px 16px;
+    font-size: 13px;
+    color: #667eea;
+    font-weight: 500;
+    display: block;
+    text-transform: capitalize;
+}
+
+/* Ranking Badge para Top 10 */
+#top-songs .top-card::before,
+#top-artists .top-card::before {
+    content: '#' attr(data-rank);
     position: absolute;
-    top: 10px;
-    left: 10px;
-    background: #667eea;
+    top: 12px;
+    left: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     font-weight: 700;
     font-size: 16px;
     padding: 6px 12px;
-    border-radius: 12px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 10;
 }
 
-/* Responsive tweaks */
+/* Empty State */
+.top-section > p {
+    text-align: center;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.9);
+    padding: 60px 20px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    margin: 0 auto;
+    max-width: 600px;
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
+@media (max-width: 1200px) {
+    #top-songs .top-card,
+    #top-artists .top-card {
+        flex: 0 0 calc(25% - 20px);
+        max-width: 220px;
+    }
+    
+    #recommended-songs .top-card,
+    #recommended-artists .top-card {
+        width: 200px;
+    }
+}
+
+@media (max-width: 992px) {
+    #top-songs .top-card,
+    #top-artists .top-card {
+        flex: 0 0 calc(33.333% - 20px);
+        max-width: 200px;
+    }
+    
+    .top-section h2 {
+        font-size: 36px;
+    }
+    
+    .top-section h3 {
+        font-size: 24px;
+    }
+}
+
 @media (max-width: 768px) {
     .top-section {
         padding: 60px 20px;
     }
 
-    .top-section h2 {
-        font-size: 28px;
+    #top-songs,
+    #top-artists,
+    #recommended-songs,
+    #recommended-artists {
+        gap: 15px;
     }
 
-    .top-card img {
-        height: 150px;
+    #top-songs .top-card,
+    #top-artists .top-card {
+        flex: 0 0 calc(33.333% - 10px);
+        max-width: 180px;
+        min-width: 140px;
+    }
+    
+    #recommended-songs .top-card,
+    #recommended-artists .top-card {
+        width: 160px;
+    }
+
+    .top-section h2 {
+        font-size: 32px;
+        margin-bottom: 35px;
+    }
+    
+    .top-section h3 {
+        font-size: 22px;
+        margin: 40px 0 20px;
+    }
+    
+    .top-name {
+        font-size: 14px;
+        padding: 12px;
+        min-height: 42px;
+    }
+    
+    .top-meta {
+        font-size: 12px;
+        padding: 0 12px 12px;
     }
 }
 
-/* --- Placeholder Styles --- */
+@media (max-width: 600px) {
+    #top-songs,
+    #top-artists,
+    #recommended-songs,
+    #recommended-artists {
+        gap: 12px;
+    }
+
+    #top-songs .top-card,
+    #top-artists .top-card,
+    #recommended-songs .top-card,
+    #recommended-artists .top-card {
+        flex: 0 0 calc(50% - 6px);
+        width: calc(50% - 6px);
+        max-width: none;
+        min-width: 0;
+    }
+    
+    .top-section h2 {
+        font-size: 26px;
+    }
+    
+    .top-section h3 {
+        font-size: 20px;
+    }
+}
+
+/* ===================================
+   ANIMATIONS
+   =================================== */
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.top-card {
+    animation: slideInUp 0.5s ease-out;
+    animation-fill-mode: backwards;
+}
+
+.top-card:nth-child(1) { animation-delay: 0.05s; }
+.top-card:nth-child(2) { animation-delay: 0.1s; }
+.top-card:nth-child(3) { animation-delay: 0.15s; }
+.top-card:nth-child(4) { animation-delay: 0.2s; }
+.top-card:nth-child(5) { animation-delay: 0.25s; }
+.top-card:nth-child(6) { animation-delay: 0.3s; }
+.top-card:nth-child(7) { animation-delay: 0.35s; }
+.top-card:nth-child(8) { animation-delay: 0.4s; }
+.top-card:nth-child(9) { animation-delay: 0.45s; }
+.top-card:nth-child(10) { animation-delay: 0.5s; }
+
+/* ===================================
+   PLACEHOLDER LOADING STYLES
+   =================================== */
 
 .top-card.placeholder {
-    min-height: 250px; /* ensures visible even if grid width is small */
-    background: #1a1a1a;
-    border-radius: 10px;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    opacity: 0.6;
+    min-height: 300px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 16px;
+    cursor: default;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 0.8;
+    }
 }
 
 .img-placeholder {
     width: 100%;
-    aspect-ratio: 1;
-    background: #333;
-    border-radius: 8px;
-    margin-bottom: 10px;
+    aspect-ratio: 1 / 1;
+    background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
 }
 
 .text-placeholder {
     width: 70%;
-    height: 14px;
-    background: #444;
-    border-radius: 4px;
-    margin-bottom: 6px;
+    height: 16px;
+    background: #e0e0e0;
+    border-radius: 8px;
+    margin: 16px auto 8px;
 }
 
 .text-placeholder-small {
     width: 40%;
-    height: 12px;
-    background: #444;
-    border-radius: 4px;
+    height: 14px;
+    background: #e0e0e0;
+    border-radius: 8px;
+    margin: 0 auto 16px;
 }
