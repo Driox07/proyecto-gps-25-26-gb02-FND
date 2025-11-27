@@ -180,12 +180,27 @@ function initFormSubmission() {
                 return;
             }
             
+
+
             // Prepare JSON with form data
             const formData = new FormData(form);
             const jsonData = {};
             formData.forEach((value, key) => {
                 jsonData[key] = value;
             });
+            
+            // Handle image upload - convert to base64 if exists
+            const imageInput = document.getElementById('profile-image');
+            if (imageInput && imageInput.files && imageInput.files[0]) {
+                try {
+                    const base64String = await fileToBase64(imageInput.files[0]);
+                    jsonData['image'] = base64String;
+                } catch (error) {
+                    console.error('Error converting image to base64:', error);
+                    showNotification('Error al procesar la imagen', 'error');
+                    return;
+                }
+            }
             
             // Show loading state
             submitBtn.classList.add('loading');
@@ -301,3 +316,19 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+/**
+ * Convert file to base64 string with data URL preamble
+ */
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            // readAsDataURL() already includes the data URL preamble
+            // Format: "data:image/jpeg;base64,/9j/4AAQSKZJRgABAQAAAQ..."
+            resolve(reader.result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
