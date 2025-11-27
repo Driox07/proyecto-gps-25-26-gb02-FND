@@ -795,6 +795,189 @@ def get_help(request: Request):
 
 
 # ===================== UPLOAD ROUTES =====================
+
+# API endpoints para obtener datos del microservicio TYA
+@app.get("/api/genres")
+def get_genres_api(request: Request):
+    """
+    Proxy para obtener géneros desde TYA
+    """
+    try:
+        genres_resp = requests.get(
+            f"{servers.TYA}/genres",
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        if genres_resp.ok:
+            return JSONResponse(content=genres_resp.json())
+        return JSONResponse(
+            content={"error": "No se pudieron obtener los géneros"},
+            status_code=genres_resp.status_code
+        )
+    except Exception as e:
+        print(f"Error obteniendo géneros: {e}")
+        return JSONResponse(
+            content={"error": "Error al obtener géneros"},
+            status_code=500
+        )
+
+
+@app.get("/api/artists")
+def get_artists_api(request: Request):
+    """
+    Proxy para obtener lista de artistas desde TYA
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    try:
+        # Usar filter sin parámetros para obtener todos los artistas
+        artists_resp = requests.get(
+            f"{servers.TYA}/artist/filter",
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if artists_resp.ok:
+            artist_ids = artists_resp.json()
+            
+            if not artist_ids:
+                return JSONResponse(content=[])
+            
+            # Obtener detalles de los artistas
+            ids_str = ','.join(map(str, artist_ids))
+            details_resp = requests.get(
+                f"{servers.TYA}/artist/list?ids={ids_str}",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            
+            if details_resp.ok:
+                artists = details_resp.json()
+                # Filtrar el artista actual
+                current_artist_id = userdata.get('artistId')
+                filtered_artists = [a for a in artists if a.get('artistId') != current_artist_id]
+                return JSONResponse(content=filtered_artists)
+            
+            return JSONResponse(content=[])
+        
+        return JSONResponse(
+            content={"error": "No se pudieron obtener los artistas"},
+            status_code=artists_resp.status_code
+        )
+    except Exception as e:
+        print(f"Error obteniendo artistas: {e}")
+        return JSONResponse(
+            content={"error": "Error al obtener artistas"},
+            status_code=500
+        )
+
+
+@app.get("/api/my-albums")
+def get_my_albums_api(request: Request):
+    """
+    Proxy para obtener álbumes del artista actual desde TYA
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if not userdata.get('artistId'):
+        return JSONResponse(content={"error": "No eres un artista"}, status_code=403)
+    
+    try:
+        artist_id = userdata.get('artistId')
+        
+        # Obtener el artista para ver sus álbumes
+        artist_resp = requests.get(
+            f"{servers.TYA}/artist/{artist_id}",
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if not artist_resp.ok:
+            return JSONResponse(content=[])
+        
+        artist_data = artist_resp.json()
+        album_ids = artist_data.get('owner_albums', [])
+        
+        if not album_ids:
+            return JSONResponse(content=[])
+        
+        # Obtener detalles de los álbumes
+        ids_str = ','.join(map(str, album_ids))
+        albums_resp = requests.get(
+            f"{servers.TYA}/album/list?ids={ids_str}",
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if albums_resp.ok:
+            return JSONResponse(content=albums_resp.json())
+        
+        return JSONResponse(content=[])
+        
+    except Exception as e:
+        print(f"Error obteniendo álbumes: {e}")
+        return JSONResponse(content=[])
+
+
+@app.get("/api/my-songs")
+def get_my_songs_api(request: Request):
+    """
+    Proxy para obtener canciones del artista actual desde TYA
+    """
+    token = request.cookies.get("oversound_auth")
+    userdata = obtain_user_data(token)
+    
+    if not userdata:
+        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
+    
+    if not userdata.get('artistId'):
+        return JSONResponse(content={"error": "No eres un artista"}, status_code=403)
+    
+    try:
+        artist_id = userdata.get('artistId')
+        
+        # Obtener el artista para ver sus canciones
+        artist_resp = requests.get(
+            f"{servers.TYA}/artist/{artist_id}",
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if not artist_resp.ok:
+            return JSONResponse(content=[])
+        
+        artist_data = artist_resp.json()
+        song_ids = artist_data.get('owner_songs', [])
+        
+        if not song_ids:
+            return JSONResponse(content=[])
+        
+        # Obtener detalles de las canciones
+        ids_str = ','.join(map(str, song_ids))
+        songs_resp = requests.get(
+            f"{servers.TYA}/song/list?ids={ids_str}",
+            timeout=5,
+            headers={"Accept": "application/json"}
+        )
+        
+        if songs_resp.ok:
+            return JSONResponse(content=songs_resp.json())
+        
+        return JSONResponse(content=[])
+        
+    except Exception as e:
+        print(f"Error obteniendo canciones: {e}")
+        return JSONResponse(content=[])
+
+
 @app.get("/song/upload")
 def upload_song_page(request: Request):
     """
@@ -838,7 +1021,7 @@ async def upload_song(request: Request):
             f"{servers.TYA}/song/upload",
             json=body,
             timeout=15,
-            headers={"Accept": "application/json"}
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
         
         if song_resp.ok:
@@ -899,7 +1082,7 @@ async def upload_album(request: Request):
             f"{servers.TYA}/album/upload",
             json=body,
             timeout=15,
-            headers={"Accept": "application/json"}
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
         
         if album_resp.ok:
@@ -961,7 +1144,7 @@ async def upload_merch(request: Request):
             f"{servers.TYA}/merch/upload",
             json=body,
             timeout=15,
-            headers={"Accept": "application/json"}
+            headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
         
         if merch_resp.ok:

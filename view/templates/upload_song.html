@@ -48,28 +48,33 @@
 
                 <div class="form-row">
                     <div class="form-group full">
-                        <label for="genres">Géneros</label>
-                        <input type="text" id="genres" name="genres" placeholder="Ej: 1,2,3 (IDs de géneros separados por comas)">
-                        <small>Puedes consultar los IDs de géneros en la tienda</small>
+                        <label for="genres">Géneros *</label>
+                        <select id="genres" name="genres" multiple size="5" required>
+                            <option value="" disabled>Cargando géneros...</option>
+                        </select>
+                        <small>Mantén Ctrl (Cmd en Mac) presionado para seleccionar múltiples géneros</small>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group full">
                         <label for="collaborators">Colaboradores</label>
-                        <input type="text" id="collaborators" name="collaborators" placeholder="Ej: 5,12,8 (IDs de artistas separados por comas)">
-                        <small>IDs de otros artistas que colaboraron en esta canción</small>
+                        <select id="collaborators" name="collaborators" multiple size="4">
+                            <option value="" disabled>Cargando artistas...</option>
+                        </select>
+                        <small>Mantén Ctrl (Cmd en Mac) presionado para seleccionar múltiples colaboradores (opcional)</small>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="cover">Portada (URL)</label>
-                        <input type="url" id="cover" name="cover" placeholder="https://ejemplo.com/cover.jpg">
+                        <label for="cover">Portada (URL) *</label>
+                        <input type="url" id="cover" name="cover" required placeholder="https://ejemplo.com/cover.jpg">
                     </div>
                     <div class="form-group">
-                        <label for="audioUrl">URL del Audio *</label>
-                        <input type="url" id="audioUrl" name="audioUrl" required placeholder="https://ejemplo.com/audio.mp3">
+                        <label for="trackId">ID del Track *</label>
+                        <input type="number" id="trackId" name="trackId" required min="1" placeholder="123456">
+                        <small>ID del archivo de audio en el sistema</small>
                     </div>
                 </div>
 
@@ -80,7 +85,11 @@
                     </div>
                     <div class="form-group">
                         <label for="albumId">Álbum (opcional)</label>
-                        <input type="number" id="albumId" name="albumId" placeholder="ID del álbum">
+                        <select id="albumId" name="albumId">
+                            <option value="">Sin álbum (single)</option>
+                            <option value="" disabled>Cargando álbumes...</option>
+                        </select>
+                        <small>Selecciona un álbum existente o déjalo como single</small>
                     </div>
                 </div>
 

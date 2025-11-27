@@ -2,6 +2,44 @@ document.addEventListener('DOMContentLoaded', function(){
     const form = document.getElementById('upload-merch-form');
     const uploadBtn = document.getElementById('upload-btn');
     const messageDiv = document.getElementById('message');
+    const collaboratorsSelect = document.getElementById('collaborators');
+
+    // Cargar artistas disponibles para colaborar desde el microservicio TYA
+    async function loadArtists() {
+        try {
+            const resp = await fetch('/api/artists', {
+                credentials: 'same-origin'
+            });
+            if (resp.ok) {
+                const artists = await resp.json();
+                collaboratorsSelect.innerHTML = '';
+                
+                if (artists.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.disabled = true;
+                    option.textContent = 'No hay otros artistas disponibles';
+                    collaboratorsSelect.appendChild(option);
+                } else {
+                    artists.forEach(artist => {
+                        const option = document.createElement('option');
+                        option.value = artist.artistId;
+                        option.textContent = artist.artisticName || `Artista ${artist.artistId}`;
+                        collaboratorsSelect.appendChild(option);
+                    });
+                }
+            } else {
+                collaboratorsSelect.innerHTML = '<option value="" disabled>Error al cargar artistas</option>';
+                console.error('Error cargando artistas:', resp.status);
+            }
+        } catch (err) {
+            console.error('Error cargando artistas:', err);
+            collaboratorsSelect.innerHTML = '<option value="" disabled>Error de conexión</option>';
+        }
+    }
+
+    // Cargar artistas al iniciar
+    loadArtists();
 
     form.addEventListener('submit', async function(e){
         e.preventDefault();
@@ -17,17 +55,21 @@ document.addEventListener('DOMContentLoaded', function(){
             releaseDate: document.getElementById('releaseDate').value || null
         };
 
-        // Procesar colaboradores (IDs separados por comas)
-        const collabsInput = document.getElementById('collaborators').value.trim();
-        if(collabsInput){
-            formData.collaborators = collabsInput.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+        // Procesar colaboradores seleccionados (multi-select, opcional)
+        const selectedCollabs = Array.from(collaboratorsSelect.selectedOptions)
+            .map(opt => parseInt(opt.value))
+            .filter(id => !isNaN(id));
+        
+        if (selectedCollabs.length > 0) {
+            formData.collaborators = selectedCollabs;
         }
 
         try{
             const resp = await fetch('/merch/upload', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(formData),
+                credentials: 'same-origin'
             });
             
             const data = await resp.json();

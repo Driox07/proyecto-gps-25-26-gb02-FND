@@ -48,9 +48,10 @@
 
                 <div class="form-row">
                     <div class="form-group full">
-                        <label for="genres">Géneros</label>
-                        <input type="text" id="genres" name="genres" placeholder="Ej: 1,2,3 (IDs de géneros separados por comas)">
-                        <small>Puedes consultar los IDs de géneros en la tienda</small>
+                        <label>Géneros</label>
+                        <div style="padding: 14px 18px; background-color: #f0f7ff; border: 2px solid #d0e7ff; border-radius: 10px; color: #2563eb;">
+                            <small>💡 Los géneros se calcularán automáticamente a partir de las canciones del álbum</small>
+                        </div>
                     </div>
                 </div>
 
@@ -63,9 +64,11 @@
 
                 <div class="form-row">
                     <div class="form-group full">
-                        <label for="songs">Canciones del álbum</label>
-                        <input type="text" id="songs" name="songs" placeholder="Ej: 15,22,37 (IDs de canciones separados por comas)">
-                        <small>IDs de las canciones que formarán parte de este álbum</small>
+                        <label for="songs">Canciones del álbum *</label>
+                        <select id="songs" name="songs" multiple size="6" required>
+                            <option value="" disabled>Cargando tus canciones...</option>
+                        </select>
+                        <small>Mantén Ctrl (Cmd en Mac) presionado para seleccionar múltiples canciones</small>
                     </div>
                 </div>
 

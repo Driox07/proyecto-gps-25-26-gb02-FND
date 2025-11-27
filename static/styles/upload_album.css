@@ -123,6 +123,32 @@ textarea {
     min-height: 100px;
 }
 
+/* Estilos específicos para select múltiple */
+select[multiple] {
+    min-height: 150px;
+    padding: 10px;
+    cursor: pointer;
+}
+
+select[multiple] option {
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin: 3px 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+select[multiple] option:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+select[multiple] option:checked {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+}
+
 input:focus,
 textarea:focus,
 select:focus {
