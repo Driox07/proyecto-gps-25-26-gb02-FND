@@ -2268,6 +2268,77 @@ def get_profile(request: Request):
         except requests.RequestException:
             payment_methods = []
         
+        # Obtener favoritos del usuario
+        favorite_songs = []
+        favorite_albums = []
+        favorite_artists = []
+        
+        try:
+            # Obtener canciones favoritas
+            songs_resp = requests.get(
+                f"{servers.SYU}/favs/songs",
+                timeout=2,
+                headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+            )
+            if songs_resp.ok:
+                song_ids = songs_resp.json()
+                if song_ids:
+                    # Obtener datos completos de las canciones
+                    song_ids_str = ','.join(map(str, song_ids))
+                    songs_data_resp = requests.get(
+                        f"{servers.TYA}/song/list?ids={song_ids_str}",
+                        timeout=5,
+                        headers={"Accept": "application/json"}
+                    )
+                    if songs_data_resp.ok:
+                        favorite_songs = songs_data_resp.json()
+        except requests.RequestException:
+            favorite_songs = []
+        
+        try:
+            # Obtener álbumes favoritos
+            albums_resp = requests.get(
+                f"{servers.SYU}/favs/albums",
+                timeout=2,
+                headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+            )
+            if albums_resp.ok:
+                album_ids = albums_resp.json()
+                if album_ids:
+                    # Obtener datos completos de los álbumes
+                    album_ids_str = ','.join(map(str, album_ids))
+                    albums_data_resp = requests.get(
+                        f"{servers.TYA}/album/list?ids={album_ids_str}",
+                        timeout=5,
+                        headers={"Accept": "application/json"}
+                    )
+                    if albums_data_resp.ok:
+                        favorite_albums = albums_data_resp.json()
+        except requests.RequestException:
+            favorite_albums = []
+        
+        try:
+            # Obtener artistas favoritos
+            artists_resp = requests.get(
+                f"{servers.SYU}/favs/artists",
+                timeout=2,
+                headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+            )
+            if artists_resp.ok:
+                artist_ids = artists_resp.json()
+                if artist_ids:
+                    # Obtener datos completos de los artistas
+                    artist_ids_str = ','.join(map(str, artist_ids))
+                    artists_data_resp = requests.get(
+                        f"{servers.TYA}/artist/list?ids={artist_ids_str}",
+                        timeout=5,
+                        headers={"Accept": "application/json"}
+                    )
+                    if artists_data_resp.ok:
+                        favorite_artists = artists_data_resp.json()
+        except requests.RequestException:
+            favorite_artists = []
+        
         # Para simplificar, asumimos datos vacíos de biblioteca y listas
         # En un caso real, se obtendrían del servidor
         canciones_biblioteca = []
@@ -2280,6 +2351,9 @@ def get_profile(request: Request):
             listas_completas,
             is_own_profile=True,
             payment_methods=payment_methods,
+            favorite_songs=favorite_songs,
+            favorite_albums=favorite_albums,
+            favorite_artists=favorite_artists,
             syu_server=servers.SYU,
             tya_server=servers.TYA,
             pt_server=servers.PT
@@ -2325,6 +2399,78 @@ def get_user_profile(request: Request, username: str):
             except requests.RequestException:
                 payment_methods = []
         
+        # Obtener favoritos del usuario (solo si es perfil propio)
+        favorite_songs = []
+        favorite_albums = []
+        favorite_artists = []
+        
+        if is_own_profile:
+            try:
+                # Obtener canciones favoritas
+                songs_resp = requests.get(
+                    f"{servers.SYU}/favs/songs",
+                    timeout=2,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                if songs_resp.ok:
+                    song_ids = songs_resp.json()
+                    if song_ids:
+                        # Obtener datos completos de las canciones
+                        song_ids_str = ','.join(map(str, song_ids))
+                        songs_data_resp = requests.get(
+                            f"{servers.TYA}/song/list?ids={song_ids_str}",
+                            timeout=5,
+                            headers={"Accept": "application/json"}
+                        )
+                        if songs_data_resp.ok:
+                            favorite_songs = songs_data_resp.json()
+            except requests.RequestException:
+                favorite_songs = []
+            
+            try:
+                # Obtener álbumes favoritos
+                albums_resp = requests.get(
+                    f"{servers.SYU}/favs/albums",
+                    timeout=2,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                if albums_resp.ok:
+                    album_ids = albums_resp.json()
+                    if album_ids:
+                        # Obtener datos completos de los álbumes
+                        album_ids_str = ','.join(map(str, album_ids))
+                        albums_data_resp = requests.get(
+                            f"{servers.TYA}/album/list?ids={album_ids_str}",
+                            timeout=5,
+                            headers={"Accept": "application/json"}
+                        )
+                        if albums_data_resp.ok:
+                            favorite_albums = albums_data_resp.json()
+            except requests.RequestException:
+                favorite_albums = []
+            
+            try:
+                # Obtener artistas favoritos
+                artists_resp = requests.get(
+                    f"{servers.SYU}/favs/artists",
+                    timeout=2,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                if artists_resp.ok:
+                    artist_ids = artists_resp.json()
+                    if artist_ids:
+                        # Obtener datos completos de los artistas
+                        artist_ids_str = ','.join(map(str, artist_ids))
+                        artists_data_resp = requests.get(
+                            f"{servers.TYA}/artist/list?ids={artist_ids_str}",
+                            timeout=5,
+                            headers={"Accept": "application/json"}
+                        )
+                        if artists_data_resp.ok:
+                            favorite_artists = artists_data_resp.json()
+            except requests.RequestException:
+                favorite_artists = []
+        
         # Para simplificar, asumimos datos vacíos de biblioteca y listas
         canciones_biblioteca = []
         listas_completas = []
@@ -2336,6 +2482,9 @@ def get_user_profile(request: Request, username: str):
             listas_completas,
             is_own_profile=is_own_profile,
             payment_methods=payment_methods if is_own_profile else [],
+            favorite_songs=favorite_songs,
+            favorite_albums=favorite_albums,
+            favorite_artists=favorite_artists,
             syu_server=servers.SYU,
             tya_server=servers.TYA,
             pt_server=servers.PT

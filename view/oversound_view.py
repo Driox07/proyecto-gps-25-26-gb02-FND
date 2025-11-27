@@ -87,9 +87,15 @@ class View():
 
     # Renderizar la template profile.html
     # Necesita un user_info completo, no se contempla otro caso.
-    def get_perfil_view(self, request: Request, usuario_data, canciones_biblioteca, listas_completas, is_own_profile: bool = False, payment_methods: list = None, syu_server: str = None, tya_server: str = None, pt_server: str = None):
+    def get_perfil_view(self, request: Request, usuario_data, canciones_biblioteca, listas_completas, is_own_profile: bool = False, payment_methods: list = None, favorite_songs: list = None, favorite_albums: list = None, favorite_artists: list = None, syu_server: str = None, tya_server: str = None, pt_server: str = None):
         if payment_methods is None:
             payment_methods = []
+        if favorite_songs is None:
+            favorite_songs = []
+        if favorite_albums is None:
+            favorite_albums = []
+        if favorite_artists is None:
+            favorite_artists = []
         data = {"userdata": usuario_data, "syu_server": syu_server, "pt_server": pt_server}
         return templates.TemplateResponse("user_profile.html", {
             "request": request,
@@ -99,6 +105,9 @@ class View():
             "listas_completas": listas_completas,
             "is_own_profile": is_own_profile,
             "payment_methods": payment_methods,
+            "favorite_songs": favorite_songs,
+            "favorite_albums": favorite_albums,
+            "favorite_artists": favorite_artists,
             "syu_server": syu_server,
             "tya_server": tya_server,
         })

@@ -131,6 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
         countObserver.observe(countElement);
     });
 
+    // Initialize horizontal scrolling navigation for favorites
+    initializeFavoritesNavigation();
+
     console.log('User Profile page loaded successfully');
 });
 
@@ -952,6 +955,64 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', addArtistStyles);
 } else {
     addArtistStyles();
+}
+
+// ==================== FAVORITES NAVIGATION FUNCTIONALITY ====================
+
+/**
+ * Initialize horizontal scrolling navigation for favorites sections
+ */
+function initializeFavoritesNavigation() {
+    const containers = document.querySelectorAll('.favorites-row-container');
+    
+    containers.forEach(container => {
+        const row = container.querySelector('.favorites-row');
+        const leftArrow = container.querySelector('.nav-arrow[data-direction="left"]');
+        const rightArrow = container.querySelector('.nav-arrow[data-direction="right"]');
+        
+        if (!row || !leftArrow || !rightArrow) return;
+        
+        // Update arrow states on scroll
+        const updateArrowStates = () => {
+            const scrollLeft = row.scrollLeft;
+            const scrollWidth = row.scrollWidth;
+            const clientWidth = row.clientWidth;
+            
+            // Show/hide left arrow
+            leftArrow.style.opacity = scrollLeft > 0 ? '1' : '0.3';
+            leftArrow.disabled = scrollLeft <= 0;
+            
+            // Show/hide right arrow
+            rightArrow.style.opacity = scrollLeft < scrollWidth - clientWidth - 1 ? '1' : '0.3';
+            rightArrow.disabled = scrollLeft >= scrollWidth - clientWidth - 1;
+        };
+        
+        // Initial state
+        updateArrowStates();
+        
+        // Update on scroll
+        row.addEventListener('scroll', updateArrowStates);
+        
+        // Handle arrow clicks
+        leftArrow.addEventListener('click', () => {
+            const scrollAmount = row.clientWidth * 0.8; // Scroll 80% of visible width
+            row.scrollBy({
+                left: -scrollAmount,
+                behavior: 'smooth'
+            });
+        });
+        
+        rightArrow.addEventListener('click', () => {
+            const scrollAmount = row.clientWidth * 0.8; // Scroll 80% of visible width
+            row.scrollBy({
+                left: scrollAmount,
+                behavior: 'smooth'
+            });
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', updateArrowStates);
+    });
 }
 
 /**
