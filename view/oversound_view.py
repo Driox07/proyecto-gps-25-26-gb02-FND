@@ -70,8 +70,8 @@ class View():
         })
 
     # Esta función se va a usar para renderizar la template music/upload_song.html (versión más reciente/completa de 'get_upload_song_view')
-    def get_upload_song_view(self, request: Request, userdata: dict):
-        data = {"userdata": userdata}
+    def get_upload_song_view(self, request: Request, userdata: dict, genres: list = None, artists: list = None, albums: list = None):
+        data = {"userdata": userdata, "genres": genres or [], "artists": artists or [], "albums": albums or []}
         return templates.TemplateResponse("upload_song.html", {"request": request, "data": data})
     
     def get_song_view(self, request: Request, song_info : dict, tipoUsuario: int, user : dict, isLiked: bool, inCarrito: bool, syu_server: str = None, metrics: dict = None, tya_server: str = None, rye_server: str = None, pt_server: str = None):
