@@ -411,9 +411,15 @@ def shop(request: Request,
 
         # Crear mapeos
         artists_map = {a.get('artistId'): a.get('artisticName') for a in all_artists if isinstance(a, dict) and a.get('artistId')}
-        genres_map = {g.get('id'): g.get('name') for g in all_genres if isinstance(g, dict) and g.get('id')}
-
-        print(f"[DEBUG] Shop filtered: {len(songs)} songs, {len(albums)} albums, {len(merch)} merch")
+        
+        # Crear genres_map con claves tanto int como string para compatibilidad
+        genres_map = {}
+        for g in all_genres:
+            if isinstance(g, dict) and g.get('id'):
+                genre_id = g.get('id')
+                genre_name = g.get('name')
+                genres_map[genre_id] = genre_name  # int key
+                genres_map[str(genre_id)] = genre_name  # string key
 
     except Exception as e:
         print(f"Error en shop: {e}")
@@ -455,9 +461,13 @@ async def get_cart(request: Request):
             )
             cart_resp.raise_for_status()
             return JSONResponse(content=cart_resp.json(), status_code=cart_resp.status_code)
+        except requests.Timeout:
+            print(f"Timeout obteniendo carrito - el servicio está tardando demasiado")
+            return JSONResponse(content={"items": [], "total": 0, "loading": True}, status_code=202)
         except requests.RequestException as e:
             print(f"Error obteniendo carrito: {e}")
-            return JSONResponse(content={"error": "No se pudo obtener el carrito"}, status_code=500)
+            # Devolver carrito vacío en lugar de error para no romper la UI
+            return JSONResponse(content={"items": [], "total": 0}, status_code=200)
     
     # Si la petición espera HTML (navegación normal)
     else:
