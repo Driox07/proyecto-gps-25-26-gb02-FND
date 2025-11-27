@@ -481,15 +481,23 @@ async function initializeFavoriteButtons() {
     try {
         const albumIds = Array.from(favoriteAlbumButtons).map(b => parseInt(b.dataset.favAlbum)).filter(Boolean);
         if (albumIds.length) {
-            const favs = await getFavoriteAlbums();
-            favoriteAlbumButtons.forEach(button => {
-                const id = parseInt(button.dataset.favAlbum);
-                let isFav = false;
-                if (favs && favs.length) {
-                    isFav = favs.some(item => (typeof item === 'number' ? item === id : (item && item.id !== undefined ? item.id === id : false)));
-                }
-                updateFavoriteButtonState(button, isFav);
+            // Solo hacer la llamada adicional si el botón no tiene estado establecido desde el servidor
+            const buttonsNeedingUpdate = Array.from(favoriteAlbumButtons).filter(button => {
+                const path = button.querySelector('path');
+                return path && path.getAttribute('fill') === 'none'; // Solo actualizar si está vacío
             });
+            
+            if (buttonsNeedingUpdate.length > 0) {
+                const favs = await getFavoriteAlbums();
+                buttonsNeedingUpdate.forEach(button => {
+                    const id = parseInt(button.dataset.favAlbum);
+                    let isFav = false;
+                    if (favs && favs.length) {
+                        isFav = favs.some(item => (typeof item === 'number' ? item === id : (item && item.id !== undefined ? item.id === id : false)));
+                    }
+                    updateFavoriteButtonState(button, isFav);
+                });
+            }
         }
     } catch (e) {
         console.warn('Error inicializando estados de álbumes favoritos:', e);

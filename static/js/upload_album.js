@@ -2,6 +2,40 @@ document.addEventListener('DOMContentLoaded', function(){
     const form = document.getElementById('upload-album-form');
     const uploadBtn = document.getElementById('upload-btn');
     const messageDiv = document.getElementById('message');
+    const songsSelect = document.getElementById('songs');
+
+    // Cargar canciones del artista desde el microservicio TYA
+    async function loadSongs() {
+        try {
+            const resp = await fetch('/api/my-songs', {
+                credentials: 'same-origin'
+            });
+            if (resp.ok) {
+                const songs = await resp.json();
+                songsSelect.innerHTML = '';
+                
+                if (songs.length === 0) {
+                    songsSelect.innerHTML = '<option value="" disabled>No tienes canciones creadas aún</option>';
+                } else {
+                    songs.forEach(song => {
+                        const option = document.createElement('option');
+                        option.value = song.songId;
+                        option.textContent = song.title || `Canción ${song.songId}`;
+                        songsSelect.appendChild(option);
+                    });
+                }
+            } else {
+                songsSelect.innerHTML = '<option value="" disabled>Error al cargar canciones</option>';
+                console.error('Error cargando canciones:', resp.status);
+            }
+        } catch (err) {
+            console.error('Error cargando canciones:', err);
+            songsSelect.innerHTML = '<option value="" disabled>Error de conexión</option>';
+        }
+    }
+
+    // Cargar las canciones al iniciar
+    loadSongs();
 
     form.addEventListener('submit', async function(e){
         e.preventDefault();
@@ -17,23 +51,27 @@ document.addEventListener('DOMContentLoaded', function(){
             releaseDate: document.getElementById('releaseDate').value || null
         };
 
-        // Procesar géneros (IDs separados por comas)
-        const genresInput = document.getElementById('genres').value.trim();
-        if(genresInput){
-            formData.genres = genresInput.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
-        }
-
-        // Procesar canciones (IDs separados por comas)
-        const songsInput = document.getElementById('songs').value.trim();
-        if(songsInput){
-            formData.songs = songsInput.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+        // Procesar canciones seleccionadas (multi-select)
+        const selectedSongs = Array.from(songsSelect.selectedOptions)
+            .map(opt => parseInt(opt.value))
+            .filter(id => !isNaN(id));
+        
+        if (selectedSongs.length > 0) {
+            formData.songs = selectedSongs;
+        } else {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Debes seleccionar al menos una canción para el álbum';
+            messageDiv.style.display = 'block';
+            uploadBtn.disabled = false;
+            return;
         }
 
         try{
             const resp = await fetch('/album/upload', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(formData),
+                credentials: 'same-origin'
             });
             
             const data = await resp.json();

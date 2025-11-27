@@ -438,15 +438,39 @@ async function processPay() {
         };
 
         // Extraer IDs según tipo de producto
-        window.currentCart.forEach(item => {
-            if (item.songId) {
-                purchaseData.songIds.push(item.songId);
-            } else if (item.albumId) {
-                purchaseData.albumIds.push(item.albumId);
-            } else if (item.merchId) {
-                purchaseData.merchIds.push(item.merchId);
+        // Soportar tanto camelCase como snake_case
+        console.log('Cart.js: Current cart before extracting IDs:', window.currentCart);
+        console.log('Cart.js: Cart length:', window.currentCart ? window.currentCart.length : 0);
+        
+        if (!window.currentCart || window.currentCart.length === 0) {
+            console.error('Cart.js: ERROR - currentCart is empty or undefined!');
+            showNotification('El carrito está vacío');
+            return;
+        }
+        
+        window.currentCart.forEach((item, index) => {
+            console.log(`Cart.js: Item ${index}:`, item);
+            const songId = item.songId || item.song_id;
+            const albumId = item.albumId || item.album_id;
+            const merchId = item.merchId || item.merch_id;
+            
+            console.log(`Cart.js: Item ${index} IDs - songId: ${songId}, albumId: ${albumId}, merchId: ${merchId}`);
+            
+            if (songId) {
+                purchaseData.songIds.push(songId);
+                console.log(`Cart.js: Added songId ${songId} to purchaseData`);
+            } else if (albumId) {
+                purchaseData.albumIds.push(albumId);
+                console.log(`Cart.js: Added albumId ${albumId} to purchaseData`);
+            } else if (merchId) {
+                purchaseData.merchIds.push(merchId);
+                console.log(`Cart.js: Added merchId ${merchId} to purchaseData`);
+            } else {
+                console.warn(`Cart.js: Item ${index} has no valid ID`, item);
             }
         });
+        
+        console.log('Cart.js: Purchase data prepared:', purchaseData);
 
         // Realizar la compra mediante POST /purchase
         const response = await fetch('/purchase', {
@@ -532,13 +556,20 @@ function updateSummary() {
 async function checkAuthenticationStatus() {
     console.log('Cart.js: Checking authentication status...');
     try {
+        // Crear un controlador AbortController para timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+
         const response = await fetch('/payment', {
             method: 'GET',
             credentials: 'include',
             headers: {
                 'Accept': 'application/json'
-            }
+            },
+            signal: controller.signal
         });
+
+        clearTimeout(timeoutId); // Limpiar el timeout si la petición se completa
 
         console.log('Cart.js: Payment methods response status:', response.status);
 
@@ -586,6 +617,18 @@ async function checkAuthenticationStatus() {
         }
     } catch (error) {
         console.error('Error al verificar autenticación:', error);
+        
+        // Si es un timeout (AbortError), mostrar mensaje específico y reintentar
+        if (error.name === 'AbortError') {
+            console.log('Cart.js: Authentication check timed out after 5 seconds');
+            showNotification('Verificación de autenticación lenta. Reintentando en segundo plano...');
+            
+            // Reintentar en segundo plano sin bloquear la UI
+            setTimeout(() => {
+                checkAuthenticationStatus();
+            }, 1000);
+            return;
+        }
         
         // Mostrar sección de no autenticado por defecto
         const checkoutSection = document.getElementById('checkout-section');

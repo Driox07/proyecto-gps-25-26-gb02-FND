@@ -56,8 +56,10 @@
                 <div class="form-row">
                     <div class="form-group full">
                         <label for="collaborators">Colaboradores</label>
-                        <input type="text" id="collaborators" name="collaborators" placeholder="Ej: 5,12,8 (IDs de artistas separados por comas)">
-                        <small>IDs de otros artistas que colaboraron en este merchandising</small>
+                        <select id="collaborators" name="collaborators" multiple size="4">
+                            <option value="" disabled>Cargando artistas...</option>
+                        </select>
+                        <small>Mantén Ctrl (Cmd en Mac) presionado para seleccionar múltiples colaboradores (opcional)</small>
                     </div>
                 </div>
 
