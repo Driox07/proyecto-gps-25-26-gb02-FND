@@ -6,8 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 import os
 import requests
+import base64
+from io import BytesIO
 import view.oversound_view as osv
 import controller.msvc_servers as servers
+from mutagen import File as MutagenFile
 
 app = FastAPI()
 osv = osv.View()
@@ -993,7 +996,60 @@ def upload_song_page(request: Request):
     if not userdata.get('artistId'):
         return osv.get_error_view(request, userdata, "Debes ser un artista para subir canciones", "")
     
-    return osv.get_upload_song_view(request, userdata)
+    # Obtener géneros desde TYA
+    genres = []
+    try:
+        resp = requests.get(f"{servers.TYA}/genres", timeout=5, headers={"Accept": "application/json"})
+        if resp.ok:
+            genres = resp.json()
+    except requests.RequestException:
+        pass  # Dejar vacío si falla
+    
+    # Obtener artistas desde TYA
+    artists = []
+    try:
+        # Primero filter para obtener todos los artistas (objetos básicos)
+        filter_resp = requests.get(f"{servers.TYA}/artist/filter", timeout=5, headers={"Accept": "application/json"})
+        if filter_resp.ok:
+            artist_objects = filter_resp.json()
+            artist_ids = artist_objects
+            if artist_ids:
+                # Luego list para obtener detalles completos
+                ids_str = ','.join(map(str, artist_ids))
+                list_resp = requests.get(f"{servers.TYA}/artist/list?ids={ids_str}", timeout=5, headers={"Accept": "application/json"})
+                if list_resp.ok:
+                    artists = list_resp.json()
+    except requests.RequestException:
+        pass
+    
+    # Obtener álbumes del artista desde TYA
+    albums = []
+    try:
+        artist_id = userdata.get('artistId')
+        if artist_id:
+            # Obtener el artista para ver sus álbumes
+            artist_resp = requests.get(
+                f"{servers.TYA}/artist/{artist_id}",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            if artist_resp.ok:
+                artist_data = artist_resp.json()
+                album_ids = artist_data.get('owner_albums', [])
+                if album_ids:
+                    # Obtener detalles de los álbumes
+                    ids_str = ','.join(map(str, album_ids))
+                    albums_resp = requests.get(
+                        f"{servers.TYA}/album/list?ids={ids_str}",
+                        timeout=5,
+                        headers={"Accept": "application/json"}
+                    )
+                    if albums_resp.ok:
+                        albums = albums_resp.json()
+    except requests.RequestException:
+        pass
+    
+    return osv.get_upload_song_view(request, userdata, genres, artists, albums)
 
 
 @app.post("/song/upload")
@@ -1013,13 +1069,81 @@ async def upload_song(request: Request):
     try:
         body = await request.json()
         
-        # Agregar el ID del artista
-        body['artistId'] = userdata.get('artistId')
+        # Extraer datos del body
+        title = body.get('title')
+        price = float(body.get('price'))
+        description = body.get('description') or None
+        release_date = body.get('releaseDate') or None
+        album_id = body.get('albumId')
+        genres = body.get('genres', [])
+        collaborators = body.get('collaborators', [])
+        audio_base64 = body.get('audioFile')
+        cover_base64 = body.get('coverFile')
+        cover_extension = body.get('coverExtension')
+        
+        if not audio_base64:
+            return JSONResponse(content={"success": False, "message": "Archivo de audio requerido"}, status_code=400)
+        
+        if not cover_base64:
+            return JSONResponse(content={"success": False, "message": "Imagen de portada requerida"}, status_code=400)
+        
+        # Decodificar archivos
+        audio_content = base64.b64decode(audio_base64)
+        cover_content = base64.b64decode(cover_base64)
+        
+        # Calcular duración del archivo de audio
+        audio = MutagenFile(BytesIO(audio_content))
+        if audio and audio.info:
+            duration = int(audio.info.length)
+        else:
+            duration = 0
+        
+        # Convertir imagen de portada a base64 con prefijo
+        cover_base64_full = f"data:image/{cover_extension};base64,{cover_base64}"
+        
+        # Subir archivo a PT
+        pt_body = {'track': audio_base64}
+        pt_resp = requests.post(f"{servers.PT}/track/upload", json=pt_body, timeout=10, headers={"Cookie": f"oversound_auth={token}"})
+        
+        if not pt_resp.ok:
+            return JSONResponse(content={"success": False, "message": f"Error subiendo a PT: {pt_resp.text}"}, status_code=pt_resp.status_code)
+        
+        pt_data = pt_resp.json()
+        track_id = pt_data['idtrack']
+        
+        # Preparar datos para TYA
+        release_date_formatted = f"{release_date}T00:00:00Z" if release_date else None
+        body_tya = {
+            'title': title,
+            'duration': duration,
+            'price': price,
+            'description': description,
+            'trackId': track_id,
+            'cover': cover_base64_full,
+            'releaseDate': release_date_formatted,
+            'albumId': album_id,
+            'genres': [int(g) for g in genres],
+            'collaborators': [int(c) for c in collaborators] if collaborators else []
+        }
+        if album_id:
+            # Obtener el álbum para calcular albumOrder
+            album_resp = requests.get(
+                f"{servers.TYA}/album/{album_id}",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            if album_resp.ok:
+                album_data = album_resp.json()
+                songs_in_album = album_data.get('songs', [])
+                album_order = len(songs_in_album) + 1
+            else:
+                album_order = 1  # Fallback
+            body_tya['albumOrder'] = album_order
         
         # Enviar a TYA para crear la canción
         song_resp = requests.post(
             f"{servers.TYA}/song/upload",
-            json=body,
+            json=body_tya,
             timeout=15,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
@@ -1027,12 +1151,12 @@ async def upload_song(request: Request):
         if song_resp.ok:
             song_data = song_resp.json()
             return JSONResponse(content={
+                "success": True,
                 "message": "Canción subida exitosamente",
                 "songId": song_data.get('songId')
             })
         else:
-            error_data = song_resp.json() if song_resp.text else {"error": "Error desconocido"}
-            return JSONResponse(content=error_data, status_code=song_resp.status_code)
+            return JSONResponse(content={"success": False, "message": f"Error en TYA: {song_resp.text}"}, status_code=song_resp.status_code)
     
     except Exception as e:
         print(f"Error subiendo canción: {e}")
