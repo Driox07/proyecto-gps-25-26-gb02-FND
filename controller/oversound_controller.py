@@ -1545,7 +1545,7 @@ def get_song_edit_page(request: Request, songId: int):
         song_data = song_resp.json()
         
         # Verificar que el usuario sea el propietario
-        if userdata.get('artistId') != song_data.get('artistId'):
+        if int(userdata.get('artistId')) != int(song_data.get('artistId')):
             return osv.get_error_view(request, userdata, "No tienes permiso para editar esta canción", "")
         
         # Obtener géneros disponibles
@@ -1594,7 +1594,7 @@ async def update_song(request: Request, songId: int):
         song_resp.raise_for_status()
         song_data = song_resp.json()
         
-        if userdata.get('artistId') != song_data.get('artistId'):
+        if int(userdata.get('artistId')) != int(song_data.get('artistId')):
             return JSONResponse(content={"error": "No tienes permiso para editar esta canción"}, status_code=403)
         
         # Obtener datos del formulario
@@ -1857,7 +1857,7 @@ async def update_album(request: Request, albumId: int):
         album_resp.raise_for_status()
         album_data = album_resp.json()
         
-        if userdata.get('artistId') != album_data.get('artistId'):
+        if int(userdata.get('artistId')) != int(album_data.get('artistId')):
             return JSONResponse(content={"error": "No tienes permiso para editar este álbum"}, status_code=403)
         
         # Obtener datos del formulario
@@ -2043,7 +2043,7 @@ async def update_merch(request: Request, merchId: int):
         merch_resp.raise_for_status()
         merch_data = merch_resp.json()
         
-        if userdata.get('artistId') != merch_data.get('artistId'):
+        if int(userdata.get('artistId')) != int(merch_data.get('artistId')):
             return JSONResponse(content={"error": "No tienes permiso para editar este producto"}, status_code=403)
         
         # Obtener datos del formulario
