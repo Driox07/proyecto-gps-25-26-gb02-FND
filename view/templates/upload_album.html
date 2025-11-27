@@ -57,18 +57,42 @@
 
                 <div class="form-row">
                     <div class="form-group full">
-                        <label for="cover">Portada (URL)</label>
-                        <input type="url" id="cover" name="cover" placeholder="https://ejemplo.com/cover.jpg">
+                        <label for="cover">Portada del álbum *</label>
+                        <div class="file-upload-panel" id="cover-upload-panel">
+                            <input type="file" id="cover" name="cover" accept="image/*" style="display: none;">
+                            <div class="file-upload-btn" id="cover-upload-btn">
+                                <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10,9 9,9 8,9"></polyline>
+                                </svg>
+                                Seleccionar imagen
+                            </div>
+                            <div class="file-info" id="cover-info">No se ha seleccionado ninguna imagen</div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group full">
-                        <label for="songs">Canciones del álbum *</label>
-                        <select id="songs" name="songs" multiple size="6" required>
-                            <option value="" disabled>Cargando tus canciones...</option>
-                        </select>
-                        <small>Mantén Ctrl (Cmd en Mac) presionado para seleccionar múltiples canciones</small>
+                        <label for="song-select">Añadir canciones al álbum</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <select id="song-select" style="flex: 1;">
+                                <option value="" disabled selected>Selecciona una canción...</option>
+                            </select>
+                            <button type="button" id="add-song-btn" class="btn btn-secondary" style="padding: 12px 20px;">Añadir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
+                        <label>Canciones del álbum *</label>
+                        <div id="album-songs" class="album-songs-list">
+                            <p style="color: #999; font-style: italic;">No hay canciones añadidas aún</p>
+                        </div>
                     </div>
                 </div>
 

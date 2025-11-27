@@ -1,179 +1,126 @@
 document.addEventListener('DOMContentLoaded', function(){
     const form = document.getElementById('upload-song-form');
-    const uploadBtn = document.getElementById('upload-btn');
-    const messageDiv = document.getElementById('message');
-    const genresSelect = document.getElementById('genres');
-    const collaboratorsSelect = document.getElementById('collaborators');
-    const albumSelect = document.getElementById('albumId');
 
-    // Cargar géneros desde el microservicio TYA
-    async function loadGenres() {
-        try {
-            const resp = await fetch('/api/genres', {
-                credentials: 'same-origin'
-            });
-            if (resp.ok) {
-                const genres = await resp.json();
-                genresSelect.innerHTML = '';
-                
-                if (genres.length === 0) {
-                    genresSelect.innerHTML = '<option value="" disabled>No hay géneros disponibles</option>';
-                } else {
-                    genres.forEach(genre => {
-                        const option = document.createElement('option');
-                        option.value = genre.id;
-                        option.textContent = genre.name;
-                        genresSelect.appendChild(option);
-                    });
-                }
+    // Función para manejar cambio de archivo
+    function handleFileChange(inputId, infoId, type) {
+        const input = document.getElementById(inputId);
+        const info = document.getElementById(infoId);
+        
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                info.textContent = `Seleccionado: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                info.style.color = '#28a745';
             } else {
-                genresSelect.innerHTML = '<option value="" disabled>Error al cargar géneros</option>';
-                console.error('Error cargando géneros:', resp.status);
+                info.textContent = '';
             }
-        } catch (err) {
-            console.error('Error cargando géneros:', err);
-            genresSelect.innerHTML = '<option value="" disabled>Error de conexión</option>';
-        }
+        });
     }
 
-    // Cargar artistas disponibles para colaborar desde el microservicio TYA
-    async function loadArtists() {
-        try {
-            const resp = await fetch('/api/artists', {
-                credentials: 'same-origin'
-            });
-            if (resp.ok) {
-                const artists = await resp.json();
-                collaboratorsSelect.innerHTML = '';
-                
-                if (artists.length === 0) {
-                    const option = document.createElement('option');
-                    option.value = '';
-                    option.disabled = true;
-                    option.textContent = 'No hay otros artistas disponibles';
-                    collaboratorsSelect.appendChild(option);
-                } else {
-                    artists.forEach(artist => {
-                        const option = document.createElement('option');
-                        option.value = artist.artistId;
-                        option.textContent = artist.artisticName || `Artista ${artist.artistId}`;
-                        collaboratorsSelect.appendChild(option);
-                    });
-                }
-            } else {
-                collaboratorsSelect.innerHTML = '<option value="" disabled>Error al cargar artistas</option>';
-                console.error('Error cargando artistas:', resp.status);
-            }
-        } catch (err) {
-            console.error('Error cargando artistas:', err);
-            collaboratorsSelect.innerHTML = '<option value="" disabled>Error de conexión</option>';
-        }
-    }
-
-    // Cargar álbumes del artista desde el microservicio TYA
-    async function loadAlbums() {
-        try {
-            const resp = await fetch('/api/my-albums', {
-                credentials: 'same-origin'
-            });
-            if (resp.ok) {
-                const albums = await resp.json();
-                // Mantener la primera opción "Sin álbum"
-                albumSelect.innerHTML = '<option value="">Sin álbum (single)</option>';
-                
-                if (albums.length > 0) {
-                    albums.forEach(album => {
-                        const option = document.createElement('option');
-                        option.value = album.albumId;
-                        option.textContent = album.title || `Álbum ${album.albumId}`;
-                        albumSelect.appendChild(option);
-                    });
-                } else {
-                    const option = document.createElement('option');
-                    option.disabled = true;
-                    option.textContent = '(No tienes álbumes creados)';
-                    albumSelect.appendChild(option);
-                }
-            } else {
-                console.error('Error cargando álbumes:', resp.status);
-            }
-        } catch (err) {
-            console.error('Error cargando álbumes:', err);
-        }
-    }
-
-    // Cargar todos los datos al iniciar la página
-    loadGenres();
-    loadArtists();
-    loadAlbums();
+    // Configurar manejadores para archivos
+    handleFileChange('audioFile', 'audioInfo', 'audio');
+    handleFileChange('coverFile', 'coverInfo', 'image');
 
     form.addEventListener('submit', async function(e){
         e.preventDefault();
+        const uploadBtn = document.getElementById('upload-btn');
+        const messageDiv = document.getElementById('message');
         uploadBtn.disabled = true;
         messageDiv.style.display = 'none';
 
-        // Recoger datos del formulario
-        const formData = {
-            title: document.getElementById('title').value.trim(),
-            duration: parseInt(document.getElementById('duration').value),
-            price: parseFloat(document.getElementById('price').value),
-            description: document.getElementById('description').value.trim() || null,
-            trackId: parseInt(document.getElementById('trackId').value),
-            cover: document.getElementById('cover').value.trim(),
-            releaseDate: document.getElementById('releaseDate').value || null,
-            albumId: albumSelect.value ? parseInt(albumSelect.value) : null
-        };
+        // Función para convertir archivo a base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]); // Remover el prefijo data:...
+                reader.onerror = error => reject(error);
+            });
+        }
 
-        // Procesar géneros seleccionados (multi-select)
-        const selectedGenres = Array.from(genresSelect.selectedOptions)
-            .map(opt => parseInt(opt.value))
-            .filter(id => !isNaN(id));
-        
-        if (selectedGenres.length > 0) {
-            formData.genres = selectedGenres;
-        } else {
+        // Obtener archivos y convertir a base64
+        const audioFile = document.getElementById('audioFile').files[0];
+        const coverFile = document.getElementById('coverFile').files[0];
+
+        if (!audioFile) {
             messageDiv.className = 'message error';
-            messageDiv.textContent = 'Debes seleccionar al menos un género';
+            messageDiv.textContent = 'Debes seleccionar un archivo de audio';
             messageDiv.style.display = 'block';
             uploadBtn.disabled = false;
             return;
         }
 
-        // Procesar colaboradores seleccionados (multi-select, opcional)
-        const selectedCollabs = Array.from(collaboratorsSelect.selectedOptions)
-            .map(opt => parseInt(opt.value))
-            .filter(id => !isNaN(id));
-        
-        if (selectedCollabs.length > 0) {
-            formData.collaborators = selectedCollabs;
+        if (!coverFile) {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Debes seleccionar una imagen de portada';
+            messageDiv.style.display = 'block';
+            uploadBtn.disabled = false;
+            return;
         }
 
-        try{
+        try {
+            const audioBase64 = await fileToBase64(audioFile);
+            const coverBase64 = await fileToBase64(coverFile);
+
+            // Procesar géneros seleccionados (multi-select)
+            const selectedGenres = Array.from(document.getElementById('genres').selectedOptions)
+                .map(opt => parseInt(opt.value))
+                .filter(id => !isNaN(id));
+            
+            if (selectedGenres.length === 0) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'Debes seleccionar al menos un género';
+                messageDiv.style.display = 'block';
+                uploadBtn.disabled = false;
+                return;
+            }
+
+            // Procesar colaboradores seleccionados (multi-select, opcional)
+            const selectedCollabs = Array.from(document.getElementById('collaborators').selectedOptions)
+                .map(opt => parseInt(opt.value))
+                .filter(id => !isNaN(id));
+
+            // Crear objeto JSON
+            const data = {
+                title: document.getElementById('title').value.trim(),
+                price: parseFloat(document.getElementById('price').value),
+                description: document.getElementById('description').value.trim() || null,
+                releaseDate: document.getElementById('releaseDate').value || null,
+                albumId: document.getElementById('albumId').value ? parseInt(document.getElementById('albumId').value) : null,
+                genres: selectedGenres,
+                collaborators: selectedCollabs,
+                audioFile: audioBase64,
+                coverFile: coverBase64,
+                coverExtension: coverFile.name.split('.').pop().toLowerCase()
+            };
+
             const resp = await fetch('/song/upload', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data),
                 credentials: 'same-origin'
             });
             
-            const data = await resp.json();
+            const responseData = await resp.json();
             
-            if(resp.ok){
+            if(responseData.success){
                 messageDiv.className = 'message success';
-                messageDiv.textContent = data.message || 'Canción subida exitosamente!';
+                messageDiv.textContent = responseData.message || 'Canción subida exitosamente!';
                 messageDiv.style.display = 'block';
                 
                 // Redirigir al perfil del artista después de 2 segundos
                 setTimeout(() => {
-                    if(data.songId){
-                        window.location.href = `/song/${data.songId}`;
+                    if(responseData.songId){
+                        window.location.href = `/song/${responseData.songId}`;
                     } else {
                         window.location.href = '/artist/studio';
                     }
                 }, 2000);
             } else {
                 messageDiv.className = 'message error';
-                messageDiv.textContent = data.error || 'No se pudo subir la canción.';
+                messageDiv.textContent = responseData.message || 'No se pudo subir la canción.';
                 messageDiv.style.display = 'block';
                 uploadBtn.disabled = false;
             }

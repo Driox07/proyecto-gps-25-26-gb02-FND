@@ -185,14 +185,100 @@ input:invalid:not(:placeholder-shown) {
     border-color: #f56565;
 }
 
-/* Message styles */
-.message {
-    padding: 15px 20px;
+/* File upload panel styles */
+.file-upload-panel {
+    border: 2px dashed #e0e0e0;
     border-radius: 10px;
-    margin-bottom: 20px;
+    padding: 20px;
+    text-align: center;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.file-upload-panel:hover {
+    border-color: #667eea;
+    background-color: #f0f2ff;
+}
+
+.file-upload-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+.file-upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.file-upload-btn .icon {
+    font-size: 20px;
+}
+
+.file-info {
+    margin-top: 10px;
     font-size: 14px;
-    line-height: 1.5;
-    animation: slideIn 0.4s ease-out;
+    color: #666;
+    font-style: italic;
+}
+
+/* Album songs list styles */
+.album-songs-list {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    min-height: 150px;
+    padding: 15px;
+    background-color: #f8f9fa;
+}
+
+.song-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: move;
+}
+
+.song-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.song-item.dragging {
+    opacity: 0.5;
+}
+
+.song-title {
+    flex: 1;
+    font-weight: 500;
+}
+
+.song-remove {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.song-remove:hover {
+    background: #c82333;
 }
 
 @keyframes slideIn {

@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cover: document.getElementById('cover').value.trim(),
             releaseDate: document.getElementById('releaseDate').value || null
         };
+
         
         // Validar campos requeridos (para merch, la descripción es obligatoria)
         if (!formData.title || !formData.price || !formData.description || !formData.cover) {
@@ -38,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
-            const response = await fetch(`/merch/${merchId}/edit`, {
+            const response = await fetch(`/merch/${merchId}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

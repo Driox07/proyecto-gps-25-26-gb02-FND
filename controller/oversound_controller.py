@@ -6,8 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 import os
 import requests
+import base64
+from io import BytesIO
 import view.oversound_view as osv
 import controller.msvc_servers as servers
+from mutagen import File as MutagenFile
 
 app = FastAPI()
 osv = osv.View()
@@ -98,14 +101,14 @@ def index(request: Request):
         print(f"Error fetching top artists from RYE: {e}")
 
     try:
-        rs = requests.get(f"{servers.RYE}/recommendations/song", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+        rs = requests.get(f"{servers.RYE}/recommendations/song", timeout=20, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
         if rs.ok:
             rec_songs = rs.json()
     except requests.RequestException as e:
         print(f"Error fetching recommended songs from RYE: {e}")
 
     try:
-        ra = requests.get(f"{servers.RYE}/recommendations/artist", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
+        ra = requests.get(f"{servers.RYE}/recommendations/artist", timeout=10, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
         if ra.ok:
             rec_artists_ids = ra.json()
             # Enriquecer con datos completos de TYA
@@ -1020,7 +1023,60 @@ def upload_song_page(request: Request):
     if not userdata.get('artistId'):
         return osv.get_error_view(request, userdata, "Debes ser un artista para subir canciones", "")
     
-    return osv.get_upload_song_view(request, userdata)
+    # Obtener géneros desde TYA
+    genres = []
+    try:
+        resp = requests.get(f"{servers.TYA}/genres", timeout=5, headers={"Accept": "application/json"})
+        if resp.ok:
+            genres = resp.json()
+    except requests.RequestException:
+        pass  # Dejar vacío si falla
+    
+    # Obtener artistas desde TYA
+    artists = []
+    try:
+        # Primero filter para obtener todos los artistas (objetos básicos)
+        filter_resp = requests.get(f"{servers.TYA}/artist/filter", timeout=5, headers={"Accept": "application/json"})
+        if filter_resp.ok:
+            artist_objects = filter_resp.json()
+            artist_ids = artist_objects
+            if artist_ids:
+                # Luego list para obtener detalles completos
+                ids_str = ','.join(map(str, artist_ids))
+                list_resp = requests.get(f"{servers.TYA}/artist/list?ids={ids_str}", timeout=5, headers={"Accept": "application/json"})
+                if list_resp.ok:
+                    artists = list_resp.json()
+    except requests.RequestException:
+        pass
+    
+    # Obtener álbumes del artista desde TYA
+    albums = []
+    try:
+        artist_id = userdata.get('artistId')
+        if artist_id:
+            # Obtener el artista para ver sus álbumes
+            artist_resp = requests.get(
+                f"{servers.TYA}/artist/{artist_id}",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            if artist_resp.ok:
+                artist_data = artist_resp.json()
+                album_ids = artist_data.get('owner_albums', [])
+                if album_ids:
+                    # Obtener detalles de los álbumes
+                    ids_str = ','.join(map(str, album_ids))
+                    albums_resp = requests.get(
+                        f"{servers.TYA}/album/list?ids={ids_str}",
+                        timeout=5,
+                        headers={"Accept": "application/json"}
+                    )
+                    if albums_resp.ok:
+                        albums = albums_resp.json()
+    except requests.RequestException:
+        pass
+    
+    return osv.get_upload_song_view(request, userdata, genres, artists, albums)
 
 
 @app.post("/song/upload")
@@ -1040,26 +1096,80 @@ async def upload_song(request: Request):
     try:
         body = await request.json()
         
-        # Agregar el ID del artista
-        body['artistId'] = userdata.get('artistId')
+        # Extraer datos del body
+        title = body.get('title')
+        price = float(body.get('price'))
+        description = body.get('description') or None
+        release_date = body.get('releaseDate') or None
+        album_id = body.get('albumId')
+        genres = body.get('genres', [])
+        collaborators = body.get('collaborators', [])
+        audio_base64 = body.get('audioFile')
+        cover_base64 = body.get('coverFile')
+        cover_extension = body.get('coverExtension')
+        
+        if not audio_base64:
+            return JSONResponse(content={"success": False, "message": "Archivo de audio requerido"}, status_code=400)
+        
+        if not cover_base64:
+            return JSONResponse(content={"success": False, "message": "Imagen de portada requerida"}, status_code=400)
+        
+        # Decodificar archivos
+        audio_content = base64.b64decode(audio_base64)
+        cover_content = base64.b64decode(cover_base64)
+        
+        # Calcular duración del archivo de audio
+        audio = MutagenFile(BytesIO(audio_content))
+        if audio and audio.info:
+            duration = int(audio.info.length)
+        else:
+            duration = 0
+        
+        # Convertir imagen de portada a base64 con prefijo
+        cover_base64_full = f"data:image/{cover_extension};base64,{cover_base64}"
+        
+        # Subir archivo a PT
+        pt_body = {'track': audio_base64}
+        pt_resp = requests.post(f"{servers.PT}/track/upload", json=pt_body, timeout=10, headers={"Cookie": f"oversound_auth={token}"})
+        
+        if not pt_resp.ok:
+            return JSONResponse(content={"success": False, "message": f"Error subiendo a PT: {pt_resp.text}"}, status_code=pt_resp.status_code)
+        
+        pt_data = pt_resp.json()
+        track_id = pt_data['idtrack']
+        
+        # Preparar datos para TYA
+        release_date_formatted = f"{release_date}T00:00:00Z" if release_date else None
+        body_tya = {
+            'title': title,
+            'duration': duration,
+            'price': price,
+            'description': description,
+            'trackId': track_id,
+            'cover': cover_base64_full,
+            'releaseDate': release_date_formatted,
+            'albumId': album_id,
+            'genres': [int(g) for g in genres],
+            'collaborators': [int(c) for c in collaborators] if collaborators else []
+        }
         
         # Enviar a TYA para crear la canción
         song_resp = requests.post(
             f"{servers.TYA}/song/upload",
-            json=body,
-            timeout=15,
+            json=body_tya,
+            timeout=20,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
         
         if song_resp.ok:
             song_data = song_resp.json()
             return JSONResponse(content={
+                "success": True,
                 "message": "Canción subida exitosamente",
                 "songId": song_data.get('songId')
             })
         else:
-            error_data = song_resp.json() if song_resp.text else {"error": "Error desconocido"}
-            return JSONResponse(content=error_data, status_code=song_resp.status_code)
+            return JSONResponse(content={"success": False, "message": f"Error en TYA: {song_resp.text}"}, status_code=song_resp.status_code)
     
     except Exception as e:
         print(f"Error subiendo canción: {e}")
@@ -1101,13 +1211,29 @@ async def upload_album(request: Request):
     try:
         body = await request.json()
         
-        # Agregar el ID del artista
-        body['artistId'] = userdata.get('artistId')
+        # Procesar cover
+        cover_base64 = body.get('coverFile')
+        cover_extension = body.get('coverExtension')
+        if cover_base64 and cover_extension:
+            cover_base64_full = f"data:image/{cover_extension};base64,{cover_base64}"
+        else:
+            cover_base64_full = None
+        
+        # Preparar datos para TYA
+        tya_body = {
+            'title': body.get('title'),
+            'price': body.get('price'),
+            'description': body.get('description'),
+            'releaseDate': body.get('releaseDate'),
+            'cover': cover_base64_full,
+            'songs': body.get('songs', []),
+            'artistId': userdata.get('artistId')
+        }
         
         # Enviar a TYA para crear el álbum
         album_resp = requests.post(
             f"{servers.TYA}/album/upload",
-            json=body,
+            json=tya_body,
             timeout=15,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
@@ -1115,16 +1241,16 @@ async def upload_album(request: Request):
         if album_resp.ok:
             album_data = album_resp.json()
             return JSONResponse(content={
+                "success": True,
                 "message": "Álbum creado exitosamente",
                 "albumId": album_data.get('albumId')
             })
         else:
-            error_data = album_resp.json() if album_resp.text else {"error": "Error desconocido"}
-            return JSONResponse(content=error_data, status_code=album_resp.status_code)
+            return JSONResponse(content={"success": False, "message": f"Error en TYA: {album_resp.text}"}, status_code=album_resp.status_code)
     
     except Exception as e:
         print(f"Error creando álbum: {e}")
-        return JSONResponse(content={"error": "Error al crear el álbum"}, status_code=500)
+        return JSONResponse(content={"success": False, "message": "Error al crear el álbum"}, status_code=500)
 
 
 # Upload Merchandising Routes
@@ -1868,8 +1994,9 @@ def get_merch_edit_page(request: Request, merchId: int):
         merch_resp.raise_for_status()
         merch_data = merch_resp.json()
         
+        print(userdata.get('artistId'), merch_data.get('artistId'))
         # Verificar que el usuario sea el propietario
-        if userdata.get('artistId') != merch_data.get('artistId'):
+        if int(userdata.get('artistId')) != int(merch_data.get('artistId')):
             return osv.get_error_view(request, userdata, "No tienes permiso para editar este producto", "")
         
         return osv.get_merch_edit_view(request, userdata, merch_data, servers.TYA)
@@ -2295,6 +2422,117 @@ def get_profile(request: Request):
         except requests.RequestException:
             payment_methods = []
         
+        # Obtener favoritos del usuario
+        favorite_songs = []
+        favorite_albums = []
+        favorite_artists = []
+        
+        try:
+            # Obtener canciones favoritas
+            songs_resp = requests.get(
+                f"{servers.SYU}/favs/songs",
+                timeout=2,
+                headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+            )
+            if songs_resp.ok:
+                song_ids = songs_resp.json()
+                if song_ids:
+                    # Obtener datos completos de las canciones
+                    song_ids_str = ','.join(map(str, song_ids))
+                    songs_data_resp = requests.get(
+                        f"{servers.TYA}/song/list?ids={song_ids_str}",
+                        timeout=5,
+                        headers={"Accept": "application/json"}
+                    )
+                    if songs_data_resp.ok:
+                        favorite_songs = songs_data_resp.json()
+                        # Resolver artistas de las canciones
+                        for song in favorite_songs:
+                            try:
+                                artist_resp = requests.get(
+                                    f"{servers.TYA}/artist/{song['artistId']}",
+                                    timeout=2,
+                                    headers={"Accept": "application/json"}
+                                )
+                                if artist_resp.ok:
+                                    song['artist'] = artist_resp.json()
+                                else:
+                                    song['artist'] = {"artistId": song['artistId'], "artisticName": "Artista Desconocido"}
+                            except requests.RequestException:
+                                song['artist'] = {"artistId": song['artistId'], "artisticName": "Artista Desconocido"}
+                        # Normalizar URLs de imágenes para canciones
+                        for song in favorite_songs:
+                            if song.get('cover'):
+                                song['cover'] = normalize_image_url(song['cover'], servers.TYA)
+        except requests.RequestException:
+            favorite_songs = []
+        
+        try:
+            # Obtener álbumes favoritos
+            albums_resp = requests.get(
+                f"{servers.SYU}/favs/albums",
+                timeout=2,
+                headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+            )
+            if albums_resp.ok:
+                album_ids = albums_resp.json()
+                if album_ids:
+                    # Obtener datos completos de los álbumes
+                    album_ids_str = ','.join(map(str, album_ids))
+                    albums_data_resp = requests.get(
+                        f"{servers.TYA}/album/list?ids={album_ids_str}",
+                        timeout=5,
+                        headers={"Accept": "application/json"}
+                    )
+                    if albums_data_resp.ok:
+                        favorite_albums = albums_data_resp.json()
+                        # Resolver artistas de los albums
+                        for album in favorite_albums:
+                            try:
+                                artist_resp = requests.get(
+                                    f"{servers.TYA}/artist/{album['artistId']}",
+                                    timeout=2,
+                                    headers={"Accept": "application/json"}
+                                )
+                                if artist_resp.ok:
+                                    album['artist'] = artist_resp.json()
+                                else:
+                                    album['artist'] = {"artistId": album['artistId'], "artisticName": "Artista Desconocido"}
+                            except requests.RequestException:
+                                album['artist'] = {"artistId": album['artistId'], "artisticName": "Artista Desconocido"}
+                        # Normalizar URLs de imágenes para álbumes
+                        for album in favorite_albums:
+                            if album.get('cover'):
+                                album['cover'] = normalize_image_url(album['cover'], servers.TYA)
+        except requests.RequestException:
+            favorite_albums = []
+        
+        try:
+            # Obtener artistas favoritos
+            artists_resp = requests.get(
+                f"{servers.SYU}/favs/artists",
+                timeout=2,
+                headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+            )
+            if artists_resp.ok:
+                artist_ids = artists_resp.json()
+                if artist_ids:
+                    # Obtener datos completos de los artistas
+                    artist_ids_str = ','.join(map(str, artist_ids))
+                    artists_data_resp = requests.get(
+                        f"{servers.TYA}/artist/list?ids={artist_ids_str}",
+                        timeout=5,
+                        headers={"Accept": "application/json"}
+                    )
+                    if artists_data_resp.ok:
+                        favorite_artists = artists_data_resp.json()
+                        # Normalizar URLs de imágenes para artistas
+                        for artist in favorite_artists:
+                            if artist.get('artisticImage'):
+                                artist['artisticImage'] = normalize_image_url(artist['artisticImage'], servers.TYA)
+        except requests.RequestException:
+            favorite_artists = []
+        
         # Para simplificar, asumimos datos vacíos de biblioteca y listas
         # En un caso real, se obtendrían del servidor
         canciones_biblioteca = []
@@ -2307,6 +2545,9 @@ def get_profile(request: Request):
             listas_completas,
             is_own_profile=True,
             payment_methods=payment_methods,
+            favorite_songs=favorite_songs,
+            favorite_albums=favorite_albums,
+            favorite_artists=favorite_artists,
             syu_server=servers.SYU,
             tya_server=servers.TYA,
             pt_server=servers.PT
@@ -2352,6 +2593,118 @@ def get_user_profile(request: Request, username: str):
             except requests.RequestException:
                 payment_methods = []
         
+        # Obtener favoritos del usuario (solo si es perfil propio)
+        favorite_songs = []
+        favorite_albums = []
+        favorite_artists = []
+        
+        if is_own_profile:
+            try:
+                # Obtener canciones favoritas
+                songs_resp = requests.get(
+                    f"{servers.SYU}/favs/songs",
+                    timeout=2,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                if songs_resp.ok:
+                    song_ids = songs_resp.json()
+                    if song_ids:
+                        # Obtener datos completos de las canciones
+                        song_ids_str = ','.join(map(str, song_ids))
+                        songs_data_resp = requests.get(
+                            f"{servers.TYA}/song/list?ids={song_ids_str}",
+                            timeout=5,
+                            headers={"Accept": "application/json"}
+                        )
+                        if songs_data_resp.ok:
+                            favorite_songs = songs_data_resp.json()
+                            # Resolver artistas de las canciones
+                            for song in favorite_songs:
+                                try:
+                                    artist_resp = requests.get(
+                                        f"{servers.TYA}/artist/{song['artistId']}",
+                                        timeout=2,
+                                        headers={"Accept": "application/json"}
+                                    )
+                                    if artist_resp.ok:
+                                        song['artist'] = artist_resp.json()
+                                    else:
+                                        song['artist'] = {"artistId": song['artistId'], "artisticName": "Artista Desconocido"}
+                                except requests.RequestException:
+                                    song['artist'] = {"artistId": song['artistId'], "artisticName": "Artista Desconocido"}
+                            # Normalizar URLs de imágenes para canciones
+                            for song in favorite_songs:
+                                if song.get('cover'):
+                                    song['cover'] = normalize_image_url(song['cover'], servers.TYA)
+            except requests.RequestException:
+                favorite_songs = []
+            
+            try:
+                # Obtener álbumes favoritos
+                albums_resp = requests.get(
+                    f"{servers.SYU}/favs/albums",
+                    timeout=2,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                if albums_resp.ok:
+                    album_ids = albums_resp.json()
+                    if album_ids:
+                        # Obtener datos completos de los álbumes
+                        album_ids_str = ','.join(map(str, album_ids))
+                        albums_data_resp = requests.get(
+                            f"{servers.TYA}/album/list?ids={album_ids_str}",
+                            timeout=5,
+                            headers={"Accept": "application/json"}
+                        )
+                        if albums_data_resp.ok:
+                            favorite_albums = albums_data_resp.json()
+                            # Resolver artistas de los albums
+                            for album in favorite_albums:
+                                try:
+                                    artist_resp = requests.get(
+                                        f"{servers.TYA}/artist/{album['artistId']}",
+                                        timeout=2,
+                                        headers={"Accept": "application/json"}
+                                    )
+                                    if artist_resp.ok:
+                                        album['artist'] = artist_resp.json()
+                                    else:
+                                        album['artist'] = {"artistId": album['artistId'], "artisticName": "Artista Desconocido"}
+                                except requests.RequestException:
+                                    album['artist'] = {"artistId": album['artistId'], "artisticName": "Artista Desconocido"}
+                            # Normalizar URLs de imágenes para álbumes
+                            for album in favorite_albums:
+                                if album.get('cover'):
+                                    album['cover'] = normalize_image_url(album['cover'], servers.TYA)
+            except requests.RequestException:
+                favorite_albums = []
+            
+            try:
+                # Obtener artistas favoritos
+                artists_resp = requests.get(
+                    f"{servers.SYU}/favs/artists",
+                    timeout=2,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                if artists_resp.ok:
+                    artist_ids = artists_resp.json()
+                    if artist_ids:
+                        # Obtener datos completos de los artistas
+                        artist_ids_str = ','.join(map(str, artist_ids))
+                        artists_data_resp = requests.get(
+                            f"{servers.TYA}/artist/list?ids={artist_ids_str}",
+                            timeout=5,
+                            headers={"Accept": "application/json"}
+                        )
+                        if artists_data_resp.ok:
+                            favorite_artists = artists_data_resp.json()
+                            # Normalizar URLs de imágenes para artistas
+                            for artist in favorite_artists:
+                                if artist.get('artisticImage'):
+                                    artist['artisticImage'] = normalize_image_url(artist['artisticImage'], servers.TYA)
+            except requests.RequestException:
+                favorite_artists = []
+        
         # Para simplificar, asumimos datos vacíos de biblioteca y listas
         canciones_biblioteca = []
         listas_completas = []
@@ -2363,6 +2716,9 @@ def get_user_profile(request: Request, username: str):
             listas_completas,
             is_own_profile=is_own_profile,
             payment_methods=payment_methods if is_own_profile else [],
+            favorite_songs=favorite_songs,
+            favorite_albums=favorite_albums,
+            favorite_artists=favorite_artists,
             syu_server=servers.SYU,
             tya_server=servers.TYA,
             pt_server=servers.PT
@@ -2499,7 +2855,7 @@ async def add_payment_method(request: Request):
         return JSONResponse(content={"error": "Error al procesar la solicitud"}, status_code=500)
 
 
-@app.get("/profile/edit")
+@app.get("/profile-edit")
 def get_profile_edit_page(request: Request):
     """
     Ruta para mostrar la página de edición de perfil de usuario
@@ -2513,53 +2869,25 @@ def get_profile_edit_page(request: Request):
     return osv.get_user_profile_edit_view(request, userdata, servers.SYU)
 
 
-@app.patch("/profile/edit")
+@app.patch("/profile-edit")
 async def update_profile(request: Request):
     """
     Ruta para actualizar el perfil de usuario
     """
+    
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     
     if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
-    
+        return RedirectResponse("/login")
+
     try:
         # Obtener los datos del formulario
-        form_data = await request.form()
-        
-        # Preparar los datos para enviar al microservicio
-        update_data = {}
-        
-        # Campos de texto
-        if form_data.get('username'):
-            update_data['username'] = form_data.get('username')
-        if form_data.get('name'):
-            update_data['name'] = form_data.get('name')
-        if form_data.get('firstLastName'):
-            update_data['firstLastName'] = form_data.get('firstLastName')
-        if form_data.get('secondLastName'):
-            update_data['secondLastName'] = form_data.get('secondLastName')
-        if form_data.get('email'):
-            update_data['email'] = form_data.get('email')
-        if form_data.get('biografia'):
-            update_data['biografia'] = form_data.get('biografia')
-        
-        # Manejar imagen si se proporciona
-        imagen_file = form_data.get('imagen')
-        if imagen_file and hasattr(imagen_file, 'filename') and imagen_file.filename:
-            # Aquí deberías subir la imagen a un servicio de almacenamiento
-            # Por ahora, asumimos que el microservicio maneja la subida
-            files = {'imagen': (imagen_file.filename, imagen_file.file, imagen_file.content_type)}
-        else:
-            files = None
-        
-        # Hacer PATCH al microservicio SYU
-        username = userdata.get('username')
+        form_data = await request.json()
+
         resp = requests.patch(
-            f"{servers.SYU}/user/{username}",
-            data=update_data,
-            files=files,
+            f"{servers.SYU}/user/{userdata.get('username')}",
+            json=form_data,
             timeout=5,
             headers={"Cookie": f"oversound_auth={token}"}
         )
@@ -2568,12 +2896,11 @@ async def update_profile(request: Request):
         return JSONResponse(content={"message": "Perfil actualizado correctamente"}, status_code=200)
         
     except requests.RequestException as e:
-        error_msg = str(e)
         try:
-            error_msg = e.response.json().get('message', str(e))
+            return e.response.json()
         except:
             pass
-        return JSONResponse(content={"message": error_msg}, status_code=500)
+        return JSONResponse(content={"message": "Unexpected error"}, status_code=500)
 
 
 # ===================== CART ENDPOINTS =====================
@@ -3020,12 +3347,17 @@ def get_artist_studio_page(request: Request):
         # Obtener merchandising del artista
         try:
             merch_resp = requests.get(
-                f"{servers.TPP}/artist/{artist_id}/merch",
+                f"{servers.TYA}/merch/filter",
+                params={"artists": artist_id},
                 timeout=5,
                 headers={"Accept": "application/json"}
             )
             merch_resp.raise_for_status()
-            artist_data['merch'] = merch_resp.json()
+            merch_data = requests.get(
+                f"{servers.TYA}/merch/list?ids={','.join(map(str, merch_resp.json()))}",)
+
+            artist_data['merch'] = merch_data.json()
+            print(f"[DEBUG] Merch data: {artist_data['merch']}")
         except requests.RequestException:
             artist_data['merch'] = []
         
@@ -3098,6 +3430,7 @@ def get_artist_profile(request: Request, artistId: int):
                 )
                 if merch_resp.ok:
                     artist_data['owner_merch'] = merch_resp.json()
+                    print(f"[DEBUG] Merch data for artist profile: {artist_data['owner_merch']}")
             except requests.RequestException as e:
                 print(f"Error obteniendo merchandising del artista: {e}")
                 artist_data['owner_merch'] = []

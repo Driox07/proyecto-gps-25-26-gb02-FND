@@ -196,7 +196,7 @@
                         {% for collaborator in data.song.collaborators_data %}
                         <a href="/artist/{{ collaborator.artistId }}" class="collaborator-card">
                             {% if collaborator.artisticImage %}
-                                <img class="collaborator-avatar" src="{{ collaborator.artisticImage }}" alt="{{ collaborator.artisticName }}">
+                                <img class="collaborator-avatar" src="{{ tya_server }}/static{{ collaborator.artisticImage }}" alt="{{ collaborator.artisticName }}">
                             {% else %}
                                 <div class="collaborator-placeholder">
                                     {{ collaborator.artisticName[0]|upper }}

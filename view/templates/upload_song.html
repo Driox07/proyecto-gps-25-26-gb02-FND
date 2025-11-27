@@ -30,8 +30,15 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="duration">Duración (segundos) *</label>
-                        <input type="number" id="duration" name="duration" required min="1" placeholder="180">
+                        <label for="audioFile">Archivo de audio *</label>
+                        <div class="file-upload-panel">
+                            <input type="file" id="audioFile" name="audioFile" accept="audio/*" required style="display: none;">
+                            <label for="audioFile" class="file-upload-btn">
+                                <i class="icon">🎵</i>
+                                <span>Seleccionar archivo de audio</span>
+                            </label>
+                            <div class="file-info" id="audioInfo"></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="price">Precio (€) *</label>
@@ -50,7 +57,12 @@
                     <div class="form-group full">
                         <label for="genres">Géneros *</label>
                         <select id="genres" name="genres" multiple size="5" required>
-                            <option value="" disabled>Cargando géneros...</option>
+                            {% for genre in data.genres %}
+                            <option value="{{ genre.id }}">{{ genre.name }}</option>
+                            {% endfor %}
+                            {% if not data.genres %}
+                            <option value="" disabled>No hay géneros disponibles</option>
+                            {% endif %}
                         </select>
                         <small>Mantén Ctrl (Cmd en Mac) presionado para seleccionar múltiples géneros</small>
                     </div>
@@ -60,7 +72,12 @@
                     <div class="form-group full">
                         <label for="collaborators">Colaboradores</label>
                         <select id="collaborators" name="collaborators" multiple size="4">
-                            <option value="" disabled>Cargando artistas...</option>
+                            {% for artist in data.artists %}
+                            <option value="{{ artist.artistId }}">{{ artist.artisticName or 'Artista ' + artist.artistId|string }}</option>
+                            {% endfor %}
+                            {% if not data.artists %}
+                            <option value="" disabled>No hay otros artistas disponibles</option>
+                            {% endif %}
                         </select>
                         <small>Mantén Ctrl (Cmd en Mac) presionado para seleccionar múltiples colaboradores (opcional)</small>
                     </div>
@@ -68,26 +85,33 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="cover">Portada (URL) *</label>
-                        <input type="url" id="cover" name="cover" required placeholder="https://ejemplo.com/cover.jpg">
+                        <label for="coverFile">Portada *</label>
+                        <div class="file-upload-panel">
+                            <input type="file" id="coverFile" name="coverFile" accept="image/*" required style="display: none;">
+                            <label for="coverFile" class="file-upload-btn">
+                                <i class="icon">🖼️</i>
+                                <span>Seleccionar imagen de portada</span>
+                            </label>
+                            <div class="file-info" id="coverInfo"></div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="trackId">ID del Track *</label>
-                        <input type="number" id="trackId" name="trackId" required min="1" placeholder="123456">
-                        <small>ID del archivo de audio en el sistema</small>
-                    </div>
-                </div>
-
-                <div class="form-row">
                     <div class="form-group">
                         <label for="releaseDate">Fecha de lanzamiento</label>
                         <input type="date" id="releaseDate" name="releaseDate">
                     </div>
-                    <div class="form-group">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
                         <label for="albumId">Álbum (opcional)</label>
                         <select id="albumId" name="albumId">
                             <option value="">Sin álbum (single)</option>
-                            <option value="" disabled>Cargando álbumes...</option>
+                            {% for album in data.albums %}
+                            <option value="{{ album.albumId }}">{{ album.title or 'Álbum ' + album.albumId|string }}</option>
+                            {% endfor %}
+                            {% if not data.albums %}
+                            <option value="" disabled>(No tienes álbumes creados)</option>
+                            {% endif %}
                         </select>
                         <small>Selecciona un álbum existente o déjalo como single</small>
                     </div>
