@@ -2596,7 +2596,7 @@ async def add_payment_method(request: Request):
         return JSONResponse(content={"error": "Error al procesar la solicitud"}, status_code=500)
 
 
-@app.get("/profile/edit")
+@app.get("/profile-edit")
 def get_profile_edit_page(request: Request):
     """
     Ruta para mostrar la página de edición de perfil de usuario
@@ -2610,53 +2610,25 @@ def get_profile_edit_page(request: Request):
     return osv.get_user_profile_edit_view(request, userdata, servers.SYU)
 
 
-@app.patch("/profile/edit")
+@app.patch("/profile-edit")
 async def update_profile(request: Request):
     """
     Ruta para actualizar el perfil de usuario
     """
+    
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     
     if not userdata:
-        return JSONResponse(content={"error": "No autenticado"}, status_code=401)
-    
+        return RedirectResponse("/login")
+
     try:
         # Obtener los datos del formulario
-        form_data = await request.form()
-        
-        # Preparar los datos para enviar al microservicio
-        update_data = {}
-        
-        # Campos de texto
-        if form_data.get('username'):
-            update_data['username'] = form_data.get('username')
-        if form_data.get('name'):
-            update_data['name'] = form_data.get('name')
-        if form_data.get('firstLastName'):
-            update_data['firstLastName'] = form_data.get('firstLastName')
-        if form_data.get('secondLastName'):
-            update_data['secondLastName'] = form_data.get('secondLastName')
-        if form_data.get('email'):
-            update_data['email'] = form_data.get('email')
-        if form_data.get('biografia'):
-            update_data['biografia'] = form_data.get('biografia')
-        
-        # Manejar imagen si se proporciona
-        imagen_file = form_data.get('imagen')
-        if imagen_file and hasattr(imagen_file, 'filename') and imagen_file.filename:
-            # Aquí deberías subir la imagen a un servicio de almacenamiento
-            # Por ahora, asumimos que el microservicio maneja la subida
-            files = {'imagen': (imagen_file.filename, imagen_file.file, imagen_file.content_type)}
-        else:
-            files = None
-        
-        # Hacer PATCH al microservicio SYU
-        username = userdata.get('username')
+        form_data = await request.json()
+
         resp = requests.patch(
-            f"{servers.SYU}/user/{username}",
-            data=update_data,
-            files=files,
+            f"{servers.SYU}/user/{userdata.get("username")}",
+            json=form_data,
             timeout=5,
             headers={"Cookie": f"oversound_auth={token}"}
         )
@@ -2665,12 +2637,11 @@ async def update_profile(request: Request):
         return JSONResponse(content={"message": "Perfil actualizado correctamente"}, status_code=200)
         
     except requests.RequestException as e:
-        error_msg = str(e)
         try:
-            error_msg = e.response.json().get('message', str(e))
+            return e.response.json()
         except:
             pass
-        return JSONResponse(content={"message": error_msg}, status_code=500)
+        return JSONResponse(content={"message": "Unexpected error"}, status_code=500)
 
 
 # ===================== CART ENDPOINTS =====================
