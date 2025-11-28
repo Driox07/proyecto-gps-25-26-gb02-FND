@@ -1579,6 +1579,12 @@ def get_song(request: Request, songId: int):
         song_resp.raise_for_status()
         song_data = song_resp.json()
         
+        # Normalizar URL de la portada
+        song_data['cover'] = normalize_image_url(song_data.get('cover', ''), servers.TYA)
+        
+        # Asegurar que price sea float
+        song_data['price'] = float(song_data.get('price', '0.0').replace(',', '.'))
+        
         # Resolver artista principal
         try:
             artist_resp = requests.get(f"{servers.TYA}/artist/{song_data['artistId']}", timeout=2, headers={"Accept": "application/json"})
@@ -1759,6 +1765,15 @@ def get_song_edit_page(request: Request, songId: int):
         song_resp.raise_for_status()
         song_data = song_resp.json()
         
+        # Normalizar URL de la portada
+        song_data['cover'] = normalize_image_url(song_data.get('cover', ''), servers.TYA)
+        
+        # Asegurar que price sea float
+        song_data['price'] = float(song_data.get('price', '0.0').replace(',', '.'))
+        
+        # Asegurar que genres sea lista de integers
+        song_data['genres'] = [int(g) for g in song_data.get('genres', [])]
+        
         # Verificar que el usuario sea el propietario
         if int(userdata.get('artistId')) != int(song_data.get('artistId')):
             return osv.get_error_view(request, userdata, "No tienes permiso para editar esta canción", "")
@@ -1773,9 +1788,22 @@ def get_song_edit_page(request: Request, songId: int):
         
         # Obtener artistas para colaboradores
         try:
-            artists_resp = requests.get(f"{servers.TYA}/artist/list?ids=1", timeout=5, headers={"Accept": "application/json"})
-            artists_resp.raise_for_status()
-            artists = artists_resp.json()
+            # Primero filter para obtener todos los artistas (IDs)
+            filter_resp = requests.get(f"{servers.TYA}/artist/filter", timeout=5, headers={"Accept": "application/json"})
+            if filter_resp.ok:
+                artist_ids = filter_resp.json()
+                if artist_ids:
+                    # Luego list para obtener detalles completos
+                    ids_str = ','.join(map(str, artist_ids))
+                    artists_resp = requests.get(f"{servers.TYA}/artist/list?ids={ids_str}", timeout=5, headers={"Accept": "application/json"})
+                    if artists_resp.ok:
+                        artists = artists_resp.json()
+                    else:
+                        artists = []
+                else:
+                    artists = []
+            else:
+                artists = []
         except requests.RequestException:
             artists = []
         
@@ -1812,13 +1840,58 @@ async def update_song(request: Request, songId: int):
         if int(userdata.get('artistId')) != int(song_data.get('artistId')):
             return JSONResponse(content={"error": "No tienes permiso para editar esta canción"}, status_code=403)
         
-        # Obtener datos del formulario
         body = await request.json()
+        
+        # Extraer datos
+        title = body.get('title')
+        price = float(body.get('price'))
+        description = body.get('description') or None
+        release_date = body.get('releaseDate') or None
+        genres = body.get('genres', [])
+        collaborators = body.get('collaborators', [])
+        audio_base64 = body.get('audioFile')
+        cover_base64 = body.get('coverFile')
+        cover_extension = body.get('coverExtension')
+        
+        # Preparar datos para TYA
+        update_data = {
+            'title': title,
+            'price': price,
+            'description': description,
+            'releaseDate': release_date,
+            'genres': [int(g) for g in genres],
+            'collaborators': [int(c) for c in collaborators] if collaborators else []
+        }
+        
+        # Si hay nuevo audio, subir a PT
+        if audio_base64:
+            audio_content = base64.b64decode(audio_base64)
+            # Calcular duración
+            audio = MutagenFile(BytesIO(audio_content))
+            if audio and audio.info:
+                duration = int(audio.info.length)
+            else:
+                duration = 0
+            update_data['duration'] = duration
+            
+            # Subir a PT
+            pt_body = {'track': audio_base64}
+            pt_resp = requests.post(f"{servers.PT}/track/upload", json=pt_body, timeout=10, headers={"Cookie": f"oversound_auth={token}"})
+            if not pt_resp.ok:
+                return JSONResponse(content={"message": f"Error subiendo a PT: {pt_resp.text}"}, status_code=pt_resp.status_code)
+            pt_data = pt_resp.json()
+            track_id = pt_data['idtrack']
+            update_data['trackId'] = track_id
+        
+        # Si hay nueva cover, convertir a base64 full
+        if cover_base64 and cover_extension:
+            cover_base64_full = f"data:image/{cover_extension};base64,{cover_base64}"
+            update_data['cover'] = cover_base64_full
         
         # Enviar actualización a TYA
         update_resp = requests.patch(
             f"{servers.TYA}/song/{songId}",
-            json=body,
+            json=update_data,
             timeout=5,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
