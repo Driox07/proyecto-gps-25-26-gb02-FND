@@ -12,18 +12,18 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPaymentMethods();
     setupPaymentMethodsModal();
     
-    // Play button functionality for favorite items
+    // Play button functionality for favorite items -> redirect to song page instead of playing
     const playButtons = document.querySelectorAll('.play-button');
     playButtons.forEach(button => {
         button.addEventListener('click', (e) => {
             e.stopPropagation();
             const card = button.closest('.favorite-card');
-            const title = card.querySelector('.card-title').textContent;
-            const trackId = card.getAttribute('data-track-id');
+            const title = card?.querySelector('.card-title')?.textContent || '';
+            const songId = card ? (card.getAttribute('data-song-id') || card.getAttribute('data-songid') || card.getAttribute('data-track-id') || null) : null;
             
-            if (trackId) {
-                console.log('Playing:', title);
-                playTrack(trackId);
+            if (songId) {
+                console.log('Redirecting to song page:', songId);
+                window.location.href = `/song/${songId}`;
             } else {
                 alert('Esta canción no tiene un track disponible');
             }
@@ -182,16 +182,7 @@ async function loadPaymentMethods() {
     }
 }
 
-// Utility: decode base64 to Uint8Array (used when PT returns JSON with base64 track)
-function base64ToUint8Array(base64) {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
-}
+// base64 helper removed from user profile (playback delegated to global player)
 
 /**
  * Display payment methods cards
@@ -1071,63 +1062,11 @@ function initializeFavoritesNavigation() {
  * Initialize HTML5 audio player
  */
 function initializeAudioPlayer() {
-    audioPlayer = new Audio();
-    audioPlayer.addEventListener('ended', () => {
-        console.log('Track finished');
-    });
-    audioPlayer.addEventListener('error', (e) => {
-        console.error('Audio player error:', e);
-        alert('Error al reproducir la canción');
-    });
+    // No local audio player on the user profile page; playback is handled
+    // by the global mini-player. Keep audioPlayer as null to avoid accidental use.
+    audioPlayer = null;
 }
 
-/**
- * Fetch and play track from microservice
- */
-async function playTrack(trackId) {
-    if (!trackId) {
-        alert('ID de canción no disponible');
-        return;
-    }
-
-    try {
-        const url = `${MUSIC_SERVICE_URL}/track/${trackId}`;
-        
-        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
-            console.log(`Fetching track from: ${url}`);
-        }
-
-        // Prefer PT_SERVER OpenAPI JSON response (base64 in `track` field)
-        let audioBlob = null;
-        if(MUSIC_SERVICE_URL){
-            const jsonResp = await fetch(url, { method: 'GET', credentials: 'include', headers: { 'Accept': 'application/json' } });
-            if(jsonResp.ok){
-                const data = await jsonResp.json().catch(()=>null);
-                if(data && data.track){
-                    const bytes = base64ToUint8Array(data.track);
-                    audioBlob = new Blob([bytes], { type: data.mime || 'audio/mpeg' });
-                }
-            }
-        }
-
-        if(!audioBlob){
-            const response = await fetch(url, { method: 'GET', credentials: 'include', headers: { 'Accept': 'audio/*' } });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            audioBlob = await response.blob();
-        }
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
-            console.log(`Audio blob received, size: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
-        }
-        
-        // Set audio source and play
-        audioPlayer.src = audioUrl;
-        audioPlayer.play();
-        console.log('Playing track:', trackId);
-
-    } catch (error) {
-        console.error('Error playing track:', error);
-        alert(`Error al reproducir: ${error.message}`);
-    }
-}
+// Local playTrack implementation removed from user profile. The page
+// redirects to `/song/<id>` for playback; actual playback is handled by
+// the global mini-player when user navigates to a song page.

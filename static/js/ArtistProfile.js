@@ -18,14 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
  * Initialize HTML5 audio player
  */
 function initializeAudioPlayer() {
-    audioPlayer = new Audio();
-    audioPlayer.addEventListener('ended', () => {
-        console.log('Track finished');
-    });
-    audioPlayer.addEventListener('error', (e) => {
-        console.error('Audio player error:', e);
-        alert('Error al reproducir la canción');
-    });
+    // No se crea un reproductor local en la página de artista. La página
+    // de artista NO debe reproducir pistas bajo ninguna circunstancia;
+    // el reproductor global centralizado (mini-player) se encarga de la reproducción
+    // en el resto de la app.
+    audioPlayer = null;
 }
 
 /**
@@ -305,11 +302,14 @@ document.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         
-        // Check if it's a track play button
+        // Check if it's a track play button -> redirect to song page instead of playing
         const trackId = playButton.getAttribute('data-track-id');
         if (trackId) {
-            console.log('Playing track:', trackId);
-            playTrack(trackId);
+            // Prefer data-song-id when available
+            const songId = playButton.getAttribute('data-song-id') || playButton.getAttribute('data-songid') || playButton.closest('.song-card')?.getAttribute('data-song-id') || null;
+            const target = songId || trackId;
+            console.log('Redirecting to song page:', target);
+            window.location.href = `/song/${target}`;
             return;
         }
         
@@ -324,56 +324,13 @@ document.addEventListener('click', (e) => {
     }
 });
 
-/**
- * Fetch and play track from microservice
- */
-async function playTrack(trackId) {
-    if (!trackId) {
-        alert('ID de canción no disponible');
-        return;
-    }
-
-    try {
-        const url = `${MUSIC_SERVICE_URL}/track/${trackId}`;
-        
-        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
-            console.log(`Fetching track from: ${url}`);
-        }
-
-        // Prefer PT_SERVER OpenAPI JSON response (base64 in `track` field)
-        let audioBlob = null;
-        if(window.PT_SERVER || window.PT_URL || window.MUSIC_SERVICE_URL){
-            const base = window.PT_SERVER || window.PT_URL || window.MUSIC_SERVICE_URL || '';
-            const jsonResp = await fetch(base.replace(/\/$/, '') + `/track/${trackId}`, { method: 'GET', credentials: 'include', headers: { 'Accept': 'application/json' } });
-            if(jsonResp.ok){
-                const data = await jsonResp.json().catch(()=>null);
-                if(data && data.track){
-                    const bytes = base64ToUint8Array(data.track);
-                    audioBlob = new Blob([bytes], { type: data.mime || 'audio/mpeg' });
-                }
-            }
-        }
-
-        if(!audioBlob){
-            const response = await fetch(url, { method: 'GET', credentials: 'include', headers: { 'Accept': 'audio/*' } });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            audioBlob = await response.blob();
-        }
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
-            console.log(`Audio blob received, size: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
-        }
-        
-        // Set audio source and play
-        audioPlayer.src = audioUrl;
-        audioPlayer.play();
-        console.log('Playing track:', trackId);
-
-    } catch (error) {
-        console.error('Error playing track:', error);
-        alert(`Error al reproducir: ${error.message}`);
-    }
+// La reproducción está deshabilitada en la página de artista. Esta función se
+// mantiene como stub para evitar errores en caso de llamadas accidentales, pero
+// NO ejecuta reproducción bajo ninguna circunstancia.
+async function playTrack(/* trackId */) {
+    // Intencionalmente vacío: el perfil de artista solo redirige a la página
+    // de la canción y no debe iniciar la reproducción.
+    console.warn('playTrack called on ArtistProfile page — playback is disabled');
 }
 
 // Export functions for external use if needed
@@ -385,15 +342,7 @@ window.ArtistProfile = {
     formatDuration
 };
 
-// Utility: decode base64 to Uint8Array (used when PT returns JSON with base64 track)
-function base64ToUint8Array(base64) {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
-}
+// base64 decoding helper removed from artist page to avoid embedding
+// playback-related helpers here.
 
 

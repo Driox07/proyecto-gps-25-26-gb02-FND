@@ -17,31 +17,14 @@ function initializeAlbumPage() {
     setupAlbumEventListeners();
 }
 
-// Utility: decode base64 to Uint8Array (used when PT returns JSON with base64 track)
-function base64ToUint8Array(base64) {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
-}
-
 /**
  * Initialize HTML5 audio player
  */
 function initializeAudioPlayer() {
-    audioPlayer = new Audio();
-    audioPlayer.addEventListener('ended', () => {
-        console.log('Track finished');
-        // Auto-play next track in album
-        playNextTrack();
-    });
-    audioPlayer.addEventListener('error', (e) => {
-        console.error('Audio player error:', e);
-        alert('Error al reproducir la canción');
-    });
+    // The album page now delegates playback to the global mini-player
+    // (window.radioPlayer). Keep a placeholder in case older code references
+    // `audioPlayer`, but do not create a local player here.
+    audioPlayer = null;
 }
 
 /**
@@ -439,7 +422,9 @@ function playNextTrack() {
 }
 
 /**
- * Fetch and play track from microservice
+ * Delegate playback to the global mini-player when available.
+ * Removes the old album-local playback implementation and centralizes
+ * audio handling in `static/js/player.js` (window.radioPlayer).
  */
 async function playTrack(trackId) {
     if (!trackId) {
@@ -447,47 +432,19 @@ async function playTrack(trackId) {
         return;
     }
 
-    try {
-        // Prefer PT_SERVER OpenAPI JSON response (base64 in `track` field)
-        const base = window.PT_SERVER || window.PT_URL || window.MUSIC_SERVICE_URL || '';
-        let audioBlob = null;
-        if(base){
-            try{
-                const jsonResp = await fetch(base.replace(/\/$/, '') + `/track/${trackId}`, { method: 'GET', credentials: 'include', headers: { 'Accept': 'application/json' } });
-                if(jsonResp.ok){
-                    const data = await jsonResp.json().catch(()=>null);
-                    if(data && data.track){
-                        const bytes = base64ToUint8Array(data.track);
-                        audioBlob = new Blob([bytes], { type: data.mime || 'audio/mpeg' });
-                        console.log('Audio blob created from PT JSON');
-                    }
-                }
-            }catch(e){
-                console.warn('PT JSON fetch failed, falling back to proxy', e);
-            }
+    if (window.radioPlayer && typeof window.radioPlayer.playTrack === 'function') {
+        try {
+            // Delegate to global player; pass trackId and let the player
+            // resolve song/artist metadata if available.
+            window.radioPlayer.playTrack(String(trackId));
+            return;
+        } catch (err) {
+            console.warn('radioPlayer.playTrack failed, falling back:', err);
         }
-
-        if(!audioBlob){
-            const url = `/track/${trackId}`;
-            console.log(`Fetching track from proxy: ${url}`);
-            const response = await fetch(url, { method: 'GET', credentials: 'include', headers: { 'Accept': 'audio/*' } });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            audioBlob = await response.blob();
-            console.log(`Audio blob received from proxy, size: ${audioBlob.size} bytes`);
-        }
-        
-        // Create object URL from blob
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        // Set audio source and play
-        audioPlayer.src = audioUrl;
-        audioPlayer.play();
-        console.log('Playing track:', trackId);
-
-    } catch (error) {
-        console.error('Error playing track:', error);
-        alert(`Error al reproducir: ${error.message}`);
     }
+
+    // If no global player present, inform the user.
+    showNotification('Reproducción no disponible en este navegador', 'error');
 }
 
 /**

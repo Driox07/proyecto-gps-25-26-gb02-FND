@@ -110,15 +110,31 @@
         };
 
         // Auto-detect clicks on elements with data-track-id
+        // NOTE: Ignore clicks that originate from the artist profile page
+        // because the artist profile should only redirect to the song page
+        // and MUST NOT trigger playback.
         document.addEventListener('click', (e)=>{
             const el = e.target.closest('[data-track-id]');
-            if(el){
-                e.preventDefault();
-                const trackId = el.getAttribute('data-track-id');
-                const songId = el.getAttribute('data-song-id') || el.getAttribute('data-songid') || null;
-                const artistId = el.getAttribute('artist-id') || null;
-                playTrack(trackId, songId, artistId);
+            if(!el) return;
+
+            // If the click happened inside the artist or user profile container, do nothing
+            if(e.target.closest('.artist-main') || e.target.closest('.profile-main') || document.body.classList.contains('artist-profile') || document.body.classList.contains('profile-page')){
+                // allow the profile page code to handle navigation instead
+                return;
             }
+
+            // Only trigger playback when the click originates from a play control
+            const playControl = e.target.closest('.track-play-btn, .play-button');
+            if(!playControl) return; // click wasn't on the play button
+
+            // Ensure the play control belongs to the same data-track-id element
+            if(!el.contains(playControl) && playControl.closest('[data-track-id]') !== el) return;
+
+            e.preventDefault();
+            const trackId = el.getAttribute('data-track-id');
+            const songId = el.getAttribute('data-song-id') || el.getAttribute('data-songid') || null;
+            const artistId = el.getAttribute('artist-id') || null;
+            playTrack(trackId, songId, artistId);
         });
     }
 
@@ -230,15 +246,30 @@
             state.audio.src = audioUrl;
 
             // Determine cover URL: prefer JSON cover, then DOM, then hide
-            let resolvedCover = null;
-            if(coverPathFromJson) resolvedCover = resolveCoverUrl(coverPathFromJson);
-            if(!resolvedCover){
-                const domCover = document.querySelector('#song-cover');
-                if(domCover && domCover.src) resolvedCover = domCover.src;
-            }
+                    let resolvedCover = null;
+                    if(coverPathFromJson) resolvedCover = resolveCoverUrl(coverPathFromJson);
 
-            // Update metadata placeholders (these could be replaced with real metadata later)
-            setMeta(document.querySelector('#song-title')?.textContent || ('Track ' + trackId), document.querySelector('#song-artist')?.textContent || '', resolvedCover);
+                    // Try to fetch metadata (title, artist, cover) from TYA service instead of reading from DOM
+                    try{
+                        const meta = await fetchMetadata(trackId, state.currentSongId, state.currentArtistId);
+                        const title = options.title || meta.title || document.querySelector('#song-title')?.textContent || ('Track ' + trackId);
+                        const artist = options.artist || meta.artistName || document.querySelector('#song-artist')?.textContent || '';
+                        if(!resolvedCover && meta.cover) resolvedCover = resolveCoverUrl(meta.cover);
+                        // If still no cover resolved, fallback to DOM cover
+                        if(!resolvedCover){
+                            const domCover = document.querySelector('#song-cover');
+                            if(domCover && domCover.src) resolvedCover = domCover.src;
+                        }
+                        setMeta(title, artist, resolvedCover);
+                    }catch(e){
+                        // on error, fallback to previous DOM-based approach
+                        console.warn('Metadata fetch failed, falling back to DOM:', e);
+                        if(!resolvedCover){
+                            const domCover = document.querySelector('#song-cover');
+                            if(domCover && domCover.src) resolvedCover = domCover.src;
+                        }
+                        setMeta(document.querySelector('#song-title')?.textContent || ('Track ' + trackId), document.querySelector('#song-artist')?.textContent || '', resolvedCover);
+                    }
 
             setLoading(false);
             $('mini-progress').style.width = '0%';
@@ -412,6 +443,67 @@
         // If it's a relative path, try prefixing with TYA_SERVER/static/
         if(window.TYA_SERVER) return window.TYA_SERVER.replace(/\/$/,'') + '/static/' + coverPath;
         return coverPath;
+    }
+
+    // Fetch metadata (title, artistName, cover) from TYA or compatible service.
+    // Tries several endpoints in order: /song/:id, /artist/:id, /track/:id
+    async function fetchMetadata(trackId, songId, artistId){
+        try{
+            const base = (window.TYA_SERVER || DEFAULT_SERVICE || '').replace(/\/$/, '');
+            if(!base) return {};
+
+            const opts = { method: 'GET', credentials: 'include', headers: { 'Accept': 'application/json' } };
+
+            // Try song endpoint first
+            if(songId){
+                try{
+                    const resp = await fetch(base + '/song/' + songId, opts);
+                    if(resp.ok){
+                        const data = await resp.json().catch(()=>null);
+                        if(data){
+                            const title = data.title || data.name || (data.song && (data.song.title || data.song.name)) || null;
+                            const artistName = (data.artist && (data.artist.artisticName || data.artist.name)) || (data.song && data.song.artist && (data.song.artist.artisticName || data.song.artist.name)) || null;
+                            const cover = data.cover || data.image || (data.song && data.song.cover) || null;
+                            return { title, artistName, cover };
+                        }
+                    }
+                }catch(_){ }
+            }
+
+            // Try artist endpoint to at least resolve artist name
+            if(artistId){
+                try{
+                    const resp = await fetch(base + '/artist/' + artistId, opts);
+                    if(resp.ok){
+                        const data = await resp.json().catch(()=>null);
+                        if(data){
+                            const artistName = data.artisticName || data.name || null;
+                            const cover = data.artisticImage || data.image || null;
+                            return { title: null, artistName, cover };
+                        }
+                    }
+                }catch(_){ }
+            }
+
+            // Finally try track endpoint which some services expose as JSON
+            if(trackId){
+                try{
+                    const resp = await fetch(base + '/track/' + trackId, opts);
+                    if(resp.ok){
+                        const data = await resp.json().catch(()=>null);
+                        if(data){
+                            const title = data.title || (data.song && (data.song.title || data.song.name)) || null;
+                            const artistName = (data.artist && (data.artist.artisticName || data.artist.name)) || (data.song && data.song.artist && (data.song.artist.artisticName || data.song.artist.name)) || null;
+                            const cover = data.cover || (data.song && data.song.cover) || null;
+                            return { title, artistName, cover };
+                        }
+                    }
+                }catch(_){ }
+            }
+        }catch(e){
+            console.warn('fetchMetadata unexpected error', e);
+        }
+        return {};
     }
 
     // Initialize when DOM ready
