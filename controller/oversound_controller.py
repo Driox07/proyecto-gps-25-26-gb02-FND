@@ -3044,7 +3044,7 @@ def get_profile(request: Request):
                     elementos_biblioteca['albums'] = albums_biblioteca_resp.json() #Listado de albums
 
         except requests.RequestException:
-            elementos_biblioteca = []
+            elementos_biblioteca = {'songs': [], 'albums': []}
 
         
         # Para simplificar, asumimos datos vacíos de biblioteca y listas
