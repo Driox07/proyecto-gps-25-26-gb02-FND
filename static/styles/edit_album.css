@@ -303,3 +303,59 @@ form {
         font-size: 14px;
     }
 }
+
+/* Album Songs Styles */
+.album-songs-list {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    min-height: 100px;
+    background: #f9f9f9;
+}
+
+.song-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.song-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.song-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.song-title {
+    font-weight: 500;
+    color: #333;
+}
+
+.song-duration {
+    font-size: 14px;
+    color: #666;
+}
+
+.remove-song-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s ease;
+}
+
+.remove-song-btn:hover {
+    background: #c82333;
+}
