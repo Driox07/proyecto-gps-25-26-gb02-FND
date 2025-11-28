@@ -4143,9 +4143,20 @@ async def update_artist_profile(request: Request):
         print(f"DEBUG PATCH: TYA response status: {resp.status_code}")
         
         resp.raise_for_status()
-        
-        result = resp.json()
-        print(f"DEBUG PATCH: TYA response: {result}")
+
+        # Intentar parsear JSON solo si hay contenido; manejar body vacío
+        result = None
+        try:
+            if resp.text and resp.text.strip():
+                result = resp.json()
+                print(f"DEBUG PATCH: TYA response: {result}")
+            else:
+                print("DEBUG PATCH: TYA returned empty body")
+        except ValueError as je:
+            # JSON decode error (respuesta no JSON o vacía)
+            print(f"DEBUG PATCH: JSON decode error when reading TYA response: {je}")
+            print(f"DEBUG PATCH: Raw TYA response text: '{resp.text}'")
+            result = None
         
         return JSONResponse(content={
             "message": "Perfil de artista actualizado correctamente",
