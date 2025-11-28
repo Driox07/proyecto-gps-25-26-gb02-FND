@@ -181,7 +181,7 @@
                         {% if artist.owner_songs %}
                             {% for song in artist.owner_songs %}
                                 <div class="song-card" data-track-id="{{ song.trackId }}">
-                                    <a href="/song/{{ song.trackId }}" class="card-image-link">
+                                    <a href="/song/{{ song.songId }}" class="card-image-link">
                                         <div class="card-image">
                                             {% if song.cover %}
                                                 <img src="{{ tya_server }}/static{{ song.cover }}" alt="{{ song.title }}">
@@ -400,18 +400,18 @@
                     </div>
 
                     <div class="stat-block">
-                        <h3 style="color: #8a75ff;">Reproducciones</h3>
-                        <p style="color: #ffffff;">Las canciones de este artista acumulan un total de {{ stats.playbacks }} reproducciones</p>
+                        <h3>Reproducciones</h3>
+                        <p>Las canciones de este artista acumulan un total de {{ stats.playbacks }} reproducciones</p>
                     </div>
 
                     <div class="stat-block">
-                        <h3 style="color: #8a75ff;">Número de canciones</h3>
-                        <p style="color: #ffffff;">Este artista tiene un total de {{ stats.songs }}</p>
+                        <h3>Número de canciones</h3>
+                        <p>Este artista tiene un total de {{ stats.songs }}</p>
                     </div>
 
                     <div class="stat-block">
-                        <h3 style="color: #8a75ff;">Popularidad</h3>
-                        <p style="color: #ffffff;">Este artista se encuentra en el puesto nº {{ stats.popularity }} de popularidad total</p>
+                        <h3>Popularidad</h3>
+                        <p>Este artista se encuentra en el puesto nº {{ stats.popularity }} de popularidad total</p>
                     </div>
 
             </div>

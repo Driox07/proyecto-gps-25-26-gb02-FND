@@ -172,6 +172,6 @@
             image: "{{ data.userdata.image if data.userdata.image else '' }}"
         };
     </script>
-    <script src="{{ url_for('static', path='js/UserProfileEdit.js') }}"></script>
+    <script src="{{ url_for('static', path='js/UserProfileEdit.js') }}?v={{ timestamp }}"></script>
 </body>
 </html>

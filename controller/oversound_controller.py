@@ -56,9 +56,12 @@ def normalize_image_url(image_path: str, server_url: str) -> str:
                 clean_path = "/" + clean_path
             clean_path = "/static" + clean_path
 
-        # Si es SYU, no debe tener /static.
-        if server_url == servers.SYU and clean_path.startswith("/static"):
-            clean_path = clean_path[len("/static"):]
+        # Si es SYU, asegurarnos de que comience con /
+        if server_url == servers.SYU:
+            if clean_path.startswith("/static"):
+                clean_path = clean_path[len("/static"):]
+            if not clean_path.startswith("/"):
+                clean_path = "/" + clean_path
 
         return f"{server_url}{clean_path}"
     
@@ -102,7 +105,47 @@ def index(request: Request):
     try:
         ts = requests.get(f"{servers.RYE}/statistics/top-10-songs", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
         if ts.ok:
-            top_songs = ts.json()
+            top_songs_raw = ts.json()
+            # Enriquecer con datos completos de TYA
+            top_songs = []
+            for song_data in top_songs_raw:
+                song_id = song_data.get('songId') or song_data.get('id')
+                if song_id:
+                    try:
+                        # Intentar obtener datos completos de TYA
+                        song_resp = requests.get(f"{servers.TYA}/song/{song_id}", timeout=2, headers={"Accept": "application/json"})
+                        if song_resp.ok:
+                            full_song_data = song_resp.json()
+                            # Normalizar imagen
+                            if full_song_data.get('cover'):
+                                full_song_data['image'] = normalize_image_url(full_song_data['cover'], servers.TYA)
+                            # Convertir price a float
+                            if 'price' in full_song_data:
+                                try:
+                                    full_song_data['price'] = float(full_song_data['price'])
+                                except (ValueError, TypeError):
+                                    full_song_data['price'] = 0.0
+                            # Convertir duration a int
+                            if 'duration' in full_song_data:
+                                try:
+                                    full_song_data['duration'] = int(full_song_data['duration'])
+                                except (ValueError, TypeError):
+                                    full_song_data['duration'] = 0
+                            top_songs.append(full_song_data)
+                        else:
+                            # Si falla, usar datos básicos y añadir campos por defecto
+                            song_data['price'] = song_data.get('price', 0.0)
+                            song_data['duration'] = song_data.get('duration', 0)
+                            song_data['image'] = song_data.get('image', '/static/img/utils/default-song.svg')
+                            top_songs.append(song_data)
+                    except requests.RequestException:
+                        # Si falla, usar datos básicos
+                        song_data['price'] = song_data.get('price', 0.0)
+                        song_data['duration'] = song_data.get('duration', 0)
+                        song_data['image'] = song_data.get('image', '/static/img/utils/default-song.svg')
+                        top_songs.append(song_data)
+                else:
+                    top_songs.append(song_data)
     except requests.RequestException as e:
         print(f"Error fetching top songs from RYE: {e}")
 
@@ -142,7 +185,43 @@ def index(request: Request):
     try:
         rs = requests.get(f"{servers.RYE}/recommendations/song", timeout=20, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
         if rs.ok:
-            rec_songs = rs.json()
+            rec_songs_raw = rs.json()
+            # Enriquecer con datos completos de TYA
+            rec_songs = []
+            for song_data in rec_songs_raw:
+                song_id = song_data.get('songId') or song_data.get('id')
+                if song_id:
+                    try:
+                        song_resp = requests.get(f"{servers.TYA}/song/{song_id}", timeout=2, headers={"Accept": "application/json"})
+                        if song_resp.ok:
+                            full_song_data = song_resp.json()
+                            if full_song_data.get('cover'):
+                                full_song_data['image'] = normalize_image_url(full_song_data['cover'], servers.TYA)
+                            # Convertir price a float
+                            if 'price' in full_song_data:
+                                try:
+                                    full_song_data['price'] = float(full_song_data['price'])
+                                except (ValueError, TypeError):
+                                    full_song_data['price'] = 0.0
+                            # Convertir duration a int
+                            if 'duration' in full_song_data:
+                                try:
+                                    full_song_data['duration'] = int(full_song_data['duration'])
+                                except (ValueError, TypeError):
+                                    full_song_data['duration'] = 0
+                            rec_songs.append(full_song_data)
+                        else:
+                            song_data['price'] = song_data.get('price', 0.0)
+                            song_data['duration'] = song_data.get('duration', 0)
+                            song_data['image'] = song_data.get('image', '/static/img/utils/default-song.svg')
+                            rec_songs.append(song_data)
+                    except requests.RequestException:
+                        song_data['price'] = song_data.get('price', 0.0)
+                        song_data['duration'] = song_data.get('duration', 0)
+                        song_data['image'] = song_data.get('image', '/static/img/utils/default-song.svg')
+                        rec_songs.append(song_data)
+                else:
+                    rec_songs.append(song_data)
     except requests.RequestException as e:
         print(f"Error fetching recommended songs from RYE: {e}")
 
@@ -3056,6 +3135,7 @@ def get_profile_edit_page(request: Request):
     """
     Ruta para mostrar la página de edición de perfil de usuario
     """
+    import time
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     
@@ -3066,7 +3146,7 @@ def get_profile_edit_page(request: Request):
     if userdata and userdata.get('imagen'):
         userdata['imagen'] = normalize_image_url(userdata['imagen'], servers.SYU)
     
-    return osv.get_user_profile_edit_view(request, userdata, servers.SYU)
+    return osv.get_user_profile_edit_view(request, userdata, servers.SYU, timestamp=int(time.time()))
 
 
 @app.patch("/profile-edit")
@@ -3097,7 +3177,8 @@ async def update_profile(request: Request):
         
     except requests.RequestException as e:
         try:
-            return e.response.json()
+            error_data = e.response.json()
+            return JSONResponse(content=error_data, status_code=e.response.status_code)
         except:
             pass
         return JSONResponse(content={"message": "Unexpected error"}, status_code=500)

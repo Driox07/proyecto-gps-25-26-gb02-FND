@@ -7,6 +7,7 @@
     <title>Editar Álbum - OverSound</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='styles/edit_album.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/upload_album.css') }}">
 </head>
 <body>
     {% include 'common/header.html' %}
@@ -48,9 +49,15 @@
 
                 <div class="form-row">
                     <div class="form-group full">
-                        <label for="genres">Géneros *</label>
-                        <input type="text" id="genres" name="genres" required placeholder="Ej: 1,2,3 (IDs de géneros separados por comas)" value="{% if data.album.genres %}{{ data.album.genres|join(',') }}{% endif %}">
-                        <small>IDs de géneros separados por comas</small>
+                        <label for="genres">Géneros</label>
+                        <div class="info-message">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            <span>Los géneros se calculan automáticamente a partir de las canciones seleccionadas</span>
+                        </div>
                     </div>
                 </div>
 
@@ -69,8 +76,10 @@
                 <div class="form-row">
                     <div class="form-group full">
                         <label for="songs">Canciones del álbum *</label>
-                        <input type="text" id="songs" name="songs" required placeholder="Ej: 15,23,42 (IDs de canciones separados por comas)" value="{% if data.album.songs %}{{ data.album.songs|join(',') }}{% endif %}">
-                        <small>IDs de las canciones que incluye este álbum</small>
+                        <select id="songs" name="songs" multiple required size="6" data-current-songs="{% if data.album.songs %}{{ data.album.songs|join(',') }}{% endif %}">
+                            <option value="">Cargando canciones...</option>
+                        </select>
+                        <small>Mantén Ctrl/Cmd para seleccionar múltiples canciones</small>
                     </div>
                 </div>
 

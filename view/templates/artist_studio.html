@@ -162,7 +162,7 @@
                     </div>
 
                     <div class="songs-list">
-                        {% if artist.owner_songs %}
+                        {% if artist.songs %}
                             {% for song in artist.songs %}
                                 <div class="song-item">
                                     <div class="song-info">
@@ -230,8 +230,8 @@
                     </div>
 
                     <div class="albums-grid">
-                        {% if artist.owner_albums %}
-                            {% for album in artist.owner_albums %}
+                        {% if artist.albums %}
+                            {% for album in artist.albums %}
                                 <div class="album-card-studio">
                                     <div class="album-cover">
                                         {% if album.cover %}
@@ -283,7 +283,7 @@
                     </div>
 
                     <div class="merch-grid">
-                        {% if artist.owner_merch %}
+                        {% if artist.merch %}
                             {% for merch in artist.merch %}
                                 <div class="merch-card-studio">
                                     <div class="merch-cover">
