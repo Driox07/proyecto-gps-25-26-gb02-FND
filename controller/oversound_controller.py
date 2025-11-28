@@ -56,9 +56,12 @@ def normalize_image_url(image_path: str, server_url: str) -> str:
                 clean_path = "/" + clean_path
             clean_path = "/static" + clean_path
 
-        # Si es SYU, no debe tener /static.
-        if server_url == servers.SYU and clean_path.startswith("/static"):
-            clean_path = clean_path[len("/static"):]
+        # Si es SYU, asegurarnos de que comience con /
+        if server_url == servers.SYU:
+            if clean_path.startswith("/static"):
+                clean_path = clean_path[len("/static"):]
+            if not clean_path.startswith("/"):
+                clean_path = "/" + clean_path
 
         return f"{server_url}{clean_path}"
     
@@ -2256,20 +2259,17 @@ def get_merch(request: Request, merchId: int):
         except requests.RequestException:
             merch_data['artist'] = {"artistId": merch_data['artistId'], "artisticName": "Artista desconocido"}
         
-        # Resolver merchandising relacionado del mismo artista usando owner_merch
-        related_merch = []
-        if merch_data.get('artist') and merch_data['artist'].get('owner_merch'):
-            try:
-                # Excluir el merch actual y tomar máximo 6
-                related_ids = [mid for mid in merch_data['artist']['owner_merch'] if mid != merchId][:6]
-                if related_ids:
-                    related_ids_str = ','.join(str(mid) for mid in related_ids)
-                    related_resp = requests.get(f"{servers.TYA}/merch/list?ids={related_ids_str}", timeout=2, headers={"Accept": "application/json"})
-                    related_resp.raise_for_status()
-                    related_merch = related_resp.json()
-            except requests.RequestException:
-                pass  # Si no se pueden cargar, dejar vacío
-        merch_data['related_merch'] = related_merch
+        # Resolver colaboradores del merch (similar a las canciones)
+        collaborators = []
+        if merch_data.get('collaborators'):
+            for collab_id in merch_data['collaborators']:
+                try:
+                    collab_resp = requests.get(f"{servers.TYA}/artist/{collab_id}", timeout=2, headers={"Accept": "application/json"})
+                    collab_resp.raise_for_status()
+                    collaborators.append(collab_resp.json())
+                except requests.RequestException:
+                    collaborators.append({"artistId": collab_id, "artisticName": "Artista desconocido"})
+        merch_data['collaborators_data'] = collaborators
         
         # Normalizar URLs de imágenes y precios
         if merch_data.get('cover'):
@@ -3208,6 +3208,7 @@ def get_profile_edit_page(request: Request):
     """
     Ruta para mostrar la página de edición de perfil de usuario
     """
+    import time
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     
@@ -3218,7 +3219,7 @@ def get_profile_edit_page(request: Request):
     if userdata and userdata.get('imagen'):
         userdata['imagen'] = normalize_image_url(userdata['imagen'], servers.SYU)
     
-    return osv.get_user_profile_edit_view(request, userdata, servers.SYU)
+    return osv.get_user_profile_edit_view(request, userdata, servers.SYU, timestamp=int(time.time()))
 
 
 @app.patch("/profile-edit")
@@ -3249,7 +3250,8 @@ async def update_profile(request: Request):
         
     except requests.RequestException as e:
         try:
-            return e.response.json()
+            error_data = e.response.json()
+            return JSONResponse(content=error_data, status_code=e.response.status_code)
         except:
             pass
         return JSONResponse(content={"message": "Unexpected error"}, status_code=500)

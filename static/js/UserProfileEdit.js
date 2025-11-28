@@ -182,11 +182,14 @@ function initFormSubmission() {
             
 
 
-            // Prepare JSON with form data
+            // Prepare JSON with form data (excluding file input)
             const formData = new FormData(form);
             const jsonData = {};
             formData.forEach((value, key) => {
-                jsonData[key] = value;
+                // Skip file inputs in FormData iteration
+                if (key !== 'imagen') {
+                    jsonData[key] = value;
+                }
             });
             
             // Handle image upload - convert to base64 if exists
@@ -324,8 +327,9 @@ function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
-            // readAsDataURL() already includes the data URL preamble
+            // readAsDataURL() includes the data URL preamble
             // Format: "data:image/jpeg;base64,/9j/4AAQSKZJRgABAQAAAQ..."
+            // Keep it as is, the backend should handle it
             resolve(reader.result);
         };
         reader.onerror = reject;
