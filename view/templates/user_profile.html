@@ -512,8 +512,14 @@
                 deleteForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     
+                    console.log('[DEBUG] Delete form submitted');
+                    console.log('[DEBUG] Expected username:', expectedUsername);
+                    
                     const username = confirmInput.value.trim();
+                    console.log('[DEBUG] Entered username:', username);
+                    
                     if (username !== expectedUsername) {
+                        console.log('[DEBUG] Username mismatch!');
                         alert('El nombre de usuario no coincide. Por favor, verifica e intenta nuevamente.');
                         return;
                     }
@@ -523,10 +529,13 @@
                     confirmBtn.textContent = 'Eliminando...';
                     
                     try {
-                        const userId = window.userData.userId;
                         const token = getCookie('oversound_auth');
                         
-                        const response = await fetch(`${window.SERVER_CONFIG.SYU}/user/${userName}`, {
+                        console.log('[DEBUG] Token:', token ? 'exists' : 'missing');
+                        console.log('[DEBUG] SYU_URL:', SYU_URL);
+                        console.log('[DEBUG] Request URL:', `${SYU_URL}/user/${username}`);
+                        
+                        const response = await fetch(`${SYU_URL}/user/${username}`, {
                             method: 'DELETE',
                             headers: {
                                 'Accept': 'application/json',
@@ -535,19 +544,24 @@
                             credentials: 'include'
                         });
                         
+                        console.log('[DEBUG] Response status:', response.status);
+                        console.log('[DEBUG] Response ok:', response.ok);
+                        
                         if (response.ok) {
+                            console.log('[DEBUG] Account deleted successfully');
                             alert('Tu cuenta ha sido eliminada exitosamente. Serás redirigido a la página de inicio.');
                             // Eliminar cookie y redirigir
                             document.cookie = 'oversound_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
                             window.location.href = '/';
                         } else {
                             const errorData = await response.json().catch(() => ({}));
+                            console.log('[DEBUG] Error response:', errorData);
                             alert(`Error al eliminar la cuenta: ${errorData.message || 'Error desconocido'}`);
                             confirmBtn.disabled = false;
                             confirmBtn.textContent = 'Entiendo las consecuencias, eliminar mi cuenta';
                         }
                     } catch (error) {
-                        console.error('Error:', error);
+                        console.error('[DEBUG] Exception caught:', error);
                         alert('Error de conexión al intentar eliminar la cuenta. Por favor, intenta nuevamente.');
                         confirmBtn.disabled = false;
                         confirmBtn.textContent = 'Entiendo las consecuencias, eliminar mi cuenta';

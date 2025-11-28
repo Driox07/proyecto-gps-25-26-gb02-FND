@@ -1,119 +1,171 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function(){
     const form = document.getElementById('edit-song-form');
-    const saveBtn = document.getElementById('save-btn');
-    const messageDiv = document.getElementById('message');
-    const songId = document.getElementById('songId').value;
+    const songIdElement = document.getElementById('songId');
+    if (!songIdElement) {
+        console.error('songId element not found');
+        return;
+    }
+    const songId = songIdElement.value;
 
-    form.addEventListener('submit', async (e) => {
+    // Función para manejar cambio de archivo
+    function handleFileChange(inputId, infoId, type) {
+        const input = document.getElementById(inputId);
+        const info = document.getElementById(infoId);
+        
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                info.innerHTML = `<div class="current-cover"><p>Nueva portada seleccionada:</p><img src="${URL.createObjectURL(file)}" alt="Nueva portada" style="max-width: 200px; border-radius: 8px; margin-top: 10px;"></div>`;
+                info.style.color = '#28a745';
+            } else {
+                // Restaurar la portada actual
+                const currentCover = document.querySelector('.current-cover');
+                if (currentCover) {
+                    info.innerHTML = currentCover.outerHTML;
+                } else {
+                    info.textContent = 'No hay portada actual';
+                }
+            }
+        });
+    }
+
+    // Configurar manejadores para archivos
+    handleFileChange('audioFile', 'audioInfo', 'audio');
+    handleFileChange('coverFile', 'coverInfo', 'image');
+
+    form.addEventListener('submit', async function(e){
         e.preventDefault();
-        
+        const saveBtn = document.getElementById('save-btn');
+        const messageDiv = document.getElementById('message');
         saveBtn.disabled = true;
-        saveBtn.textContent = 'Guardando...';
-        
-        // Preparar datos del formulario
-        const formData = {
-            title: document.getElementById('title').value.trim(),
-            duration: parseInt(document.getElementById('duration').value),
-            price: parseFloat(document.getElementById('price').value),
-            description: document.getElementById('description').value.trim() || null,
-            cover: document.getElementById('cover').value.trim(),
-            releaseDate: document.getElementById('releaseDate').value || null
-        };
-        
-        // Validar campos requeridos
-        if (!formData.title || !formData.duration || !formData.price || !formData.cover) {
-            showMessage('Por favor, completa todos los campos obligatorios', 'error');
+        messageDiv.style.display = 'none';
+
+        // Función para convertir archivo a base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]); // Remover el prefijo data:...
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Obtener archivos y convertir a base64
+        const audioFile = document.getElementById('audioFile').files[0];
+        const coverFile = document.getElementById('coverFile').files[0];
+
+        // Verificar que los elementos del formulario existan
+        const titleEl = document.getElementById('title');
+        const priceEl = document.getElementById('price');
+        const descriptionEl = document.getElementById('description');
+        const releaseDateEl = document.getElementById('releaseDate');
+        const genresEl = document.getElementById('genres');
+        const collaboratorsEl = document.getElementById('collaborators');
+
+        let missingElements = [];
+        if (!titleEl) missingElements.push('Título');
+        if (!priceEl) missingElements.push('Precio');
+        if (!descriptionEl) missingElements.push('Descripción');
+        if (!releaseDateEl) missingElements.push('Fecha de lanzamiento');
+        if (!genresEl) missingElements.push('Géneros');
+        if (!collaboratorsEl) missingElements.push('Colaboradores');
+
+        if (missingElements.length > 0) {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Elementos del formulario faltantes: ' + missingElements.join(', ') + '. Los campos obligatorios son: Título, Precio, Géneros.';
+            messageDiv.style.display = 'block';
             saveBtn.disabled = false;
-            saveBtn.textContent = 'Guardar Cambios';
             return;
         }
-        
-        // Procesar géneros
-        const genresInput = document.getElementById('genres').value.trim();
-        if (genresInput) {
-            formData.genres = genresInput.split(',')
-                .map(id => parseInt(id.trim()))
+
+        try {
+            let audioBase64 = null;
+            if (audioFile) {
+                audioBase64 = await fileToBase64(audioFile);
+            }
+
+            let coverBase64 = null;
+            let coverExtension = null;
+            if (coverFile) {
+                coverBase64 = await fileToBase64(coverFile);
+                coverExtension = coverFile.name.split('.').pop().toLowerCase();
+            }
+
+            // Procesar géneros seleccionados (multi-select)
+            const selectedGenres = Array.from(genresEl.selectedOptions)
+                .map(opt => parseInt(opt.value))
                 .filter(id => !isNaN(id));
             
-            if (formData.genres.length === 0) {
-                showMessage('Los géneros deben ser IDs numéricos válidos', 'error');
+            // Procesar colaboradores seleccionados (multi-select, opcional)
+            const selectedCollabs = Array.from(collaboratorsEl.selectedOptions)
+                .map(opt => parseInt(opt.value))
+                .filter(id => !isNaN(id));
+
+            // Verificar campos obligatorios
+            let missingFields = [];
+            if (titleEl.value.trim() === '') missingFields.push('Título');
+            if (priceEl.value === '' || isNaN(parseFloat(priceEl.value)) || parseFloat(priceEl.value) <= 0) missingFields.push('Precio (debe ser un número positivo)');
+            if (selectedGenres.length === 0) missingFields.push('Géneros');
+
+            if (missingFields.length > 0) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'Los siguientes campos son obligatorios: ' + missingFields.join(', ');
+                messageDiv.style.display = 'block';
                 saveBtn.disabled = false;
-                saveBtn.textContent = 'Guardar Cambios';
                 return;
             }
-        } else {
-            showMessage('Debes especificar al menos un género', 'error');
-            saveBtn.disabled = false;
-            saveBtn.textContent = 'Guardar Cambios';
-            return;
-        }
-        
-        // Procesar colaboradores (opcional)
-        const collabsInput = document.getElementById('collaborators').value.trim();
-        if (collabsInput) {
-            formData.collaborators = collabsInput.split(',')
-                .map(id => parseInt(id.trim()))
-                .filter(id => !isNaN(id));
-        } else {
-            formData.collaborators = [];
-        }
-        
-        try {
-            const response = await fetch(`/song/${songId}/edit`, {
+
+            // Crear objeto JSON
+            const data = {
+                title: titleEl.value.trim(),
+                price: parseFloat(priceEl.value),
+                description: descriptionEl.value.trim() || null,
+                releaseDate: releaseDateEl.value || null,
+                genres: selectedGenres,
+                collaborators: selectedCollabs
+            };
+
+            if (audioBase64) {
+                data.audioFile = audioBase64;
+            }
+
+            if (coverBase64) {
+                data.coverFile = coverBase64;
+                data.coverExtension = coverExtension;
+            }
+
+            const resp = await fetch(`/song/${songId}/edit`, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(data),
+                credentials: 'same-origin'
             });
             
-            const result = await response.json();
+            const responseData = await resp.json();
             
-            if (response.ok) {
-                showMessage('Canción actualizada exitosamente', 'success');
+            if(responseData.message && resp.ok){
+                messageDiv.className = 'message success';
+                messageDiv.textContent = responseData.message || 'Canción actualizada exitosamente!';
+                messageDiv.style.display = 'block';
                 
-                // Redirigir después de 1.5 segundos
+                // Redirigir al perfil del artista después de 2 segundos
                 setTimeout(() => {
-                    window.location.href = '/artist/studio';
-                }, 1500);
+                    window.location.href = `/song/${songId}`;
+                }, 2000);
             } else {
-                throw new Error(result.message || result.detail || 'Error al actualizar la canción');
+                messageDiv.className = 'message error';
+                messageDiv.textContent = responseData.message || 'No se pudo actualizar la canción.';
+                messageDiv.style.display = 'block';
+                saveBtn.disabled = false;
             }
-        } catch (error) {
-            console.error('Error:', error);
-            showMessage(error.message || 'Error de conexión con el servidor', 'error');
-            
+        } catch(err){
+            console.error('Error:', err);
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Error de conexión. Intenta de nuevo.';
+            messageDiv.style.display = 'block';
             saveBtn.disabled = false;
-            saveBtn.textContent = 'Guardar Cambios';
-        }
-    });
-    
-    // Función auxiliar para mostrar mensajes
-    function showMessage(text, type) {
-        messageDiv.textContent = text;
-        messageDiv.className = `message ${type}`;
-        messageDiv.style.display = 'block';
-        
-        // Scroll hacia el mensaje
-        messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-    
-    // Preview de imagen al cambiar la URL
-    const coverInput = document.getElementById('cover');
-    coverInput.addEventListener('change', () => {
-        const url = coverInput.value.trim();
-        let previewContainer = document.querySelector('.preview-container');
-        
-        if (url) {
-            if (!previewContainer) {
-                previewContainer = document.createElement('div');
-                previewContainer.className = 'preview-container';
-                coverInput.parentElement.appendChild(previewContainer);
-            }
-            
-            previewContainer.innerHTML = `<img src="${url}" alt="Vista previa" onerror="this.style.display='none'">`;
-        } else if (previewContainer) {
-            previewContainer.remove();
         }
     });
 });
