@@ -6,6 +6,7 @@ let imageBase64 = '';
 document.addEventListener('DOMContentLoaded', () => {
     setupFormValidation();
     setupFormSubmission();
+    preventEnterSubmit();
 });
 
 /**
@@ -213,64 +214,67 @@ function handleImageUpload(event) {
 }
 
 /**
- * Setup form submission
+ * Prevent form submission on Enter key
  */
-function setupFormSubmission() {
+function preventEnterSubmit() {
     const form = document.getElementById('artist-form');
     
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        if (!validateCurrentStep()) {
-            return;
-        }
-        
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = `
-            <div class="spinner-small"></div>
-            Creando...
-        `;
-        
-        try {
-            const formData = {
-                artisticName: document.getElementById('artisticName').value.trim(),
-                artisticEmail: document.getElementById('artisticEmail').value.trim(),
-                artisticBiography: document.getElementById('artisticBiography').value.trim() || '',
-                artisticImage: imageBase64 || '',
-                socialMediaUrl: document.getElementById('socialMediaUrl').value.trim() || null
-            };
+    // Prevenir submit con Enter - SIEMPRE
+    form.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
             
-            const response = await fetch('/artist/create', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
-                showNotification('¡Perfil de artista creado correctamente!', 'success');
-                
-                // Redirect to artist profile after 1.5 seconds
-                setTimeout(() => {
-                    window.location.href = `/artist/${data.artistId}`;
-                }, 1500);
-            } else {
-                showNotification(data.error || 'Error al crear el perfil de artista', 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <polyline points="20 6 9 17 4 12" stroke-width="2"></polyline>
-                    </svg>
-                    Crear Perfil de Artista
-                `;
+            // Si no estamos en el último paso, avanzar
+            if (currentStep < totalSteps) {
+                nextStep();
             }
-        } catch (error) {
-            console.error('Error:', error);
-            showNotification('Error al crear el perfil de artista', 'error');
+            // Si estamos en el último paso, no hacer nada (el botón debe ser clickeado explícitamente)
+        }
+    });
+}
+
+/**
+ * Submit artist form
+ */
+window.submitArtistForm = async function() {
+    console.log('submitArtistForm called, currentStep:', currentStep);
+    
+    // No validar el paso 4 ya que no tiene campos requeridos
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `
+        <div class="spinner-small"></div>
+        Creando...
+    `;
+    
+    try {
+        const formData = {
+            artisticName: document.getElementById('artisticName').value.trim(),
+            artisticEmail: document.getElementById('artisticEmail').value.trim(),
+            artisticBiography: document.getElementById('artisticBiography').value.trim() || '',
+            artisticImage: imageBase64 || '',
+            socialMediaUrl: document.getElementById('socialMediaUrl').value.trim() || null
+        };
+        
+        const response = await fetch('/artist/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification('¡Perfil de artista creado correctamente!', 'success');
+            
+            // Redirect to artist profile after 1.5 seconds
+            setTimeout(() => {
+                window.location.href = `/artist/${data.artistId}`;
+            }, 1500);
+        } else {
+            showNotification(data.error || 'Error al crear el perfil de artista', 'error');
             submitBtn.disabled = false;
             submitBtn.innerHTML = `
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -279,6 +283,29 @@ function setupFormSubmission() {
                 Crear Perfil de Artista
             `;
         }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error al crear el perfil de artista', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <polyline points="20 6 9 17 4 12" stroke-width="2"></polyline>
+            </svg>
+            Crear Perfil de Artista
+        `;
+    }
+}
+
+/**
+ * Setup form submission prevention
+ */
+function setupFormSubmission() {
+    const form = document.getElementById('artist-form');
+    
+    // Prevenir completamente el submit del formulario
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        return false;
     });
 }
 

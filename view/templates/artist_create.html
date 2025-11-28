@@ -162,7 +162,7 @@
                         <polyline points="9 18 15 12 9 6" stroke-width="2"></polyline>
                     </svg>
                 </button>
-                <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;" form="artist-form">
+                <button type="button" class="btn btn-success" id="submitBtn" style="display: none;" onclick="submitArtistForm()">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <polyline points="20 6 9 17 4 12" stroke-width="2"></polyline>
                     </svg>
@@ -172,6 +172,6 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', path='js/ArtistCreate.js') }}"></script>
+    <script src="{{ url_for('static', path='js/ArtistCreate.js') }}?v={{ timestamp }}"></script>
 </body>
 </html>

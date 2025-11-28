@@ -277,9 +277,9 @@ class View():
         return templates.TemplateResponse("giftcard.html", {"request": request, "data": data})
     
     # Renderizar la template artist_create.html
-    def get_artist_create_view(self, request: Request, userdata: dict = None, syu_server: str = None):
+    def get_artist_create_view(self, request: Request, userdata: dict = None, syu_server: str = None, timestamp: int = None):
         data = {"userdata": userdata, "syu_server": syu_server}
-        return templates.TemplateResponse("artist_create.html", {"request": request, "data": data})
+        return templates.TemplateResponse("artist_create.html", {"request": request, "data": data, "timestamp": timestamp})
     
     # Renderizar la template user_profile_edit.html
     def get_user_profile_edit_view(self, request: Request, userdata: dict = None, syu_server: str = None, timestamp: int = None):
