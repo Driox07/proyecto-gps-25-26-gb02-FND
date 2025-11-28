@@ -75,26 +75,7 @@ function setupButtonListeners() {
         });
     }
 
-    // Favorite button
-    const favoriteButton = document.getElementById('favorite-button');
-    if (favoriteButton) {
-        // If the element has data-fav-merch, favorites.js will already attach
-        // the handler — avoid duplicate listeners which cause double requests
-        if (!favoriteButton.dataset || !favoriteButton.dataset.favMerch) {
-            favoriteButton.addEventListener('click', () => {
-                const merchId = window.location.pathname.split('/').pop();
-                if (!merchId) {
-                    alert('ID de mercancía no disponible');
-                    return;
-                }
-                if (typeof toggleFavoriteMerch === 'function') {
-                    toggleFavoriteMerch(parseInt(merchId), favoriteButton);
-                } else {
-                    alert('Los favoritos de mercancía aún no están disponibles');
-                }
-            });
-        }
-    }
+    // Favoritos de merch: eliminado (los productos no pueden ser likeados)
 
     // Delete button
     const deleteButton = document.getElementById('delete-merch-button');
