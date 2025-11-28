@@ -1498,13 +1498,12 @@ async def upload_merch(request: Request):
         
         # Agregar el ID del artista
         body['artistId'] = userdata.get('artistId')
-        print(body)
         
         # Enviar a TYA para crear el merchandising
         merch_resp = requests.post(
             f"{servers.TYA}/merch/upload",
             json=body,
-            timeout=15,
+            timeout=20,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
         print(merch_resp.status_code, merch_resp.text)
