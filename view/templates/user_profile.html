@@ -180,6 +180,71 @@
                 </div>
             </div>
         </section>
+        <!-- Inventory section -->>
+        <section class="items-section">
+            <div class="favorites-container">
+                <div class="favorites-category">
+                    <div class="category-header">
+                        <h2 class="category-title">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke-width="2"></path>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96" stroke-width="2"></polyline>
+                                <line x1="12" y1="22.08" x2="12" y2="12" stroke-width="2"></line>
+                            </svg>
+                            Mis Artículos
+                        </h2>
+                    </div>
+
+                    <div class="favorites-row">
+                        {% if elementos_biblioteca %}
+                            {% if elementos_biblioteca.songs%}
+                                {% for item in elementos_biblioteca.songs %}
+                                    <a href="/song/{{ item.songId }}" class="favorite-card">
+                                        <div class="card-image">
+                                            {% if item.image %}
+                                                <img src="{{ item.cover }}" alt="{{ item.title }}" loading="lazy">
+                                            {% else %}
+                                                <div class="card-image-placeholder">
+                                                    {{ item.title[0].upper() }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="card-content">
+                                            <h3 class="card-title">{{ item.title }}</h3>
+                                        </div>
+                                    </a>
+                                {% endfor %}
+                            {% endif %}
+                            {% if elementos_biblioteca.albums%}
+                                {% for item in elementos_biblioteca.albums %}
+                                    <a href="/album/{{ item.albumId }}" class="favorite-card">
+                                        <div class="card-image">
+                                            {% if item.image %}
+                                                <img src="{{ item.cover }}" alt="{{ item.title }}" loading="lazy">
+                                            {% else %}
+                                                <div class="card-image-placeholder">
+                                                    {{ item.title[0].upper() }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="card-content">
+                                            <h3 class="card-title">{{ item.title }}</h3>
+                                        </div>
+                                    </a>
+                                {% endfor %}
+                            {% endif %}
+                        {% else %}
+                            <div class="empty-state">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke-width="2"></path>
+                                </svg>
+                                <p>No tienes artículos en tu colección</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <!-- Favorites Section -->
         <section class="favorites-section">
