@@ -50,6 +50,13 @@
                         <img src="{{ (data.tya_server + '/static' + s.image) if s.image else '/static/img/utils/default-song.svg' }}" alt="{{ s.name or s.title or 'Canción' }}" />
                         <p class="top-name">{{ s.name or s.title or 'Título desconocido' }}</p>
                         <span class="top-meta">{{ data.genres_map.get(s.genre) or s.genreName or '' }}</span>
+
+                        {% if s.price %}
+                            <span class="top-price">€{{ "%.2f"|format(s.price) }}</span>
+                        {% endif %}
+                        {% if s.duration %}
+                            <span class="top-duration">{{ (s.duration // 60) }}:{{ "%02d"|format(s.duration % 60) }}</span>
+                        {% endif %}
                     </a>
                 {% endfor %}
             {% else %}
@@ -62,9 +69,12 @@
             {% if data.top_artists and data.top_artists | length > 0 %}
                 {% for a in data.top_artists %}
                     <a class="top-card" data-rank="{{ loop.index }}" href="/artist/{{ a.artistId or a.id }}" aria-label="Ver perfil de {{ a.name or a.artisticName or 'artista' }}">
-                        <img src="{{ (data.tya_server + '/static' + a.image) if a.image else '/static/img/utils/default-artist.svg' }}" alt="{{ a.name or a.artisticName or 'Artista' }}" />
+                        <img src="{{ (data.tya_server + '/static' + a.artisticImage) if a.artisticImage else '/static/img/utils/default-artist.svg' }}" alt="{{ a.name or a.artisticName or 'Artista' }}" />
                         <p class="top-name">{{ a.name or a.artisticName or 'Nombre desconocido' }}</p>
                         <span class="top-meta" style="display: none;"></span>
+                        {% if a.artisticBiography %}
+                            <span class="top-bio">{{ a.artisticBiography | truncate(50) }}</span>
+                        {% endif %}
                     </a>
                 {% endfor %}
             {% else %}
@@ -83,6 +93,12 @@
                         <img src="{{ (data.tya_server + '/static' + s.image) if s.image else '/static/img/utils/default-song.svg' }}" alt="{{ s.name or s.title or 'Canción' }}" />
                         <p class="top-name">{{ s.name or s.title or 'Título desconocido' }}</p>
                         <span class="top-meta">{{ data.genres_map.get(s.genre) or s.genreName or '' }}</span>
+                        {% if s.price %}
+                            <span class="top-price">€{{ "%.2f"|format(s.price) }}</span>
+                        {% endif %}
+                        {% if s.duration %}
+                            <span class="top-duration">{{ (s.duration // 60) }}:{{ "%02d"|format(s.duration % 60) }}</span>
+                        {% endif %}
                     </a>
                 {% endfor %}
             {% else %}
@@ -95,9 +111,12 @@
             {% if data.rec_artists and data.rec_artists | length > 0 %}
                 {% for a in data.rec_artists %}
                     <a class="top-card" href="/artist/{{ a.artistId or a.id }}" aria-label="Ver perfil de {{ a.name or a.artisticName or 'artista' }}">
-                        <img src="{{ (data.tya_server + '/static' + a.image) if a.image else '/static/img/utils/default-artist.svg' }}" alt="{{ a.name or a.artisticName or 'Artista' }}" />
+                        <img src="{{ (data.tya_server + '/static' + a.artisticImage) if a.artisticImage else '/static/img/utils/default-artist.svg' }}" alt="{{ a.name or a.artisticName or 'Artista' }}" />
                         <p class="top-name">{{ a.name or a.artisticName or 'Nombre desconocido' }}</p>
                         <span class="top-meta" style="display: none;"></span>
+                        {% if a.artisticBiography %}
+                            <span class="top-bio">{{ a.artisticBiography | truncate(50) }}</span>
+                        {% endif %}
                     </a>
                 {% endfor %}
             {% else %}
