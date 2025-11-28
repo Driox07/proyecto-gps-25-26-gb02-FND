@@ -3512,7 +3512,9 @@ def artist_create_page(request: Request):
     if userdata.get('artistId'):
         return RedirectResponse(f"/artist/{userdata.get('artistId')}")
     
-    return osv.get_artist_create_view(request, userdata, servers.SYU)
+    import time
+    timestamp = int(time.time())
+    return osv.get_artist_create_view(request, userdata, servers.SYU, timestamp)
 
 
 @app.post("/artist/create")
