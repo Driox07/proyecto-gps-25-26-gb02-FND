@@ -1413,3 +1413,82 @@ body {
         width: 100%;
     }
 }
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .content-section {
+        background: #1a1a1a;
+    }
+
+    .tab-button {
+        color: #666;
+    }
+
+    .tab-button:hover,
+    .tab-button.active {
+        color: #667eea;
+    }
+
+    .tabs-navigation {
+        border-bottom-color: #333;
+    }
+
+    .favorites-grid .song-card,
+    .favorites-grid .album-card,
+    .favorites-grid .artist-card {
+        background: #2a2a2a;
+    }
+
+    .favorites-grid .card-title {
+        color: #e0e0e0;
+    }
+
+    .favorites-grid .card-subtitle {
+        color: #999;
+    }
+
+    .purchase-card {
+        background: #2a2a2a;
+    }
+
+    .purchase-title {
+        color: #e0e0e0;
+    }
+
+    .purchase-artist {
+        color: #999;
+    }
+
+    .purchase-date,
+    .purchase-price {
+        color: #bbb;
+    }
+
+    .payment-card {
+        background: #2a2a2a;
+    }
+
+    .payment-method {
+        color: #e0e0e0;
+    }
+
+    .payment-modal {
+        background: #2a2a2a;
+    }
+
+    .modal-header h2 {
+        color: #e0e0e0;
+    }
+
+    .modal-detail-label {
+        color: #999;
+    }
+
+    .modal-detail-value {
+        color: #e0e0e0;
+    }
+
+    .empty-state p {
+        color: #666;
+    }
+}

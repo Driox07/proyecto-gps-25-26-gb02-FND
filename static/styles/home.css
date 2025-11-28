@@ -772,3 +772,51 @@ body {
     border-radius: 8px;
     margin: 0 auto 16px;
 }
+
+/* ===================================
+   DARK MODE SUPPORT
+   =================================== */
+
+@media (prefers-color-scheme: dark) {
+    .features-section {
+        background: #1a1a1a;
+    }
+
+    .feature-card {
+        background: #2a2a2a;
+        border-color: #333;
+    }
+
+    .feature-card h3 {
+        color: #fff;
+    }
+
+    .feature-card p {
+        color: #bbb;
+    }
+
+    .top-section {
+        background: rgba(26, 26, 26, 0.95);
+    }
+
+    .top-card {
+        background: #2a2a2a;
+    }
+
+    .top-name {
+        color: #fff;
+    }
+
+    .top-meta {
+        color: #8a75ff;
+    }
+
+    .top-section > p {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .main-footer {
+        background: rgba(0, 0, 0, 0.4);
+    }
+}

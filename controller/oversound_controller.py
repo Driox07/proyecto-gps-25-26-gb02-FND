@@ -3568,6 +3568,30 @@ def get_artist_profile(request: Request, artistId: int):
             print(f"Error obteniendo métricas del artista: {e}")
             metrics = {"playbacks": 0, "songs": 0, "popularity": None}
         
+        # Verificar si el artista está en favoritos del usuario
+        is_favorite = False
+        if userdata and not is_own_profile:
+            try:
+                fav_resp = requests.get(
+                    f"{servers.SYU}/favs/artists",
+                    timeout=2,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                if fav_resp.ok:
+                    fav_data = fav_resp.json()
+                    # El API devuelve una lista de IDs directamente o un objeto con 'ids'
+                    if isinstance(fav_data, list):
+                        favorite_artists = fav_data
+                    elif isinstance(fav_data, dict):
+                        favorite_artists = fav_data.get('ids', [])
+                    else:
+                        favorite_artists = []
+                    is_favorite = int(artistId) in [int(aid) for aid in favorite_artists]
+            except requests.RequestException as e:
+                print(f"Error verificando favoritos: {e}")
+        
+        artist_data['is_favorite'] = is_favorite
+        
         return osv.get_artist_profile_view(request, artist_data, userdata, is_own_profile, servers.SYU, metrics, servers.TYA, servers.RYE, servers.PT)
         
     except requests.RequestException as e:

@@ -640,3 +640,43 @@ body {
     transform: translateY(0);
     box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
 }
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .merch-info {
+        color: #e0e0e0;
+    }
+
+    .merch-title {
+        color: #fff;
+    }
+
+    .merch-artist a {
+        color: #a8b3ff;
+    }
+
+    .merch-artist a:hover {
+        color: #8a75ff;
+    }
+
+    .price-label {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .price-value {
+        color: #fff;
+    }
+
+    .specs-section {
+        background: #2a2a2a;
+    }
+
+    .spec-item strong {
+        color: #e0e0e0;
+    }
+
+    .spec-item {
+        color: #bbb;
+        border-bottom-color: #333;
+    }
+}

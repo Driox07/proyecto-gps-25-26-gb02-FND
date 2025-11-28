@@ -930,3 +930,51 @@ body {
         gap: 6px;
     }
 }
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .shop-main {
+        background: #1a1a1a;
+    }
+
+    .filters-section {
+        background: rgba(42, 42, 42, 0.95);
+    }
+
+    .search-input {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #e0e0e0;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .search-input::placeholder {
+        color: #999;
+    }
+
+    .filter-select {
+        background-color: #2a2a2a;
+        color: #e0e0e0;
+        border-color: #333;
+    }
+
+    .item-card {
+        background: #2a2a2a;
+    }
+
+    .item-card:hover {
+        background: #333;
+    }
+
+    .item-title {
+        color: #e0e0e0;
+    }
+
+    .item-artist,
+    .item-genre {
+        color: #999;
+    }
+
+    .pagination-info {
+        color: #999;
+    }
+}
