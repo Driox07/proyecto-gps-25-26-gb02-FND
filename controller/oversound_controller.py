@@ -330,18 +330,63 @@ def shop(request: Request,
             )
             merch = merch_resp.json() if merch_resp.ok else []
 
-        # Normalizar URLs de imágenes para todos los productos
+        # Normalizar URLs de imágenes, precios y artistId para todos los productos
         for song in songs:
             if song.get('cover'):
                 song['cover'] = normalize_image_url(song['cover'], servers.TYA)
+            # Normalizar precio: convertir string "10,00" a float 10.00
+            if song.get('price'):
+                try:
+                    if isinstance(song['price'], str):
+                        song['price'] = float(song['price'].replace(',', '.'))
+                    else:
+                        song['price'] = float(song['price'])
+                except (ValueError, TypeError):
+                    song['price'] = 0.99
+            # Normalizar artistId a int
+            if song.get('artistId'):
+                try:
+                    song['artistId'] = int(song['artistId'])
+                except (ValueError, TypeError):
+                    pass
         
         for album in albums:
             if album.get('cover'):
                 album['cover'] = normalize_image_url(album['cover'], servers.TYA)
+            # Normalizar precio
+            if album.get('price'):
+                try:
+                    if isinstance(album['price'], str):
+                        album['price'] = float(album['price'].replace(',', '.'))
+                    else:
+                        album['price'] = float(album['price'])
+                except (ValueError, TypeError):
+                    album['price'] = 9.99
+            # Normalizar artistId a int
+            if album.get('artistId'):
+                try:
+                    album['artistId'] = int(album['artistId'])
+                except (ValueError, TypeError):
+                    pass
         
         for item in merch:
             if item.get('cover'):
                 item['cover'] = normalize_image_url(item['cover'], servers.TYA)
+            # Normalizar precio
+            if item.get('price'):
+                try:
+                    if isinstance(item['price'], str):
+                        item['price'] = float(item['price'].replace(',', '.'))
+                    else:
+                        item['price'] = float(item['price'])
+                except (ValueError, TypeError):
+                    item['price'] = 19.99
+            # Normalizar artistId a int
+            if item.get('artistId'):
+                try:
+                    item['artistId'] = int(item['artistId'])
+                except (ValueError, TypeError):
+                    pass
 
         # POST-FILTRADO: Validar que los productos realmente coincidan con los filtros seleccionados
         # Esto es necesario porque algunos productos pueden no tener todos los campos
@@ -427,6 +472,24 @@ def shop(request: Request,
                 genre_name = g.get('name')
                 genres_map[genre_id] = genre_name  # int key
                 genres_map[str(genre_id)] = genre_name  # string key
+
+        # DEBUG: Mostrar información sobre los productos
+        print(f"[DEBUG] Shop - Total productos: {len(songs)} canciones, {len(albums)} álbumes, {len(merch)} merch")
+        if songs:
+            song = songs[0]
+            artist_id = song.get('artistId')
+            print(f"[DEBUG] Primera canción - ID: {song.get('songId')}, Título: {song.get('title')}, Precio: {song.get('price')}, ArtistId: {artist_id} (tipo: {type(artist_id).__name__})")
+            print(f"[DEBUG] ¿artistId en artists_map? {artist_id in artists_map}, Valor: {artists_map.get(artist_id, 'NO ENCONTRADO')}")
+        if albums:
+            album = albums[0]
+            artist_id = album.get('artistId')
+            print(f"[DEBUG] Primer álbum - ID: {album.get('albumId')}, Título: {album.get('title')}, Precio: {album.get('price')}, ArtistId: {artist_id} (tipo: {type(artist_id).__name__})")
+        if merch:
+            item = merch[0]
+            artist_id = item.get('artistId')
+            print(f"[DEBUG] Primer merch - ID: {item.get('merchId')}, Título: {item.get('title')}, Precio: {item.get('price')}, ArtistId: {artist_id} (tipo: {type(artist_id).__name__})")
+        print(f"[DEBUG] Artists_map tiene {len(artists_map)} artistas: {list(artists_map.items())[:3]}")
+        print(f"[DEBUG] Tipos de claves en artists_map: {[type(k).__name__ for k in list(artists_map.keys())[:3]]}")
 
     except Exception as e:
         print(f"Error en shop: {e}")
