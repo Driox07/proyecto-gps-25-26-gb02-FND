@@ -1,8 +1,5 @@
 // Album Page Functionality
 
-// Configuration for the music microservice (defined in config.js)
-const MUSIC_SERVICE_URL = PT_URL;
-
 // Global audio player instance for album page
 let audioPlayer = null;
 let currentTrackIndex = -1;
@@ -249,8 +246,19 @@ async function handleDeleteAlbum(event) {
  */
 function handlePlayAlbum(event) {
     event.preventDefault();
-    showNotification('Reproducción del álbum iniciada', 'info');
-    console.log('Reproduciendo álbum completo');
+    
+    // Construir el array de canciones
+    buildAlbumTracksArray();
+    
+    // Si hay canciones, reproducir la primera
+    if (albumTracks.length > 0) {
+        currentTrackIndex = 0;
+        const firstTrack = albumTracks[0];
+        showNotification(`Reproduciendo álbum: ${firstTrack.name}`, 'info');
+        playTrack(firstTrack.trackId);
+    } else {
+        showNotification('No hay canciones disponibles en el álbum', 'warning');
+    }
 }
 
 /**
@@ -261,6 +269,7 @@ function handleTrackPlay(event) {
     const trackItem = event.currentTarget.closest('.track-item');
     const trackName = trackItem.querySelector('.track-name a').textContent;
     const trackId = trackItem.getAttribute('data-track-id');
+    const songId = trackItem.getAttribute('data-song-id');
     
     if (!trackId) {
         alert('ID de canción no disponible');
@@ -286,6 +295,7 @@ function buildAlbumTracksArray() {
     const trackItems = document.querySelectorAll('.track-item');
     albumTracks = Array.from(trackItems).map(item => ({
         trackId: item.getAttribute('data-track-id'),
+        songId: item.getAttribute('data-song-id'),
         name: item.querySelector('.track-name a').textContent
     }));
 }
@@ -318,11 +328,10 @@ async function playTrack(trackId) {
     }
 
     try {
-        const url = `${MUSIC_SERVICE_URL}/track/${trackId}`;
+        // Usar el proxy del frontend para evitar problemas de cookies entre puertos
+        const url = `/track/${trackId}`;
         
-        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
-            console.log(`Fetching track from: ${url}`);
-        }
+        console.log(`Fetching track from: ${url}`);
 
         const response = await fetch(url, {
             method: 'GET',
@@ -336,13 +345,12 @@ async function playTrack(trackId) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // Get audio blob
+        // Get audio blob from proxy
         const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
+        console.log(`Audio blob received, size: ${audioBlob.size} bytes`);
         
-        if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
-            console.log(`Audio blob received, size: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
-        }
+        // Create object URL from blob
+        const audioUrl = URL.createObjectURL(audioBlob);
         
         // Set audio source and play
         audioPlayer.src = audioUrl;
