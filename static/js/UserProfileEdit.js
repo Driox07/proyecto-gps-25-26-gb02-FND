@@ -48,7 +48,7 @@ function initImageUpload() {
  * Initialize character counters for textareas
  */
 function initCharacterCounters() {
-    const biografia = document.getElementById('biografia');
+    const biografia = document.getElementById('bio');
     const bioCounter = document.getElementById('char-count');
     
     if (biografia && bioCounter) {
