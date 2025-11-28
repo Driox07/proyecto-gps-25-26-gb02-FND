@@ -1554,11 +1554,37 @@ def get_song(request: Request, songId: int):
             if linked_album.get('cover'):
                 linked_album['cover'] = normalize_image_url(linked_album['cover'], servers.TYA)
         
-        # Asegurarse de que el precio sea un número
-        try:
-            song_data['price'] = float(song_data.get('price', 0))
-        except ValueError:
-            song_data['price'] = 0.0
+        # Normalizar precio: convertir string "10,00" a float 10.00
+        if song_data.get('price'):
+            try:
+                if isinstance(song_data['price'], str):
+                    song_data['price'] = float(song_data['price'].replace(',', '.'))
+                else:
+                    song_data['price'] = float(song_data['price'])
+            except (ValueError, TypeError):
+                song_data['price'] = 0.99
+        else:
+            song_data['price'] = 0.99
+        
+        # Normalizar precios de álbumes relacionados
+        if song_data.get('original_album') and song_data['original_album'].get('price'):
+            try:
+                if isinstance(song_data['original_album']['price'], str):
+                    song_data['original_album']['price'] = float(song_data['original_album']['price'].replace(',', '.'))
+                else:
+                    song_data['original_album']['price'] = float(song_data['original_album']['price'])
+            except (ValueError, TypeError):
+                song_data['original_album']['price'] = 9.99
+        
+        for linked_album in song_data.get('linked_albums_data', []):
+            if linked_album.get('price'):
+                try:
+                    if isinstance(linked_album['price'], str):
+                        linked_album['price'] = float(linked_album['price'].replace(',', '.'))
+                    else:
+                        linked_album['price'] = float(linked_album['price'])
+                except (ValueError, TypeError):
+                    linked_album['price'] = 9.99
         
         # Determinar si está en favoritos
         isLiked = False
@@ -2063,18 +2089,33 @@ def get_merch(request: Request, merchId: int):
                 pass  # Si no se pueden cargar, dejar vacío
         merch_data['related_merch'] = related_merch
         
-        # Normalizar URLs de imágenes
+        # Normalizar URLs de imágenes y precios
         if merch_data.get('cover'):
             merch_data['cover'] = normalize_image_url(merch_data['cover'], servers.TYA)
         for related in merch_data.get('related_merch', []):
             if related.get('cover'):
                 related['cover'] = normalize_image_url(related['cover'], servers.TYA)
+            # Normalizar precio de merchandising relacionado
+            if related.get('price'):
+                try:
+                    if isinstance(related['price'], str):
+                        related['price'] = float(related['price'].replace(',', '.'))
+                    else:
+                        related['price'] = float(related['price'])
+                except (ValueError, TypeError):
+                    related['price'] = 19.99
         
-        # Asegurarse de que el precio sea un número
-        try:
-            merch_data['price'] = float(merch_data.get('price', 0))
-        except ValueError:
-            merch_data['price'] = 0.0
+        # Normalizar precio: convertir string "10,00" a float 10.00
+        if merch_data.get('price'):
+            try:
+                if isinstance(merch_data['price'], str):
+                    merch_data['price'] = float(merch_data['price'].replace(',', '.'))
+                else:
+                    merch_data['price'] = float(merch_data['price'])
+            except (ValueError, TypeError):
+                merch_data['price'] = 19.99
+        else:
+            merch_data['price'] = 19.99
         
         # Determinar si está en favoritos y carrito (por ahora False, implementar después)
         isLiked = False
@@ -3542,7 +3583,18 @@ def get_artist_profile(request: Request, artistId: int):
                     headers={"Accept": "application/json"}
                 )
                 if songs_resp.ok:
-                    artist_data['owner_songs'] = songs_resp.json()
+                    songs_list = songs_resp.json()
+                    # Normalizar precios de canciones
+                    for song in songs_list:
+                        if song.get('price'):
+                            try:
+                                if isinstance(song['price'], str):
+                                    song['price'] = float(song['price'].replace(',', '.'))
+                                else:
+                                    song['price'] = float(song['price'])
+                            except (ValueError, TypeError):
+                                song['price'] = 0.99
+                    artist_data['owner_songs'] = songs_list
             except requests.RequestException as e:
                 print(f"Error obteniendo canciones del artista: {e}")
                 artist_data['owner_songs'] = []
@@ -3557,7 +3609,18 @@ def get_artist_profile(request: Request, artistId: int):
                     headers={"Accept": "application/json"}
                 )
                 if albums_resp.ok:
-                    artist_data['owner_albums'] = albums_resp.json()
+                    albums_list = albums_resp.json()
+                    # Normalizar precios de álbumes
+                    for album in albums_list:
+                        if album.get('price'):
+                            try:
+                                if isinstance(album['price'], str):
+                                    album['price'] = float(album['price'].replace(',', '.'))
+                                else:
+                                    album['price'] = float(album['price'])
+                            except (ValueError, TypeError):
+                                album['price'] = 9.99
+                    artist_data['owner_albums'] = albums_list
             except requests.RequestException as e:
                 print(f"Error obteniendo álbumes del artista: {e}")
                 artist_data['owner_albums'] = []
@@ -3572,8 +3635,18 @@ def get_artist_profile(request: Request, artistId: int):
                     headers={"Accept": "application/json"}
                 )
                 if merch_resp.ok:
-                    artist_data['owner_merch'] = merch_resp.json()
-                    print(f"[DEBUG] Merch data for artist profile: {artist_data['owner_merch']}")
+                    merch_list = merch_resp.json()
+                    # Normalizar precios de merchandising
+                    for item in merch_list:
+                        if item.get('price'):
+                            try:
+                                if isinstance(item['price'], str):
+                                    item['price'] = float(item['price'].replace(',', '.'))
+                                else:
+                                    item['price'] = float(item['price'])
+                            except (ValueError, TypeError):
+                                item['price'] = 19.99
+                    artist_data['owner_merch'] = merch_list
             except requests.RequestException as e:
                 print(f"Error obteniendo merchandising del artista: {e}")
                 artist_data['owner_merch'] = []
