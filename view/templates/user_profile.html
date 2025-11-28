@@ -218,13 +218,7 @@
                                                     </svg>
                                                 </div>
                                             {% endif %}
-                                            <div class="card-overlay">
-                                                <button class="play-button" data-track-id="{{ song.trackId }}">
-                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                                    </svg>
-                                                </button>
-                                            </div>
+                                            <!-- Overlay de reproducción eliminado: la tarjeta redirige a la página de la canción -->
                                         </div>
                                         <div class="card-content">
                                             <h3 class="card-title">{{ song.title }}</h3>
@@ -285,13 +279,7 @@
                                                     </svg>
                                                 </div>
                                             {% endif %}
-                                            <div class="card-overlay">
-                                                <button class="play-button" data-track-id="{{ album.trackId }}">
-                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                                    </svg>
-                                                </button>
-                                            </div>
+                                            <!-- Overlay de reproducción eliminado: la tarjeta redirige a la página del álbum -->
                                         </div>
                                         <div class="card-content">
                                             <h3 class="card-title">{{ album.title }}</h3>
@@ -528,13 +516,17 @@
                     confirmBtn.textContent = 'Eliminando...';
                     
                     try {
-                        console.log('[DEBUG] Deleting account for username:', username);
-                        console.log('[DEBUG] Request URL:', `/user/${username}`);
+                        const token = getCookie('oversound_auth');
                         
-                        const response = await fetch(`/user/${username}`, {
+                        console.log('[DEBUG] Token:', token ? 'exists' : 'missing');
+                        console.log('[DEBUG] SYU_URL:', SYU_URL);
+                        console.log('[DEBUG] Request URL:', `${SYU_URL}/user/${username}`);
+                        
+                        const response = await fetch(`${SYU_URL}/user/${username}`, {
                             method: 'DELETE',
                             headers: {
-                                'Accept': 'application/json'
+                                'Accept': 'application/json',
+                                'Cookie': `oversound_auth=${token}`
                             },
                             credentials: 'include'
                         });

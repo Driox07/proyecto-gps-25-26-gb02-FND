@@ -128,7 +128,7 @@
                     <div class="tracklist-container">
                         {% if album.songs_data %}
                             {% for track in album.songs_data %}
-                            <div class="track-item" data-track-id="{{ track.trackId }}">
+                            <div class="track-item" data-song-id="{{ track.songId }}" data-track-id="{{ track.trackId }}">
                                 <div class="track-number">{{ loop.index }}</div>
                                 <div class="track-content">
                                     <div class="track-name">
