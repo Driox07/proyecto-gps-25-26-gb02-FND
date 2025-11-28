@@ -309,7 +309,7 @@ class View():
             "tya_server": tya_server or ""
         }
         print(f"DEBUG: Rendering artist edit template with artist data keys: {list(artist_data.keys()) if artist_data else 'None'}")
-        return templates.TemplateResponse("artist_profile_edit.html", {"request": request, "data": data})
+        return templates.TemplateResponse("artist_profile_edit.html", {"request": request, "data": data, "tya_server": tya_server})
     
     # Renderizar la template song_edit.html (Versión más reciente)
     def get_song_edit_view(self, request: Request, userdata: dict = None, song_data: dict = None, tya_server: str = None):

@@ -4084,50 +4084,66 @@ async def update_artist_profile(request: Request):
     Ruta para actualizar el perfil de artista del usuario actual
     """
     token = request.cookies.get("oversound_auth")
+    print(f"DEBUG PATCH: Token from cookie: {token[:20] if token else 'None'}...")
+    
     userdata = obtain_user_data(token)
+    print(f"DEBUG PATCH: Userdata obtained: {userdata is not None}")
     
     if not userdata:
+        print("DEBUG PATCH: No userdata - returning 401")
         return JSONResponse(content={"error": "No autenticado"}, status_code=401)
     
     if not userdata.get('artistId'):
+        print("DEBUG PATCH: No artistId - returning 403")
         return JSONResponse(content={"error": "No tienes un perfil de artista"}, status_code=403)
     
     try:
-        # Obtener los datos del formulario
-        form_data = await request.form()
+        # Obtener los datos del JSON
+        json_data = await request.json()
+        print(f"DEBUG PATCH: JSON data: {json_data}")
         
         # Preparar los datos para enviar al microservicio
         update_data = {}
         
         # Campos de texto
-        if form_data.get('artisticName'):
-            update_data['artisticName'] = form_data.get('artisticName')
-        if form_data.get('artisticEmail'):
-            update_data['artisticEmail'] = form_data.get('artisticEmail')
-        if form_data.get('artisticBiography'):
-            update_data['artisticBiography'] = form_data.get('artisticBiography')
-        if form_data.get('socialMediaUrl'):
-            update_data['socialMediaUrl'] = form_data.get('socialMediaUrl')
+        if json_data.get('artisticName'):
+            update_data['artisticName'] = json_data.get('artisticName')
+        if json_data.get('artisticEmail'):
+            update_data['artisticEmail'] = json_data.get('artisticEmail')
+        if json_data.get('artisticBiography'):
+            update_data['artisticBiography'] = json_data.get('artisticBiography')
+        if json_data.get('socialMediaUrl'):
+            update_data['socialMediaUrl'] = json_data.get('socialMediaUrl')
         
-        # Manejar imagen si se proporciona
-        imagen_file = form_data.get('artisticImage')
-        if imagen_file and hasattr(imagen_file, 'filename') and imagen_file.filename:
-            # Aquí deberías subir la imagen a un servicio de almacenamiento
-            # Por ahora, asumimos que el microservicio maneja la subida
-            files = {'artisticImage': (imagen_file.filename, imagen_file.file, imagen_file.content_type)}
+        print(f"DEBUG PATCH: Update data: {update_data}")
+        
+        # Manejar imagen si se proporciona (base64)
+        image_base64 = json_data.get('artisticImage')
+        if image_base64:
+            print(f"DEBUG PATCH: Image base64 provided (length: {len(image_base64)})")
+            # Aquí se podría procesar la imagen base64 si fuera necesario
+            # Por ahora, la pasamos tal cual al microservicio
+            update_data['artisticImage'] = image_base64
         else:
-            files = None
+            print("DEBUG PATCH: No image provided")
         
         # Hacer PATCH al microservicio TYA
         artist_id = userdata.get('artistId')
+        tya_url = f"{servers.TYA}/artist/{artist_id}"
+        print(f"DEBUG PATCH: Making PATCH request to: {tya_url}")
+        
         resp = requests.patch(
-            f"{servers.TYA}/artist/{artist_id}",
-            data=update_data,
-            files=files,
+            tya_url,
+            json=update_data,
             timeout=5,
             headers={"Cookie": f"oversound_auth={token}"}
         )
+        print(f"DEBUG PATCH: TYA response status: {resp.status_code}")
+        
         resp.raise_for_status()
+        
+        result = resp.json()
+        print(f"DEBUG PATCH: TYA response: {result}")
         
         return JSONResponse(content={
             "message": "Perfil de artista actualizado correctamente",
@@ -4135,12 +4151,20 @@ async def update_artist_profile(request: Request):
         }, status_code=200)
         
     except requests.RequestException as e:
+        print(f"DEBUG PATCH: RequestException: {e}")
         error_msg = str(e)
         try:
-            error_msg = e.response.json().get('message', str(e))
+            if hasattr(e, 'response') and e.response:
+                error_msg = e.response.text
+                print(f"DEBUG PATCH: TYA error response: {error_msg}")
         except:
             pass
-        return JSONResponse(content={"message": error_msg}, status_code=500)
+        return JSONResponse(content={"message": f"Error al actualizar el perfil: {error_msg}"}, status_code=500)
+    except Exception as e:
+        print(f"DEBUG PATCH: Unexpected error: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(content={"message": f"Error inesperado: {str(e)}"}, status_code=500)
 
 
 @app.patch("/artist/{artistId}/edit")

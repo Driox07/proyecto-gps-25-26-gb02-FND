@@ -32,7 +32,7 @@
                     <div class="image-upload-container">
                         <div class="image-preview artist-image">
                             {% if data.artist.artisticImage %}
-                                <img src="{{ data.artist.artisticImage }}" alt="Imagen de artista" id="image-preview">
+                                <img src="{{ tya_server }}/static{{ data.artist.artisticImage }}" alt="Imagen de artista" id="image-preview">
                             {% else %}
                                 <div class="image-placeholder" id="image-placeholder">
                                     {{ data.artist.artisticName[0].upper() if data.artist.artisticName else 'A' }}

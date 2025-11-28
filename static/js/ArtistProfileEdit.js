@@ -192,8 +192,20 @@ function initFormSubmission() {
                 return;
             }
             
-            // Prepare form data
+            // Prepare JSON data
             const formData = new FormData(form);
+            const jsonData = {
+                artisticName: formData.get('artisticName'),
+                artisticEmail: formData.get('artisticEmail'),
+                artisticBiography: formData.get('artisticBiography'),
+                socialMediaUrl: formData.get('socialMediaUrl')
+            };
+            
+            // Handle image separately (convert to base64 if present)
+            const imageFile = formData.get('artisticImage');
+            if (imageFile && imageFile.size > 0) {
+                jsonData.artisticImage = await fileToBase64(imageFile);
+            }
             
             // Show loading state
             submitBtn.classList.add('loading');
@@ -202,24 +214,33 @@ function initFormSubmission() {
             try {
                 const response = await fetch('/artist-edit', {
                     method: 'PATCH',
-                    body: formData,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jsonData),
                     credentials: 'include'
                 });
                 
                 if (response.ok) {
                     showNotification('Perfil de artista actualizado correctamente', 'success');
                     
-                    // Get artist ID from response or form data
-                    const result = await response.json();
-                    const artistId = result.artistId;
+                    // Get artist ID from form data
+                    const artistId = document.getElementById('edit-artist-form').getAttribute('data-artist-id');
                     
                     // Redirect after short delay
                     setTimeout(() => {
                         window.location.href = `/artist/${artistId}`;
                     }, 1500);
                 } else {
-                    const error = await response.json();
-                    showNotification(error.message || 'Error al actualizar el perfil', 'error');
+                    // Try to get error message from response
+                    let errorMessage = 'Error al actualizar el perfil';
+                    try {
+                        const error = await response.json();
+                        errorMessage = error.message || errorMessage;
+                    } catch (e) {
+                        // If response is not JSON, use default message
+                    }
+                    showNotification(errorMessage, 'error');
                     
                     // Remove loading state
                     submitBtn.classList.remove('loading');
@@ -321,3 +342,20 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+/**
+ * Convert file to base64 string with data URL preamble
+ */
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            // readAsDataURL() includes the data URL preamble
+            // Format: "data:image/jpeg;base64,/9j/4AAQSKZJRgABAQAAAQ..."
+            // Keep it as is, the backend should handle it
+            resolve(reader.result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
