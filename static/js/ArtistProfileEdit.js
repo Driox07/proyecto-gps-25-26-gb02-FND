@@ -200,7 +200,7 @@ function initFormSubmission() {
             submitBtn.disabled = true;
             
             try {
-                const response = await fetch('/artist/edit', {
+                const response = await fetch('/artist-edit', {
                     method: 'PATCH',
                     body: formData,
                     credentials: 'include'
