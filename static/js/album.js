@@ -40,13 +40,97 @@ function setupAlbumEventListeners() {
     // Botón de compra del álbum
     const buyAlbumButton = document.getElementById('buy-album-button');
     if (buyAlbumButton) {
-        buyAlbumButton.addEventListener('click', handleBuyAlbum);
+        buyAlbumButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            const albumId = getAlbumIdFromUrl();
+            const albumTitle = document.querySelector('.album-title') ? document.querySelector('.album-title').textContent : 'Álbum';
+
+            if (!albumId || albumId === 'unknown') {
+                showNotification('ID de álbum no disponible', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/cart', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        songId: null,
+                        albumId: parseInt(albumId),
+                        merchId: null,
+                        unidades: null
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Error del servidor al añadir al carrito:', errorData);
+                    alert(`Error al añadir al carrito: ${errorData.error || 'Error desconocido'}`);
+                    return;
+                }
+
+                window.dispatchEvent(new CustomEvent('cartUpdated'));
+                // Redirigir al carrito
+                window.location.href = '/cart';
+
+            } catch (error) {
+                console.error('Error al añadir al carrito:', error);
+                alert('Error al añadir el producto al carrito');
+            }
+        });
     }
 
     // Botón de añadir al carrito
     const addToCartButton = document.getElementById('add-to-cart-album-button');
     if (addToCartButton) {
-        addToCartButton.addEventListener('click', handleAddAlbumToCart);
+        addToCartButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            const albumId = getAlbumIdFromUrl();
+            const albumTitle = document.querySelector('.album-title') ? document.querySelector('.album-title').textContent : 'Álbum';
+
+            if (!albumId || albumId === 'unknown') {
+                showNotification('ID de álbum no disponible', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/cart', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        songId: null,
+                        albumId: parseInt(albumId),
+                        merchId: null,
+                        unidades: null
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Error del servidor al añadir al carrito:', errorData);
+                    alert(`Error al añadir al carrito: ${errorData.error || 'Error desconocido'}`);
+                    return;
+                }
+
+                window.dispatchEvent(new CustomEvent('cartUpdated'));
+                // Redirigir al carrito
+                window.location.href = '/cart';
+
+            } catch (error) {
+                console.error('Error al añadir al carrito:', error);
+                alert('Error al añadir el producto al carrito');
+            }
+        });
     }
 
     // Botón de favoritos
@@ -92,32 +176,52 @@ function setupAlbumEventListeners() {
 /**
  * Maneja la compra del álbum completo
  */
-function handleBuyAlbum(event) {
+async function handleBuyAlbum(event) {
     event.preventDefault();
-    
-    const albumTitle = document.querySelector('.album-title').textContent;
-    const albumPrice = document.getElementById('album-price').textContent;
-    
-    // Obtener información del álbum de la página
-    const albumData = {
-        id: getAlbumIdFromUrl(),
-        type: 'album',
-        name: albumTitle,
-        price: albumPrice,
-        timestamp: new Date().getTime()
-    };
 
-    // Aquí se puede implementar un carrito más avanzado
-    // O redirigir directamente a prepaid con el álbum
-    console.log('Compra de álbum:', albumData);
-    
-    showNotification('Redirigiendo a pago...', 'info');
-    
-    // Redirigir a prepaid o a la página de pago
-    setTimeout(() => {
-        // En producción, aquí iría la lógica real de checkout
-        // window.location.href = '/prepaid';
-    }, 1000);
+    const albumId = getAlbumIdFromUrl();
+    const albumTitle = document.querySelector('.album-title').textContent;
+
+    if (!albumId || albumId === 'unknown') {
+        showNotification('ID de álbum no disponible', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/cart', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                songId: null,
+                albumId: parseInt(albumId),
+                merchId: null,
+                unidades: null
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Error del servidor al añadir al carrito:', errorData);
+            showNotification(`Error al añadir al carrito: ${errorData.error || 'Error desconocido'}`, 'error');
+            return;
+        }
+
+        showNotification(`${albumTitle} añadido al carrito`, 'success');
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+
+        // Redirigir al carrito
+        setTimeout(() => {
+            window.location.href = '/cart';
+        }, 300);
+
+    } catch (error) {
+        console.error('Error al añadir al carrito:', error);
+        showNotification('Error al añadir al carrito', 'error');
+    }
 }
 
 /**
@@ -164,6 +268,11 @@ async function handleAddAlbumToCart(event) {
 
         // Emitir evento para actualizar el header
         window.dispatchEvent(new CustomEvent('cartUpdated'));
+
+        // Redirigir al carrito
+        setTimeout(() => {
+            window.location.href = '/cart';
+        }, 300);
         
     } catch (error) {
         console.error('Error al añadir al carrito:', error);

@@ -219,12 +219,47 @@ function setupButtonListeners() {
     // Buy button
     const buyButton = document.getElementById('buy-button');
     if (buyButton) {
-        buyButton.addEventListener('click', () => {
+        buyButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const songId = getSongIdFromUrl();
             const songTitle = document.getElementById('song-title').textContent;
-            const songPrice = document.getElementById('song-price').textContent;
-            console.log('Buying song:', songTitle);
-            alert(`Comprando: ${songTitle}\nPrecio: ${songPrice}\n(Funcionalidad de compra pendiente)`);
-            // TODO: Implement purchase functionality
+
+            if (!songId) {
+                alert('ID de canción no disponible');
+                return;
+            }
+
+            try {
+                const response = await fetch('/cart', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        songId: parseInt(songId),
+                        albumId: null,
+                        merchId: null,
+                        unidades: null
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Error del servidor al añadir al carrito:', errorData);
+                    alert(`Error al añadir al carrito: ${errorData.error || 'Error desconocido'}`);
+                    return;
+                }
+
+                window.dispatchEvent(new CustomEvent('cartUpdated'));
+                // Redirigir al carrito
+                window.location.href = '/cart';
+
+            } catch (error) {
+                console.error('Error al añadir al carrito:', error);
+                alert('Error al añadir el producto al carrito');
+            }
         });
     }
 
@@ -267,7 +302,8 @@ function setupButtonListeners() {
                 // Emitir evento para actualizar el header
                 window.dispatchEvent(new CustomEvent('cartUpdated'));
                 
-                alert(`${songTitle} añadido al carrito`);
+                // Redirigir al carrito después de añadir
+                window.location.href = '/cart';
                 
             } catch (error) {
                 console.error('Error al añadir al carrito:', error);

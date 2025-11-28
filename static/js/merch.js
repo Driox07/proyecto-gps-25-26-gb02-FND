@@ -21,8 +21,46 @@ function setupButtonListeners() {
     // Buy button - Redirige al carrito
     const buyButton = document.getElementById('buy-button');
     if (buyButton) {
-        buyButton.addEventListener('click', () => {
-            window.location.href = '/cart';
+        buyButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            // Al comprar ahora, añadimos 1 unidad y redirigimos al carrito
+            const merchId = window.location.pathname.split('/').pop();
+
+            if (!merchId || isNaN(parseInt(merchId))) {
+                alert('ID de producto no disponible');
+                return;
+            }
+
+            try {
+                const response = await fetch('/cart', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        songId: null,
+                        albumId: null,
+                        merchId: parseInt(merchId),
+                        unidades: 1
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Error del servidor al añadir al carrito:', errorData);
+                    alert(`Error al añadir al carrito: ${errorData.error || 'Error desconocido'}`);
+                    return;
+                }
+
+                window.dispatchEvent(new CustomEvent('cartUpdated'));
+                window.location.href = '/cart';
+
+            } catch (error) {
+                console.error('Error al añadir al carrito:', error);
+                alert('Error al añadir el producto al carrito');
+            }
         });
     }
 
@@ -66,7 +104,8 @@ function setupButtonListeners() {
                 // Emitir evento para actualizar el header
                 window.dispatchEvent(new CustomEvent('cartUpdated'));
                 
-                alert(`${merchName} añadido al carrito`);
+                // Redirigir al carrito después de añadir
+                window.location.href = '/cart';
                 
             } catch (error) {
                 console.error('Error al añadir al carrito:', error);
