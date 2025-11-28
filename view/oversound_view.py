@@ -89,7 +89,7 @@ class View():
 
     # Renderizar la template profile.html
     # Necesita un user_info completo, no se contempla otro caso.
-    def get_perfil_view(self, request: Request, usuario_data, canciones_biblioteca, listas_completas, is_own_profile: bool = False, payment_methods: list = None, favorite_songs: list = None, favorite_albums: list = None, favorite_artists: list = None, syu_server: str = None, tya_server: str = None, pt_server: str = None):
+    def get_perfil_view(self, request: Request, usuario_data, elementos_biblioteca, listas_completas, is_own_profile: bool = False, payment_methods: list = None, favorite_songs: list = None, favorite_albums: list = None, favorite_artists: list = None, syu_server: str = None, tya_server: str = None, pt_server: str = None):
         if payment_methods is None:
             payment_methods = []
         if favorite_songs is None:
@@ -103,7 +103,7 @@ class View():
             "request": request,
             "data": data,
             "user": usuario_data,
-            "canciones_biblioteca": canciones_biblioteca,
+            "elementos_biblioteca": elementos_biblioteca,
             "listas_completas": listas_completas,
             "is_own_profile": is_own_profile,
             "payment_methods": payment_methods,

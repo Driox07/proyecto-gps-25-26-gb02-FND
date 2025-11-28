@@ -2980,16 +2980,82 @@ def get_profile(request: Request):
                                 artist['artisticImage'] = normalize_image_url(artist['artisticImage'], servers.TYA)
         except requests.RequestException:
             favorite_artists = []
+
+        biblioteca = []
+        elementos_biblioteca = {'songs': [],
+            'albums': []
+        }
+        # Obtener elementos de la biblioteca del usuario
+        try:
+            biblioteca_resp = requests.get(
+                f"{servers.TPP}/purchase",
+                timeout = 2,
+                headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+            )
+            if not biblioteca_resp.ok:
+                raise requests.RequestException("Error al obtener la biblioteca")
+            
+            biblioteca = biblioteca_resp.json()
+            print(biblioteca)
+            
+            albums = []
+            included_songs = []
+            songs = []
+            for purchase in biblioteca:
+                for album in purchase.get('albumIds', []):
+                    if album not in albums:
+                        albums.append(album)
+                        albums_response = requests.get(
+                            f"{servers.TYA}/album/{album}",
+                            timeout=2,
+                            headers={"Accept": "application/json"}
+                        )
+                        if not albums_response.ok:
+                            continue
+                        album_data = albums_response.json()
+                        for song_id in album_data.get('songIds', []):
+                            if song_id not in included_songs:
+                                included_songs.append(song_id)
+            
+            for purchase in biblioteca:
+                for song in purchase.get('songIds', []):
+                    if song not in included_songs:
+                        songs.append(song)
+
+            # Obtener los datos de las canciones
+            print(songs)
+            if songs:
+                canciones_biblioteca_resp = requests.get( 
+                    f"{servers.TYA}/song/list?ids={','.join(map(str, songs))}",
+                    timeout = 2,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                if canciones_biblioteca_resp.ok:
+                    elementos_biblioteca['songs'] = canciones_biblioteca_resp.json() #Listado de canciones
+
+            # Obtener los datos de los albums
+            if albums:
+                albums_biblioteca_resp = requests.get( 
+                    f"{servers.TYA}/album/list?ids={','.join(map(str, albums))}",
+                    timeout = 2,
+                    headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
+                )
+                if albums_biblioteca_resp.ok:
+                    elementos_biblioteca['albums'] = albums_biblioteca_resp.json() #Listado de albums
+
+        except requests.RequestException:
+            elementos_biblioteca = []
+
         
         # Para simplificar, asumimos datos vacíos de biblioteca y listas
         # En un caso real, se obtendrían del servidor
-        canciones_biblioteca = []
         listas_completas = []
+        print(elementos_biblioteca['songs'])
         
         return osv.get_perfil_view(
             request, 
             userdata, 
-            canciones_biblioteca, 
+            elementos_biblioteca, 
             listas_completas,
             is_own_profile=True,
             payment_methods=payment_methods,
@@ -3158,13 +3224,13 @@ def get_user_profile(request: Request, username: str):
                 favorite_artists = []
         
         # Para simplificar, asumimos datos vacíos de biblioteca y listas
-        canciones_biblioteca = []
+        elementos_biblioteca = []
         listas_completas = []
         
         return osv.get_perfil_view(
             request,
             user_data,
-            canciones_biblioteca,
+            elementos_biblioteca,
             listas_completas,
             is_own_profile=is_own_profile,
             payment_methods=payment_methods if is_own_profile else [],
