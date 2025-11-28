@@ -3980,36 +3980,72 @@ def get_artist_profile(request: Request, artistId: int):
         return osv.get_error_view(request, userdata, "No se pudo cargar el perfil del artista", str(e))
 
 
-@app.get("/artist/edit")
+@app.get("/artist-edit")
 def get_artist_edit_page(request: Request):
     """
     Ruta para mostrar la página de edición de perfil de artista (usuario actual)
     """
-    token = request.cookies.get("oversound_auth")
-    userdata = obtain_user_data(token)
-    
-    if not userdata:
-        return RedirectResponse("/login")
-    
-    # Verificar que el usuario tenga un perfil de artista
-    if not userdata.get('artistId'):
-        return RedirectResponse("/artist/create")
-    
     try:
-        # Obtener datos actuales del artista
-        artist_resp = requests.get(
-            f"{servers.TYA}/artist/{userdata.get('artistId')}",
-            timeout=5,
-            headers={"Accept": "application/json"}
-        )
-        artist_resp.raise_for_status()
-        artist_data = artist_resp.json()
+        token = request.cookies.get("oversound_auth")
+        print(f"DEBUG: Token from cookie: {token[:20] if token else 'None'}...")
         
+        userdata = obtain_user_data(token)
+        print(f"DEBUG: Userdata obtained: {userdata is not None}")
+        
+        if not userdata:
+            print("DEBUG: No userdata - redirecting to login")
+            return RedirectResponse("/login")
+        
+        print(f"DEBUG: User: {userdata.get('username', 'unknown')}, artistId: {userdata.get('artistId')}")
+        
+        # Verificar que el usuario tenga un perfil de artista
+        if not userdata.get('artistId'):
+            print("DEBUG: No artistId - redirecting to artist create")
+            return RedirectResponse("/artist/create")
+        
+        # Crear datos de respaldo básicos
+        fallback_artist_data = {
+            "artistId": userdata.get('artistId'),
+            "artisticName": userdata.get('username', ''),
+            "artisticEmail": userdata.get('email', ''),
+            "artisticBiography": "",
+            "socialMediaUrl": "",
+            "artisticImage": None
+        }
+        
+        try:
+            artist_id = userdata.get('artistId')
+            print(f"DEBUG: Fetching artist data for artistId: {artist_id}")
+            
+            # Obtener datos actuales del artista
+            artist_resp = requests.get(
+                f"{servers.TYA}/artist/{artist_id}",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            print(f"DEBUG: TYA response status: {artist_resp.status_code}")
+            
+            if artist_resp.status_code == 200:
+                artist_data = artist_resp.json()
+                print(f"DEBUG: Artist data keys: {list(artist_data.keys()) if artist_data else 'None'}")
+            else:
+                print(f"DEBUG: TYA returned status {artist_resp.status_code}, using fallback data")
+                artist_data = fallback_artist_data
+                
+        except requests.RequestException as e:
+            print(f"DEBUG: Error obteniendo datos del artista: {e}")
+            print("DEBUG: Using fallback artist data for editing")
+            artist_data = fallback_artist_data
+        
+        print(f"DEBUG: Calling get_artist_profile_edit_view with artist_data keys: {list(artist_data.keys()) if artist_data else 'None'}")
         return osv.get_artist_profile_edit_view(request, userdata, artist_data, servers.TYA)
         
-    except requests.RequestException as e:
-        print(f"Error obteniendo datos del artista: {e}")
-        return osv.get_error_view(request, userdata, "No se pudo cargar los datos del artista", str(e))
+    except Exception as e:
+        print(f"DEBUG: Unexpected error in get_artist_edit_page: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        # En caso de error inesperado, redirigir a la página de creación de artista
+        return RedirectResponse("/artist/create")
 
 
 @app.get("/artist/{artistId}/edit")
@@ -4044,7 +4080,7 @@ def get_specific_artist_edit_page(request: Request, artistId: int):
         return osv.get_error_view(request, userdata, "No se pudo cargar los datos del artista", str(e))
 
 
-@app.patch("/artist/edit")
+@app.patch("/artist-edit")
 async def update_artist_profile(request: Request):
     """
     Ruta para actualizar el perfil de artista del usuario actual

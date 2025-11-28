@@ -119,9 +119,8 @@ class View():
         return templates.TemplateResponse("main/faqs.html", {"request": request, "faqs": faqs })
     
     # Renderizar la template upload_album.html (versión más reciente/completa de 'get_upload_album_view')
-    def get_upload_album_view(self, request: Request, userdata: dict, songs: list = None):
-        data = {"userdata": userdata, "songs": songs or []}
-        return templates.TemplateResponse("upload_album.html", {"request": request, "data": data}) 
+    def get_upload_album_view(self, request: Request, songs: list[dict]):
+        return templates.TemplateResponse("upload_album.html", {"request": request , "songs": songs}) 
     
     # Renderizar la template album.html
     def get_album_view(self, request: Request, album_info : dict, tipoUsuario : int, isLiked: bool, inCarrito: bool, tiempo_formateado: str, userdata: dict = None, pt_server: str = None):
@@ -183,8 +182,8 @@ class View():
         })
     
     # Renderizar la template artist_studio.html
-    def get_artist_studio_view(self, request: Request, artist: dict, userdata: dict, syu_server: str = None, tya_server: str = None):
-        data = {"userdata": userdata, "syu_server": syu_server, "tya_server": tya_server}
+    def get_artist_studio_view(self, request: Request, artist: dict, userdata: dict, syu_server: str = None):
+        data = {"userdata": userdata, "syu_server": syu_server}
         return templates.TemplateResponse("artist_studio.html", {
             "request": request,
             "data": data,
@@ -288,7 +287,28 @@ class View():
     
     # Renderizar la template artist_profile_edit.html
     def get_artist_profile_edit_view(self, request: Request, userdata: dict = None, artist_data: dict = None, tya_server: str = None):
-        data = {"userdata": userdata, "artist": artist_data, "tya_server": tya_server}
+        # Asegurarse de que artist_data tenga todos los campos necesarios
+        if artist_data is None:
+            artist_data = {}
+        
+        # Campos requeridos con valores por defecto
+        artist_data.setdefault('artistId', userdata.get('artistId') if userdata else None)
+        artist_data.setdefault('artisticName', userdata.get('username', '') if userdata else '')
+        artist_data.setdefault('artisticEmail', userdata.get('email', '') if userdata else '')
+        artist_data.setdefault('artisticBiography', '')
+        artist_data.setdefault('socialMediaUrl', '')
+        artist_data.setdefault('artisticImage', None)
+        
+        # Asegurarse de que userdata tenga valores por defecto
+        if userdata is None:
+            userdata = {}
+        
+        data = {
+            "userdata": userdata, 
+            "artist": artist_data, 
+            "tya_server": tya_server or ""
+        }
+        print(f"DEBUG: Rendering artist edit template with artist data keys: {list(artist_data.keys()) if artist_data else 'None'}")
         return templates.TemplateResponse("artist_profile_edit.html", {"request": request, "data": data})
     
     # Renderizar la template song_edit.html (Versión más reciente)
