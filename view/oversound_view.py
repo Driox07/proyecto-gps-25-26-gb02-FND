@@ -125,8 +125,9 @@ class View():
     
     # Renderizar la template album.html
     def get_album_view(self, request: Request, album_info : dict, tipoUsuario : int, isLiked: bool, inCarrito: bool, tiempo_formateado: str, userdata: dict = None, pt_server: str = None):
+        import time
         data = {"userdata": userdata, "pt_server": pt_server}
-        return templates.TemplateResponse("album.html", {"request": request, "data": data, "album": album_info, "tipoUsuario": tipoUsuario, "isLiked": isLiked, "inCarrito": inCarrito, "duracion_total": tiempo_formateado})
+        return templates.TemplateResponse("album.html", {"request": request, "data": data, "album": album_info, "tipoUsuario": tipoUsuario, "isLiked": isLiked, "inCarrito": inCarrito, "duracion_total": tiempo_formateado, "timestamp": int(time.time())})
     
     # Renderizar la template header.html
     def get_header_view(self, request: Request, user_info : dict):

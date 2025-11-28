@@ -431,49 +431,55 @@
     function resolveCoverUrl(coverPath){
         if(!coverPath) return null;
         coverPath = String(coverPath);
+        // El backend ya normaliza las URLs, así que solo necesitamos devolverlas tal cual
+        // Las URLs absolutas (http/https) se devuelven tal cual
         if(/^https?:\/\//i.test(coverPath)) return coverPath;
+        // Las URLs protocol-relative se convierten al protocolo actual
         if(/^\/\//.test(coverPath)) return window.location.protocol + coverPath;
-        // If already points to /static, use as-is
-        if(coverPath.startsWith('/static')) return coverPath;
-        // If starts with / it's likely the raw path (e.g. /song/123.png) -> use TYA_SERVER/static + path
-        if(coverPath.startsWith('/')){
-            if(window.TYA_SERVER) return window.TYA_SERVER.replace(/\/$/,'') + '/static' + coverPath;
-            return coverPath; // fallback to server root
-        }
-        // If it's a relative path, try prefixing with TYA_SERVER/static/
-        if(window.TYA_SERVER) return window.TYA_SERVER.replace(/\/$/,'') + '/static/' + coverPath;
+        // Las URLs que empiezan con / o /static ya están listas
         return coverPath;
     }
 
     // Fetch metadata (title, artistName, cover) from TYA or compatible service.
-    // Tries several endpoints in order: /song/:id, /artist/:id, /track/:id
+    // Uses frontend proxy endpoints to avoid CORS and cookie issues
     async function fetchMetadata(trackId, songId, artistId){
         try{
-            const base = (window.TYA_SERVER || DEFAULT_SERVICE || '').replace(/\/$/, '');
-            if(!base) return {};
-
             const opts = { method: 'GET', credentials: 'include', headers: { 'Accept': 'application/json' } };
 
-            // Try song endpoint first
+            // Try song endpoint first (using frontend proxy)
             if(songId){
                 try{
-                    const resp = await fetch(base + '/song/' + songId, opts);
+                    const resp = await fetch('/api/song/' + songId, opts);
                     if(resp.ok){
                         const data = await resp.json().catch(()=>null);
                         if(data){
-                            const title = data.title || data.name || (data.song && (data.song.title || data.song.name)) || null;
-                            const artistName = (data.artist && (data.artist.artisticName || data.artist.name)) || (data.song && data.song.artist && (data.song.artist.artisticName || data.song.artist.name)) || null;
-                            const cover = data.cover || data.image || (data.song && data.song.cover) || null;
+                            const title = data.title || data.name || null;
+                            let artistName = null;
+                            let cover = data.cover || data.image || null;
+                            
+                            // Resolve artist name if artistId is present
+                            if(data.artistId){
+                                try{
+                                    const artistResp = await fetch('/api/artist/' + data.artistId, opts);
+                                    if(artistResp.ok){
+                                        const artistData = await artistResp.json().catch(()=>null);
+                                        if(artistData) artistName = artistData.artisticName || artistData.name || null;
+                                    }
+                                }catch(_){ }
+                            }
+                            
                             return { title, artistName, cover };
                         }
                     }
-                }catch(_){ }
+                }catch(e){ 
+                    console.warn('Error fetching song metadata:', e);
+                }
             }
 
             // Try artist endpoint to at least resolve artist name
             if(artistId){
                 try{
-                    const resp = await fetch(base + '/artist/' + artistId, opts);
+                    const resp = await fetch('/api/artist/' + artistId, opts);
                     if(resp.ok){
                         const data = await resp.json().catch(()=>null);
                         if(data){
@@ -482,23 +488,9 @@
                             return { title: null, artistName, cover };
                         }
                     }
-                }catch(_){ }
-            }
-
-            // Finally try track endpoint which some services expose as JSON
-            if(trackId){
-                try{
-                    const resp = await fetch(base + '/track/' + trackId, opts);
-                    if(resp.ok){
-                        const data = await resp.json().catch(()=>null);
-                        if(data){
-                            const title = data.title || (data.song && (data.song.title || data.song.name)) || null;
-                            const artistName = (data.artist && (data.artist.artisticName || data.artist.name)) || (data.song && data.song.artist && (data.song.artist.artisticName || data.song.artist.name)) || null;
-                            const cover = data.cover || (data.song && data.song.cover) || null;
-                            return { title, artistName, cover };
-                        }
-                    }
-                }catch(_){ }
+                }catch(e){
+                    console.warn('Error fetching artist metadata:', e);
+                }
             }
         }catch(e){
             console.warn('fetchMetadata unexpected error', e);

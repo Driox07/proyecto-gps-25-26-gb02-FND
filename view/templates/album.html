@@ -123,7 +123,7 @@
                     <div class="tracklist-container">
                         {% if album.songs_data %}
                             {% for track in album.songs_data %}
-                            <div class="track-item" data-song-id="{{ track.songId }}" data-track-id="{{ track.trackId }}">
+                            <div class="track-item" data-song-id="{{ track.songId }}" data-track-id="{{ track.trackId }}" artist-id="{{ track.artist.artistId }}">
                                 <div class="track-number">{{ loop.index }}</div>
                                 <div class="track-content">
                                     <div class="track-name">
@@ -234,11 +234,11 @@
 
     </main>
 
-    <script src="{{ url_for('static', path='js/config.js') }}"></script>
+    <script src="{{ url_for('static', path='js/config.js') }}?v={{ timestamp }}"></script>
     <script>
         const PT_URL = '{{ data.pt_server }}';
     </script>
-    <script src="{{ url_for('static', path='js/album.js') }}"></script>
-    <script src="{{ url_for('static', path='js/favorites.js') }}"></script>
+    <script src="{{ url_for('static', path='js/album.js') }}?v={{ timestamp }}"></script>
+    <script src="{{ url_for('static', path='js/favorites.js') }}?v={{ timestamp }}"></script>
 </body>
 </html>

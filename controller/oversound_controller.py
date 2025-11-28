@@ -49,12 +49,13 @@ def normalize_image_url(image_path: str, server_url: str) -> str:
     
     # Si es una ruta relativa o solo el nombre del archivo, convertirla a URL del servidor especificado
     if server_url:
-        # Si es TYA, le añadimos /static si no está ya presente
         clean_path = image_path
-        if server_url == servers.TYA and not clean_path.startswith("/static"):
-            if not clean_path.startswith("/"):
-                clean_path = "/" + clean_path
-            clean_path = "/static" + clean_path
+        
+        # Si es TYA, construir la URL como TYA_SERVER/static{cover_path}
+        if server_url == servers.TYA:
+            # El path ya viene como /song/123.png o /album/456.jpg
+            # Construir como: http://localhost:8081/static/song/123.png
+            return f"{server_url}/static{clean_path}"
 
         # Si es SYU, asegurarnos de que comience con /
         if server_url == servers.SYU:
@@ -63,7 +64,7 @@ def normalize_image_url(image_path: str, server_url: str) -> str:
             if not clean_path.startswith("/"):
                 clean_path = "/" + clean_path
 
-        return f"{server_url}{clean_path}"
+            return f"{server_url}{clean_path}"
     
     return image_path
 
@@ -1082,6 +1083,117 @@ def get_artists_api(request: Request):
         print(f"Error obteniendo artistas: {e}")
         return JSONResponse(
             content={"error": "Error al obtener artistas"},
+            status_code=500
+        )
+
+
+@app.get("/api/song/{songId}")
+def get_song_api(request: Request, songId: int):
+    """
+    Proxy para obtener información de una canción desde TYA
+    """
+    token = request.cookies.get("oversound_auth")
+    
+    try:
+        song_resp = requests.get(
+            f"{servers.TYA}/song/{songId}",
+            timeout=5,
+            headers={
+                "Accept": "application/json",
+                "Cookie": f"oversound_auth={token}" if token else ""
+            }
+        )
+        
+        if song_resp.ok:
+            song_data = song_resp.json()
+            # Normalizar URL de cover
+            if song_data.get('cover'):
+                song_data['cover'] = normalize_image_url(song_data['cover'], servers.TYA)
+            return JSONResponse(content=song_data)
+        
+        return JSONResponse(
+            content={"error": "Canción no encontrada"},
+            status_code=song_resp.status_code
+        )
+    except Exception as e:
+        print(f"Error obteniendo canción {songId}: {e}")
+        return JSONResponse(
+            content={"error": "Error al obtener canción"},
+            status_code=500
+        )
+
+
+@app.get("/api/artist/{artistId}")
+def get_artist_api(request: Request, artistId: int):
+    """
+    Proxy para obtener información de un artista desde TYA
+    """
+    token = request.cookies.get("oversound_auth")
+    
+    try:
+        artist_resp = requests.get(
+            f"{servers.TYA}/artist/{artistId}",
+            timeout=5,
+            headers={
+                "Accept": "application/json",
+                "Cookie": f"oversound_auth={token}" if token else ""
+            }
+        )
+        
+        if artist_resp.ok:
+            artist_data = artist_resp.json()
+            # Normalizar URL de imagen
+            if artist_data.get('artisticImage'):
+                artist_data['artisticImage'] = normalize_image_url(artist_data['artisticImage'], servers.TYA)
+            return JSONResponse(content=artist_data)
+        
+        return JSONResponse(
+            content={"error": "Artista no encontrado"},
+            status_code=artist_resp.status_code
+        )
+    except Exception as e:
+        print(f"Error obteniendo artista {artistId}: {e}")
+        return JSONResponse(
+            content={"error": "Error al obtener artista"},
+            status_code=500
+        )
+
+
+@app.get("/tya-static/{path:path}")
+async def proxy_tya_static(request: Request, path: str):
+    """
+    Proxy para servir archivos estáticos de TYA (imágenes)
+    """
+    try:
+        # Construir la URL completa hacia TYA
+        tya_url = f"{servers.TYA}/static/{path}"
+        
+        # Hacer la petición a TYA
+        response = requests.get(tya_url, timeout=10, stream=True)
+        
+        if not response.ok:
+            return JSONResponse(
+                content={"error": "Imagen no encontrada"},
+                status_code=404
+            )
+        
+        # Determinar el tipo de contenido
+        content_type = response.headers.get('Content-Type', 'image/jpeg')
+        
+        # Devolver la imagen
+        return Response(
+            content=response.content,
+            media_type=content_type,
+            headers={
+                "Cache-Control": "public, max-age=86400",  # Cache por 24 horas
+                "Access-Control-Allow-Origin": "*"
+            }
+        )
+        
+    except Exception as e:
+        print(f"Error proxying TYA static file {path}: {e}")
+        return JSONResponse(
+            content={"error": "Error al obtener imagen"},
             status_code=500
         )
 
