@@ -1,6 +1,6 @@
 // Song Page - Interactive Features
 // Configuration for the music microservice (defined in config.js)
-const MUSIC_SERVICE_URL = PT_URL;
+const MUSIC_SERVICE_URL = window.PT_SERVER || window.PT_URL || '';
 const STATS_SERVICE_URL = RYE_URL; 
 
 // Global audio player instance
@@ -145,20 +145,24 @@ async function playTrack(trackId) {
             console.log(`Fetching track from: ${url}`);
         }
 
-        const response = await fetch(url, {
-            method: 'GET',
-            credentials: 'include', // Include cookies for authentication
-            headers: {
-                'Accept': 'audio/*'
+        // Prefer PT_SERVER OpenAPI JSON response (base64 in `track` field)
+        let audioBlob = null;
+        if(MUSIC_SERVICE_URL){
+            const jsonResp = await fetch(url, { method: 'GET', credentials: 'include', headers: { 'Accept': 'application/json' } });
+            if(jsonResp.ok){
+                const data = await jsonResp.json().catch(()=>null);
+                if(data && data.track){
+                    const bytes = base64ToUint8Array(data.track);
+                    audioBlob = new Blob([bytes], { type: data.mime || 'audio/mpeg' });
+                }
             }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // Get audio blob
-        const audioBlob = await response.blob();
+        if(!audioBlob){
+            const response = await fetch(url, { method: 'GET', credentials: 'include', headers: { 'Accept': 'audio/*' } });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            audioBlob = await response.blob();
+        }
         const audioUrl = URL.createObjectURL(audioBlob);
         
         if (CONFIG && CONFIG.debug && CONFIG.debug.logging) {
@@ -200,8 +204,13 @@ function setupButtonListeners() {
 
             
             if (audioPlayer.paused) {
-                if (!audioPlayer.src) {
-                    // Start playing new track
+                const songId = getSongId();
+                const artistId = getArtistId();
+                if (window.radioPlayer && typeof window.radioPlayer.playTrack === 'function') {
+                    // Delegate fetching/playing to the global radio player (shows UI + progress)
+                    window.radioPlayer.playTrack(trackId, songId, artistId);
+                } else if (!audioPlayer.src) {
+                    // Fallback to local fetch
                     playTrack(trackId);
                 } else {
                     // Resume paused track
@@ -456,6 +465,17 @@ function setupAnimations() {
             coverContainer.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
         });
     }
+}
+
+// Utility: decode base64 to Uint8Array (used when PT returns JSON with base64 track)
+function base64ToUint8Array(base64) {
+    const binaryString = atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
 }
 
 // Log page load

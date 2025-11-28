@@ -120,3 +120,34 @@
 
 <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
 <script src="{{ url_for('static', path='js/header.js') }}"></script>
+<!-- Mini radio player (global) -->
+<div id="mini-player" class="mini-player" aria-hidden="true">
+    <div class="mini-player-left">
+        <img id="mini-player-cover" class="mini-player-cover" src="" alt="Cover" />
+        <div class="mini-player-meta">
+            <div id="mini-player-title" class="mini-player-title">—</div>
+            <div id="mini-player-artist" class="mini-player-artist">—</div>
+        </div>
+    </div>
+    <div class="mini-player-center">
+        <div class="mini-player-controls">
+            <button id="mini-prev" class="mini-btn" title="Anterior">◄◄</button>
+            <button id="mini-play" class="mini-btn" title="Reproducir/Pausar">►</button>
+            <button id="mini-next" class="mini-btn" title="Siguiente">►►</button>
+        </div>
+        <div class="mini-player-progress" id="mini-progress-container">
+            <div id="mini-progress" class="mini-progress-bar"></div>
+        </div>
+        <div id="mini-time" class="mini-time">0:00 / --:--</div>
+        <div id="mini-loading" class="mini-loading" style="display:none;">Cargando…</div>
+    </div>
+    <div class="mini-player-right">
+        <div class="mini-volume">
+            <button id="mini-volume-btn" class="mini-btn" title="Silenciar">🔊</button>
+            <input id="mini-volume" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volumen">
+        </div>
+        <button id="mini-close" class="mini-btn" title="Cerrar">✕</button>
+    </div>
+</div>
+<link rel="stylesheet" href="{{ url_for('static', path='styles/player.css') }}">
+<script src="{{ url_for('static', path='js/player.js') }}"></script>
