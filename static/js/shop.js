@@ -2,9 +2,9 @@
 
 // Estado de la paginación para cada sección
 const paginationState = {
-    songs: { currentPage: 1, itemsPerPage: 9 },
-    albums: { currentPage: 1, itemsPerPage: 9 },
-    merch: { currentPage: 1, itemsPerPage: 9 }
+    songs: { currentPage: 1, itemsPerPage: 10 },
+    albums: { currentPage: 1, itemsPerPage: 10 },
+    merch: { currentPage: 1, itemsPerPage: 10 }
 };
 
 // Inicialización cuando el DOM está listo
@@ -34,6 +34,8 @@ function updatePagination(section) {
     const state = paginationState[section];
     const totalPages = Math.ceil(cards.length / state.itemsPerPage);
 
+    console.log(`[${section}] Total cards: ${cards.length}, Items per page: ${state.itemsPerPage}, Total pages: ${totalPages}`);
+
     // Ocultar todas las cards primero
     cards.forEach(card => card.classList.remove('visible'));
 
@@ -45,10 +47,10 @@ function updatePagination(section) {
     // Actualizar info de página
     const pageInfo = document.getElementById(`${section}-page-info`);
     if (pageInfo && cards.length > 0) {
-        pageInfo.textContent = `Página ${state.currentPage} de ${totalPages}`;
+        pageInfo.textContent = `Mostrando ${Math.min(start + 1, cards.length)}-${Math.min(end, cards.length)} de ${cards.length}`;
     }
 
-    // Crear botones de paginación
+    // Crear botones de paginación cuando hay más de una página
     const paginationContainer = document.getElementById(`${section}-pagination`);
     if (paginationContainer && totalPages > 1) {
         paginationContainer.innerHTML = '';
@@ -98,6 +100,9 @@ function updatePagination(section) {
             };
             paginationContainer.appendChild(nextBtn);
         }
+    } else if (paginationContainer) {
+        // Si solo hay una página o menos, limpiar el contenedor de paginación
+        paginationContainer.innerHTML = '';
     }
 }
 

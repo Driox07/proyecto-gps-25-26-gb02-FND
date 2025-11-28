@@ -522,7 +522,9 @@ def shop(request: Request,
                 # Verificar géneros (la canción debe tener al menos uno de los géneros seleccionados)
                 if selected_genres:
                     song_genres = song.get('genres', [])
-                    if not song_genres or not any(g in selected_genres for g in song_genres):
+                    # Convertir géneros a int para comparar correctamente
+                    song_genres_int = [int(g) if isinstance(g, str) else g for g in song_genres]
+                    if not song_genres_int or not any(g in selected_genres for g in song_genres_int):
                         continue
                 filtered_songs.append(song)
             songs = filtered_songs
@@ -536,7 +538,9 @@ def shop(request: Request,
                 # Verificar géneros (el álbum debe tener al menos uno de los géneros seleccionados)
                 if selected_genres:
                     album_genres = album.get('genres', [])
-                    if not album_genres or not any(g in selected_genres for g in album_genres):
+                    # Convertir géneros a int para comparar correctamente
+                    album_genres_int = [int(g) if isinstance(g, str) else g for g in album_genres]
+                    if not album_genres_int or not any(g in selected_genres for g in album_genres_int):
                         continue
                 filtered_albums.append(album)
             albums = filtered_albums
