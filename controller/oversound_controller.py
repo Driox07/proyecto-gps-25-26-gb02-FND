@@ -56,9 +56,12 @@ def normalize_image_url(image_path: str, server_url: str) -> str:
                 clean_path = "/" + clean_path
             clean_path = "/static" + clean_path
 
-        # Si es SYU, no debe tener /static.
-        if server_url == servers.SYU and clean_path.startswith("/static"):
-            clean_path = clean_path[len("/static"):]
+        # Si es SYU, asegurarnos de que comience con /
+        if server_url == servers.SYU:
+            if clean_path.startswith("/static"):
+                clean_path = clean_path[len("/static"):]
+            if not clean_path.startswith("/"):
+                clean_path = "/" + clean_path
 
         return f"{server_url}{clean_path}"
     
@@ -3059,6 +3062,7 @@ def get_profile_edit_page(request: Request):
     """
     Ruta para mostrar la página de edición de perfil de usuario
     """
+    import time
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
     
@@ -3069,7 +3073,7 @@ def get_profile_edit_page(request: Request):
     if userdata and userdata.get('imagen'):
         userdata['imagen'] = normalize_image_url(userdata['imagen'], servers.SYU)
     
-    return osv.get_user_profile_edit_view(request, userdata, servers.SYU)
+    return osv.get_user_profile_edit_view(request, userdata, servers.SYU, timestamp=int(time.time()))
 
 
 @app.patch("/profile-edit")
@@ -3100,7 +3104,8 @@ async def update_profile(request: Request):
         
     except requests.RequestException as e:
         try:
-            return e.response.json()
+            error_data = e.response.json()
+            return JSONResponse(content=error_data, status_code=e.response.status_code)
         except:
             pass
         return JSONResponse(content={"message": "Unexpected error"}, status_code=500)

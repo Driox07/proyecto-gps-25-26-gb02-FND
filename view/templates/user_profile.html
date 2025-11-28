@@ -17,7 +17,10 @@
             <div class="profile-header-content">
                 <div class="profile-image-container">
                     {% if user.image %}
-                        <img src="{{ user.image }}" alt="{{ user.username }}" class="profile-image">
+                        <img src="{{ user.image }}" alt="{{ user.username }}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="profile-image-placeholder" style="display:none;">
+                            {{ user.username[0].upper() }}
+                        </div>
                     {% else %}
                         <div class="profile-image-placeholder">
                             {{ user.username[0].upper() }}
