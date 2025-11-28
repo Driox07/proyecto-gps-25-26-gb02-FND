@@ -337,7 +337,11 @@ function initSearch() {
         } else {
             const placeholder = document.createElement('div');
             placeholder.className = `search-item-placeholder ${type === 'artist' ? 'artist' : ''}`;
-            placeholder.innerHTML = getIconForType(type);
+            if (type === 'artist') {
+                placeholder.textContent = title.charAt(0).toUpperCase();
+            } else {
+                placeholder.innerHTML = getIconForType(type);
+            }
             link.appendChild(placeholder);
         }
 

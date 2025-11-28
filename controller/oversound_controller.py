@@ -2107,20 +2107,17 @@ def get_merch(request: Request, merchId: int):
         except requests.RequestException:
             merch_data['artist'] = {"artistId": merch_data['artistId'], "artisticName": "Artista desconocido"}
         
-        # Resolver merchandising relacionado del mismo artista usando owner_merch
-        related_merch = []
-        if merch_data.get('artist') and merch_data['artist'].get('owner_merch'):
-            try:
-                # Excluir el merch actual y tomar máximo 6
-                related_ids = [mid for mid in merch_data['artist']['owner_merch'] if mid != merchId][:6]
-                if related_ids:
-                    related_ids_str = ','.join(str(mid) for mid in related_ids)
-                    related_resp = requests.get(f"{servers.TYA}/merch/list?ids={related_ids_str}", timeout=2, headers={"Accept": "application/json"})
-                    related_resp.raise_for_status()
-                    related_merch = related_resp.json()
-            except requests.RequestException:
-                pass  # Si no se pueden cargar, dejar vacío
-        merch_data['related_merch'] = related_merch
+        # Resolver colaboradores del merch (similar a las canciones)
+        collaborators = []
+        if merch_data.get('collaborators'):
+            for collab_id in merch_data['collaborators']:
+                try:
+                    collab_resp = requests.get(f"{servers.TYA}/artist/{collab_id}", timeout=2, headers={"Accept": "application/json"})
+                    collab_resp.raise_for_status()
+                    collaborators.append(collab_resp.json())
+                except requests.RequestException:
+                    collaborators.append({"artistId": collab_id, "artisticName": "Artista desconocido"})
+        merch_data['collaborators_data'] = collaborators
         
         # Normalizar URLs de imágenes y precios
         if merch_data.get('cover'):

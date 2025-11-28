@@ -23,6 +23,14 @@
                     <div class="merch-artist">
                         <span>Por</span>
                         <a href="/artist/{{ data.merch.artist.artistId }}" id="artist-link">{{ data.merch.artist.artisticName }}</a>
+                        {% if data.merch.collaborators_data %}
+                            <span class="collaborators-text">
+                                con 
+                                {% for collaborator in data.merch.collaborators_data %}
+                                    <a href="/artist/{{ collaborator.artistId }}">{{ collaborator.artisticName }}</a>{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </span>
+                        {% endif %}
                     </div>
                     
                     {% if data.merch.description %}
@@ -115,14 +123,45 @@
                     {% endif %}
                 </div>
 
+                <!-- Collaborators Section -->
+                {% if data.merch.collaborators_data %}
+                <div class="details-section" id="collaborators-section">
+                    <h2 class="section-title">Colaboradores</h2>
+                    <div class="collaborators-container" id="collaborators-container">
+                        {% for collaborator in data.merch.collaborators_data %}
+                        <a href="/artist/{{ collaborator.artistId }}" class="collaborator-card">
+                            {% if collaborator.artisticImage %}
+                                <img class="collaborator-avatar" src="{{ tya_server }}/static{{ collaborator.artisticImage }}" alt="{{ collaborator.artisticName }}">
+                            {% else %}
+                                <div class="collaborator-placeholder">
+                                    {{ collaborator.artisticName[0]|upper }}
+                                </div>
+                            {% endif %}
+                            <div class="collaborator-name">{{ collaborator.artisticName }}</div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- Details Section -->
                 <div class="details-section" id="details-section">
                     <h2 class="section-title">Detalles del Producto</h2>
                     <div class="specs-grid">
                         <div class="spec-item">
-                            <span class="spec-label">Artista</span>
+                            <span class="spec-label">Artista Principal</span>
                             <a href="/artist/{{ data.merch.artist.artistId }}" class="spec-value-link">{{ data.merch.artist.artisticName }}</a>
                         </div>
+                        {% if data.merch.collaborators_data %}
+                        <div class="spec-item">
+                            <span class="spec-label">Colaboradores</span>
+                            <span class="spec-value">
+                                {% for collaborator in data.merch.collaborators_data %}
+                                    <a href="/artist/{{ collaborator.artistId }}" class="spec-value-link">{{ collaborator.artisticName }}</a>{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </span>
+                        </div>
+                        {% endif %}
                         <div class="spec-item">
                             <span class="spec-label">Fecha de Lanzamiento</span>
                             <span class="spec-value">{{ data.merch.releaseDate[:10] }}</span>
