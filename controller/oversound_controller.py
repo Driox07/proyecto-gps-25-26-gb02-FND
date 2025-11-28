@@ -1726,8 +1726,11 @@ def get_song(request: Request, songId: int):
                 genres_resp = requests.get(f"{servers.TYA}/genres", timeout=2, headers={"Accept": "application/json"})
                 genres_resp.raise_for_status()
                 all_genres = genres_resp.json()
-                genres = [g for g in all_genres if g['id'] in song_data['genres']]
-            except requests.RequestException:
+                # Convertir los IDs de géneros a enteros para la comparación
+                genre_ids = [int(g) if isinstance(g, str) else g for g in song_data['genres']]
+                genres = [g for g in all_genres if g['id'] in genre_ids]
+            except requests.RequestException as e:
+                print(f"[DEBUG] Error getting genres: {e}")
                 pass
         song_data['genres_data'] = genres
         
