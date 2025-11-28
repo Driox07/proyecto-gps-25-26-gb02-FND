@@ -3523,62 +3523,55 @@ def get_artist_studio_page(request: Request):
         artist_resp.raise_for_status()
         artist_data = artist_resp.json()
         
-        # Obtener canciones del artista
-        # try:
-        #     songs_resp = requests.get(
-        #         f"{servers.TYA}/artist/{artist_id}/songs",
-        #         timeout=5,
-        #         headers={"Accept": "application/json"}
-        #     )
-        #     songs_resp.raise_for_status()
-        #     artist_data['songs'] = songs_resp.json()
-        # except requests.RequestException:
-        #     artist_data['songs'] = []
+        # Obtener canciones del artista (solo owner)
         try:
-            song_resp = requests.get(
-                f"{servers.TYA}/song/filter",
-                params={"artists": artist_id},
-                timeout=5,
-                headers={"Accept": "application/json"}
-            )
-            song_resp.raise_for_status()
-            song_data = requests.get(
-                f"{servers.TYA}/song/list?ids={','.join(map(str, song_resp.json()))}",)
-
-            artist_data['songs'] = song_data.json()
+            song_ids = artist_data.get('owner_songs', [])
+            if song_ids:
+                song_data = requests.get(
+                    f"{servers.TYA}/song/list?ids={','.join(map(str, song_ids))}",
+                    timeout=5,
+                    headers={"Accept": "application/json"}
+                )
+                song_data.raise_for_status()
+                artist_data['songs'] = song_data.json()
+            else:
+                artist_data['songs'] = []
         except requests.RequestException:
             artist_data['songs'] = []
         
-        # Obtener álbumes del artista
+        # Obtener álbumes del artista (solo owner)
         try:
-            albums_resp = requests.get(
-                f"{servers.TYA}/artist/{artist_id}/albums",
-                timeout=5,
-                headers={"Accept": "application/json"}
-            )
-            albums_resp.raise_for_status()
-            artist_data['albums'] = albums_resp.json()
+            album_ids = artist_data.get('owner_albums', [])
+            if album_ids:
+                albums_data = requests.get(
+                    f"{servers.TYA}/album/list?ids={','.join(map(str, album_ids))}",
+                    timeout=5,
+                    headers={"Accept": "application/json"}
+                )
+                albums_data.raise_for_status()
+                artist_data['albums'] = albums_data.json()
+            else:
+                artist_data['albums'] = []
         except requests.RequestException:
             artist_data['albums'] = []
         
-        # Obtener merchandising del artista
+        # Obtener merchandising del artista (solo owner)
         try:
-            merch_resp = requests.get(
-                f"{servers.TYA}/merch/filter",
-                params={"artists": artist_id},
-                timeout=5,
-                headers={"Accept": "application/json"}
-            )
-            merch_resp.raise_for_status()
-            merch_data = requests.get(
-                f"{servers.TYA}/merch/list?ids={','.join(map(str, merch_resp.json()))}",)
-
-            artist_data['merch'] = merch_data.json()
-            print(f"[DEBUG] Merch data: {artist_data['merch']}")
+            merch_ids = artist_data.get('owner_merch', [])
+            if merch_ids:
+                merch_data = requests.get(
+                    f"{servers.TYA}/merch/list?ids={','.join(map(str, merch_ids))}",
+                    timeout=5,
+                    headers={"Accept": "application/json"}
+                )
+                merch_data.raise_for_status()
+                artist_data['merch'] = merch_data.json()
+            else:
+                artist_data['merch'] = []
         except requests.RequestException:
             artist_data['merch'] = []
         
-        return osv.get_artist_studio_view(request, artist_data, userdata, servers.SYU)
+        return osv.get_artist_studio_view(request, artist_data, userdata, servers.SYU, servers.TYA)
         
     except requests.RequestException as e:
         print(f"Error obteniendo datos del estudio del artista: {e}")

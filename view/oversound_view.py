@@ -183,8 +183,8 @@ class View():
         })
     
     # Renderizar la template artist_studio.html
-    def get_artist_studio_view(self, request: Request, artist: dict, userdata: dict, syu_server: str = None):
-        data = {"userdata": userdata, "syu_server": syu_server}
+    def get_artist_studio_view(self, request: Request, artist: dict, userdata: dict, syu_server: str = None, tya_server: str = None):
+        data = {"userdata": userdata, "syu_server": syu_server, "tya_server": tya_server}
         return templates.TemplateResponse("artist_studio.html", {
             "request": request,
             "data": data,

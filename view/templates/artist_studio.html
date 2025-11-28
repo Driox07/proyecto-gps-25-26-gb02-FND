@@ -167,7 +167,7 @@
                                 <div class="song-item">
                                     <div class="song-info">
                                         {% if song.cover %}
-                                            <img src="{{ song.cover }}" alt="{{ song.title }}" class="song-cover">
+                                            <img src="{{ data.tya_server }}/static{{ song.cover }}" alt="{{ song.title }}" class="song-cover">
                                         {% else %}
                                             <div class="song-cover-placeholder">
                                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -235,7 +235,7 @@
                                 <div class="album-card-studio">
                                     <div class="album-cover">
                                         {% if album.cover %}
-                                            <img src="{{ album.cover }}" alt="{{ album.title }}">
+                                            <img src="{{ data.tya_server }}/static{{ album.cover }}" alt="{{ album.title }}">
                                         {% else %}
                                             <div class="album-cover-placeholder">
                                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
@@ -288,7 +288,7 @@
                                 <div class="merch-card-studio">
                                     <div class="merch-cover">
                                         {% if merch.cover %}
-                                            <img src="{{ merch.cover }}" alt="{{ merch.title }}">
+                                            <img src="{{ data.tya_server }}/static{{ merch.cover }}" alt="{{ merch.title }}">
                                         {% else %}
                                             <div class="merch-cover-placeholder">
                                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
