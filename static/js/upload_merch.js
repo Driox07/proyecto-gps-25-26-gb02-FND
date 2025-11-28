@@ -4,6 +4,25 @@ document.addEventListener('DOMContentLoaded', function(){
     const messageDiv = document.getElementById('message');
     const collaboratorsSelect = document.getElementById('collaborators');
 
+    // Función para manejar cambio de archivo
+    function handleFileChange(inputId, infoId, type) {
+        const input = document.getElementById(inputId);
+        const info = document.getElementById(infoId);
+        
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                info.textContent = `Seleccionado: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                info.style.color = '#28a745';
+            } else {
+                info.textContent = '';
+            }
+        });
+    }
+
+    // Configurar manejador para la imagen de portada
+    handleFileChange('cover', 'coverInfo', 'image');
+
     // Cargar artistas disponibles para colaborar desde el microservicio TYA
     async function loadArtists() {
         try {
@@ -46,12 +65,32 @@ document.addEventListener('DOMContentLoaded', function(){
         uploadBtn.disabled = true;
         messageDiv.style.display = 'none';
 
+        // Función para convertir archivo a base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]); // Remover el prefijo data:...
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Obtener archivo de portada y convertir a base64
+        const coverFile = document.getElementById('cover').files[0];
+
+        if (!coverFile) {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Debes seleccionar una imagen del producto';
+            messageDiv.style.display = 'block';
+            uploadBtn.disabled = false;
+            return;
+        }
+
         // Recoger datos del formulario
         const formData = {
             title: document.getElementById('title').value.trim(),
             price: parseFloat(document.getElementById('price').value),
             description: document.getElementById('description').value.trim(),
-            cover: document.getElementById('cover').value.trim(),
             releaseDate: document.getElementById('releaseDate').value || null
         };
 
@@ -64,7 +103,11 @@ document.addEventListener('DOMContentLoaded', function(){
             formData.collaborators = selectedCollabs;
         }
 
-        try{
+        try {
+            // Convertir imagen a base64
+            const coverBase64 = await fileToBase64(coverFile);
+            formData.cover = coverBase64;
+
             const resp = await fetch('/merch/upload', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

@@ -119,8 +119,9 @@ class View():
         return templates.TemplateResponse("main/faqs.html", {"request": request, "faqs": faqs })
     
     # Renderizar la template upload_album.html (versión más reciente/completa de 'get_upload_album_view')
-    def get_upload_album_view(self, request: Request, songs: list[dict]):
-        return templates.TemplateResponse("upload_album.html", {"request": request , "songs": songs}) 
+    def get_upload_album_view(self, request: Request, userdata: dict, songs: list = None):
+        data = {"userdata": userdata, "songs": songs or []}
+        return templates.TemplateResponse("upload_album.html", {"request": request, "data": data}) 
     
     # Renderizar la template album.html
     def get_album_view(self, request: Request, album_info : dict, tipoUsuario : int, isLiked: bool, inCarrito: bool, tiempo_formateado: str, userdata: dict = None, pt_server: str = None):
@@ -182,8 +183,8 @@ class View():
         })
     
     # Renderizar la template artist_studio.html
-    def get_artist_studio_view(self, request: Request, artist: dict, userdata: dict, syu_server: str = None):
-        data = {"userdata": userdata, "syu_server": syu_server}
+    def get_artist_studio_view(self, request: Request, artist: dict, userdata: dict, syu_server: str = None, tya_server: str = None):
+        data = {"userdata": userdata, "syu_server": syu_server, "tya_server": tya_server}
         return templates.TemplateResponse("artist_studio.html", {
             "request": request,
             "data": data,
