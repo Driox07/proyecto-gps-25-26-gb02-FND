@@ -48,6 +48,21 @@
 
                 <div class="form-row">
                     <div class="form-group full">
+                        <label for="collaborators">Colaboradores</label>
+                        <select id="collaborators" name="collaborators" multiple size="4">
+                            {% for artist in data.artists %}
+                            <option value="{{ artist.artistId }}">{{ artist.artisticName or 'Artista ' + artist.artistId|string }}</option>
+                            {% endfor %}
+                            {% if not data.artists %}
+                            <option value="" disabled>No hay otros artistas disponibles</option>
+                            {% endif %}
+                        </select>
+                        <small>Mantén Ctrl (Cmd en Mac) presionado para seleccionar múltiples colaboradores (opcional)</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full">
                         <label>Géneros</label>
                         <div style="padding: 14px 18px; background-color: #f0f7ff; border: 2px solid #d0e7ff; border-radius: 10px; color: #2563eb;">
                             <small>💡 Los géneros se calcularán automáticamente a partir de las canciones del álbum</small>

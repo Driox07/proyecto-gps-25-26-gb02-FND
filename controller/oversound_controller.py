@@ -1341,6 +1341,9 @@ def upload_song_page(request: Request):
     except requests.RequestException:
         pass
     
+    # Filtrar el artista actual de la lista de colaboradores
+    artists = [a for a in artists if a['artistId'] != userdata.get('artistId')]
+    
     # Obtener álbumes del artista desde TYA
     albums = []
     try:
@@ -1510,7 +1513,27 @@ def upload_album_page(request: Request):
     except requests.RequestException:
         pass
     
-    return osv.get_upload_album_view(request, userdata, songs)
+    # Obtener artistas desde TYA
+    artists = []
+    try:
+        # Primero filter para obtener todos los artistas (objetos básicos)
+        filter_resp = requests.get(f"{servers.TYA}/artist/filter", timeout=5, headers={"Accept": "application/json"})
+        if filter_resp.ok:
+            artist_objects = filter_resp.json()
+            artist_ids = artist_objects
+            if artist_ids:
+                # Luego list para obtener detalles completos
+                ids_str = ','.join(map(str, artist_ids))
+                list_resp = requests.get(f"{servers.TYA}/artist/list?ids={ids_str}", timeout=5, headers={"Accept": "application/json"})
+                if list_resp.ok:
+                    artists = list_resp.json()
+    except requests.RequestException:
+        pass
+    
+    # Filtrar el artista actual de la lista de colaboradores
+    artists = [a for a in artists if a['artistId'] != userdata.get('artistId')]
+    
+    return osv.get_upload_album_view(request, userdata, songs, artists)
 
 
 @app.post("/album/upload")
@@ -1924,6 +1947,9 @@ def get_song_edit_page(request: Request, songId: int):
         except requests.RequestException:
             artists = []
         
+        # Filtrar el artista actual de la lista de colaboradores
+        artists = [a for a in artists if a['artistId'] != userdata.get('artistId')]
+        
         song_data['genres_list'] = genres
         song_data['artists_list'] = artists
         
@@ -2305,6 +2331,9 @@ def get_album_edit_page(request: Request, albumId: int):
         except requests.RequestException:
             artists = []
         
+        # Filtrar el artista actual de la lista de colaboradores
+        artists = [a for a in artists if a['artistId'] != userdata.get('artistId')]
+        
         album_data['genres_list'] = genres
         album_data['artists_list'] = artists
         
@@ -2500,7 +2529,7 @@ def get_merch(request: Request, merchId: int):
             tipoUsuario = 1  # TODO: Implementar lógica para distinguir artista
         
         
-        return osv.get_merch_view(request, merch_data, tipoUsuario, isLiked, inCarrito, userdata, servers.SYU)
+        return osv.get_merch_view(request, merch_data, tipoUsuario, isLiked, inCarrito, userdata, servers.SYU, servers.TYA)
         
     except requests.RequestException as e:
         # En caso de error, mostrar página de error

@@ -133,7 +133,7 @@
                         {% for collaborator in data.merch.collaborators_data %}
                         <a href="/artist/{{ collaborator.artistId }}" class="collaborator-card">
                             {% if collaborator.artisticImage %}
-                                <img class="collaborator-avatar" src="{{ tya_server }}/static{{ collaborator.artisticImage }}" alt="{{ collaborator.artisticName }}">
+                                <img class="collaborator-avatar" src="{{ data.tya_server }}/static{{ collaborator.artisticImage }}" alt="{{ collaborator.artisticName }}">
                             {% else %}
                                 <div class="collaborator-placeholder">
                                     {{ collaborator.artisticName[0]|upper }}
