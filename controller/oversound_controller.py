@@ -2418,6 +2418,10 @@ def get_merch_edit_page(request: Request, merchId: int):
         if int(userdata.get('artistId')) != int(merch_data.get('artistId')):
             return osv.get_error_view(request, userdata, "No tienes permiso para editar este producto", "")
         
+        # Normalizar URL de la imagen
+        if merch_data.get('cover'):
+            merch_data['cover'] = normalize_image_url(merch_data['cover'], servers.TYA)
+        
         return osv.get_merch_edit_view(request, userdata, merch_data, servers.TYA)
         
     except requests.RequestException as e:
