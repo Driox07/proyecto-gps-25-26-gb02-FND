@@ -2422,6 +2422,18 @@ def get_merch_edit_page(request: Request, merchId: int):
         if merch_data.get('cover'):
             merch_data['cover'] = normalize_image_url(merch_data['cover'], servers.TYA)
         
+        # Normalizar precio para el input number: convertir coma decimal a punto
+        if merch_data.get('price') is not None:
+            try:
+                # Si viene como string con coma decimal, sustituir por punto
+                price_val = merch_data['price']
+                if isinstance(price_val, str):
+                    price_val = price_val.replace(',','.')
+                # Intentar convertir a float
+                merch_data['price'] = float(price_val)
+            except (ValueError, TypeError):
+                # En caso de error, dejar campo vacío para evitar error de validación en el input
+                merch_data['price'] = ''
         return osv.get_merch_edit_view(request, userdata, merch_data, servers.TYA)
         
     except requests.RequestException as e:
@@ -2454,6 +2466,18 @@ async def update_merch(request: Request, merchId: int):
         
         # Obtener datos del formulario
         body = await request.json()
+        # Normalizar el precio recibido: aceptar coma como separador decimal
+        if body.get('price') is not None:
+            try:
+                p = body.get('price')
+                if isinstance(p, str):
+                    # Reemplazar coma por punto y quitar espacios
+                    p = p.replace(',', '.').strip()
+                # Convertir a float si es posible
+                body['price'] = float(p)
+            except (ValueError, TypeError):
+                # Si no se puede convertir, eliminar para que el backend no reciba valor inválido
+                body.pop('price', None)
         
         # Enviar actualización a TYA
         update_resp = requests.patch(
@@ -3661,7 +3685,9 @@ def artist_create_page(request: Request):
     if userdata.get('artistId'):
         return RedirectResponse(f"/artist/{userdata.get('artistId')}")
     
-    return osv.get_artist_create_view(request, userdata, servers.SYU)
+    import time
+    timestamp = int(time.time())
+    return osv.get_artist_create_view(request, userdata, servers.SYU, timestamp)
 
 
 @app.post("/artist/create")
