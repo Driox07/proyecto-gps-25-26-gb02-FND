@@ -59,7 +59,7 @@ def normalize_image_url(image_path: str, server_url: str) -> str:
         # Si es SYU, no debe tener /static.
         if server_url == servers.SYU and clean_path.startswith("/static"):
             clean_path = clean_path[len("/static"):]
-            
+
         return f"{server_url}{clean_path}"
     
     return image_path
@@ -1292,7 +1292,34 @@ def upload_album_page(request: Request):
     if not userdata.get('artistId'):
         return osv.get_error_view(request, userdata, "Debes ser un artista para crear álbumes", "")
     
-    return osv.get_upload_album_view(request, userdata)
+    # Obtener canciones del artista desde TYA
+    songs = []
+    try:
+        artist_id = userdata.get('artistId')
+        if artist_id:
+            # Obtener el artista para ver sus canciones
+            artist_resp = requests.get(
+                f"{servers.TYA}/artist/{artist_id}",
+                timeout=5,
+                headers={"Accept": "application/json"}
+            )
+            if artist_resp.ok:
+                artist_data = artist_resp.json()
+                song_ids = artist_data.get('owner_songs', [])
+                if song_ids:
+                    # Obtener detalles de las canciones
+                    ids_str = ','.join(map(str, song_ids))
+                    songs_resp = requests.get(
+                        f"{servers.TYA}/song/list?ids={ids_str}",
+                        timeout=5,
+                        headers={"Accept": "application/json"}
+                    )
+                    if songs_resp.ok:
+                        songs = songs_resp.json()
+    except requests.RequestException:
+        pass
+    
+    return osv.get_upload_album_view(request, userdata, songs)
 
 
 @app.post("/album/upload")
