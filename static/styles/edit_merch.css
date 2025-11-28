@@ -163,6 +163,32 @@ form {
     min-height: 100px;
 }
 
+/* Estilos específicos para select múltiple */
+.form-group select[multiple] {
+    min-height: 130px;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.form-group select[multiple] option {
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin: 3px 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.form-group select[multiple] option:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.form-group select[multiple] option:checked {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+}
+
 .form-group small {
     font-size: 12px;
     color: #999;
@@ -301,5 +327,81 @@ form {
     .btn {
         padding: 12px 24px;
         font-size: 14px;
+    }
+}
+
+/* Image Upload Styles */
+.image-upload-container {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.current-image-container {
+    flex-shrink: 0;
+}
+
+.current-image-container label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.current-image {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 2px solid #e0e0e0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.image-upload-controls {
+    flex: 1;
+}
+
+.change-image-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    margin-bottom: 12px;
+}
+
+.change-image-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.file-info {
+    font-size: 14px;
+    color: #666;
+    margin: 8px 0;
+    min-height: 20px;
+}
+
+.upload-hint {
+    color: #888;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* Responsive Image Upload */
+@media (max-width: 768px) {
+    .image-upload-container {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .current-image {
+        width: 120px;
+        height: 120px;
+    }
+
+    .change-image-btn {
+        width: 100%;
+        justify-content: center;
     }
 }

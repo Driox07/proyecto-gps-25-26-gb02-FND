@@ -154,10 +154,6 @@
                 
                 <div class="artist-content" id="artist-content">
                     <!-- Contenido cargado dinámicamente -->
-                    <div class="loading-spinner">
-                        <div class="spinner"></div>
-                        <p>Cargando información...</p>
-                    </div>
                 </div>
             </div>
         </section>
@@ -351,10 +347,7 @@
                                                 <img src="{{ artist.artisticImage }}" alt="{{ artist.artisticName }}">
                                             {% else %}
                                                 <div class="card-image-placeholder">
-                                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke-width="2"></path>
-                                                        <circle cx="12" cy="7" r="4" stroke-width="2"></circle>
-                                                    </svg>
+                                                    {{ artist.artisticName[0].upper() }}
                                                 </div>
                                             {% endif %}
                                         </div>
@@ -467,6 +460,9 @@
         const TYA_URL = '{{ tya_server }}';
         const PT_URL = '{{ pt_server }}';
         const TPP_SERVER = '{{ tpp_server }}';
+        
+        // Definir datos del usuario para JavaScript
+        window.userData = {{ user | tojson }};
     </script>
     <script src="{{ url_for('static', path='js/config.js') }}"></script>
     <script src="{{ url_for('static', path='js/UserProfile.js') }}"></script>
@@ -515,8 +511,14 @@
                 deleteForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     
+                    console.log('[DEBUG] Delete form submitted');
+                    console.log('[DEBUG] Expected username:', expectedUsername);
+                    
                     const username = confirmInput.value.trim();
+                    console.log('[DEBUG] Entered username:', username);
+                    
                     if (username !== expectedUsername) {
+                        console.log('[DEBUG] Username mismatch!');
                         alert('El nombre de usuario no coincide. Por favor, verifica e intenta nuevamente.');
                         return;
                     }
@@ -526,10 +528,13 @@
                     confirmBtn.textContent = 'Eliminando...';
                     
                     try {
-                        const userId = window.userData.userId;
                         const token = getCookie('oversound_auth');
                         
-                        const response = await fetch(`${window.SERVER_CONFIG.SYU}/user/${userName}`, {
+                        console.log('[DEBUG] Token:', token ? 'exists' : 'missing');
+                        console.log('[DEBUG] SYU_URL:', SYU_URL);
+                        console.log('[DEBUG] Request URL:', `${SYU_URL}/user/${username}`);
+                        
+                        const response = await fetch(`${SYU_URL}/user/${username}`, {
                             method: 'DELETE',
                             headers: {
                                 'Accept': 'application/json',
@@ -538,19 +543,24 @@
                             credentials: 'include'
                         });
                         
+                        console.log('[DEBUG] Response status:', response.status);
+                        console.log('[DEBUG] Response ok:', response.ok);
+                        
                         if (response.ok) {
+                            console.log('[DEBUG] Account deleted successfully');
                             alert('Tu cuenta ha sido eliminada exitosamente. Serás redirigido a la página de inicio.');
                             // Eliminar cookie y redirigir
                             document.cookie = 'oversound_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
                             window.location.href = '/';
                         } else {
                             const errorData = await response.json().catch(() => ({}));
+                            console.log('[DEBUG] Error response:', errorData);
                             alert(`Error al eliminar la cuenta: ${errorData.message || 'Error desconocido'}`);
                             confirmBtn.disabled = false;
                             confirmBtn.textContent = 'Entiendo las consecuencias, eliminar mi cuenta';
                         }
                     } catch (error) {
-                        console.error('Error:', error);
+                        console.error('[DEBUG] Exception caught:', error);
                         alert('Error de conexión al intentar eliminar la cuenta. Por favor, intenta nuevamente.');
                         confirmBtn.disabled = false;
                         confirmBtn.textContent = 'Entiendo las consecuencias, eliminar mi cuenta';

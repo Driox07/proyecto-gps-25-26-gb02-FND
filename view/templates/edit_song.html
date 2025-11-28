@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Canción - OverSound</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles/header.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', path='styles/edit_song.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles/upload_song.css') }}">
 </head>
 <body>
     {% include 'common/header.html' %}
@@ -20,7 +20,7 @@
 
             <div id="message" class="message" style="display:none;"></div>
 
-            <form id="edit-song-form">
+            <form id="edit-song-form" enctype="multipart/form-data">
                 <div class="form-row">
                     <div class="form-group full">
                         <label for="title">Título de la canción *</label>
@@ -30,12 +30,28 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="duration">Duración (segundos) *</label>
-                        <input type="number" id="duration" name="duration" required min="1" placeholder="180" value="{{ data.song.duration if data.song.duration else '' }}">
+                        <label for="audioFile">Nuevo archivo de audio (opcional)</label>
+                        <div class="file-upload-panel">
+                            <input type="file" id="audioFile" name="audioFile" accept="audio/*" style="display: none;">
+                            <label for="audioFile" class="file-upload-btn">
+                                <i class="icon">🎵</i>
+                                <span>Seleccionar nuevo archivo de audio</span>
+                            </label>
+                            <div class="file-info" id="audioInfo">
+                                Archivo actual: {{ data.song.trackId }} (no se puede cambiar directamente, sube uno nuevo para reemplazarlo)
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="price">Precio (€) *</label>
                         <input type="number" id="price" name="price" step="0.01" required min="0.01" placeholder="0.99" value="{{ data.song.price if data.song.price else '' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="releaseDate">Fecha de lanzamiento</label>
+                        <input type="date" id="releaseDate" name="releaseDate" value="{{ data.song.releaseDate[:10] if data.song.releaseDate else '' }}">
                     </div>
                 </div>
 
@@ -49,40 +65,53 @@
                 <div class="form-row">
                     <div class="form-group full">
                         <label for="genres">Géneros *</label>
-                        <input type="text" id="genres" name="genres" required placeholder="Ej: 1,2,3 (IDs de géneros separados por comas)" value="{% if data.song.genres %}{{ data.song.genres|join(',') }}{% endif %}">
-                        <small>IDs de géneros separados por comas</small>
+                        <select id="genres" name="genres" multiple size="5" required>
+                            {% for genre in data.song.genres_list %}
+                            <option value="{{ genre.id }}" {% if genre.id in data.song.genres %}selected{% endif %}>{{ genre.name }}</option>
+                            {% endfor %}
+                            {% if not data.song.genres_list %}
+                            <option value="" disabled>No hay géneros disponibles</option>
+                            {% endif %}
+                        </select>
+                        <small>Mantén Ctrl (Cmd en Mac) presionado para seleccionar múltiples géneros</small>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group full">
                         <label for="collaborators">Colaboradores</label>
-                        <input type="text" id="collaborators" name="collaborators" placeholder="Ej: 5,12,8 (IDs de artistas separados por comas)" value="{% if data.song.collaborators %}{{ data.song.collaborators|join(',') }}{% endif %}">
-                        <small>IDs de otros artistas que colaboraron en esta canción</small>
+                        <select id="collaborators" name="collaborators" multiple size="4">
+                            {% for artist in data.song.artists_list %}
+                            <option value="{{ artist.artistId }}" {% if artist.artistId in data.song.collaborators %}selected{% endif %}>{{ artist.artisticName or 'Artista ' + artist.artistId|string }}</option>
+                            {% endfor %}
+                            {% if not data.song.artists_list %}
+                            <option value="" disabled>No hay otros artistas disponibles</option>
+                            {% endif %}
+                        </select>
+                        <small>Mantén Ctrl (Cmd en Mac) presionado para seleccionar múltiples colaboradores (opcional)</small>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group full">
-                        <label for="cover">Portada (URL) *</label>
-                        <input type="url" id="cover" name="cover" required placeholder="https://ejemplo.com/cover.jpg" value="{{ data.song.cover if data.song.cover else '' }}">
-                        {% if data.song.cover %}
-                        <div class="preview-container" style="margin-top: 10px;">
-                            <img src="{{ data.song.cover }}" alt="Vista previa" style="max-width: 200px; border-radius: 8px;">
+                        <label for="coverFile">Portada (opcional)</label>
+                        <div class="file-upload-panel">
+                            <input type="file" id="coverFile" name="coverFile" accept="image/*" style="display: none;">
+                            <label for="coverFile" class="file-upload-btn">
+                                <i class="icon">🖼️</i>
+                                <span>Cambiar imagen de portada</span>
+                            </label>
+                            <div class="file-info" id="coverInfo">
+                                {% if data.song.cover %}
+                                <div class="current-cover">
+                                    <p>Portada actual:</p>
+                                    <img src="{{ data.song.cover }}" alt="Portada actual" style="max-width: 200px; border-radius: 8px; margin-top: 10px;">
+                                </div>
+                                {% else %}
+                                No hay portada actual
+                                {% endif %}
+                            </div>
                         </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="releaseDate">Fecha de lanzamiento</label>
-                        <input type="date" id="releaseDate" name="releaseDate" value="{{ data.song.releaseDate[:10] if data.song.releaseDate else '' }}">
-                    </div>
-                    <div class="form-group">
-                        <label>Track ID</label>
-                        <input type="text" value="{{ data.song.trackId }}" disabled>
-                        <small>El archivo de audio no se puede cambiar</small>
                     </div>
                 </div>
 

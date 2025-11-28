@@ -1582,6 +1582,12 @@ def get_song(request: Request, songId: int):
         song_resp.raise_for_status()
         song_data = song_resp.json()
         
+        # Normalizar URL de la portada
+        song_data['cover'] = normalize_image_url(song_data.get('cover', ''), servers.TYA)
+        
+        # Asegurar que price sea float
+        song_data['price'] = float(song_data.get('price', '0.0').replace(',', '.'))
+        
         # Resolver artista principal
         try:
             artist_resp = requests.get(f"{servers.TYA}/artist/{song_data['artistId']}", timeout=2, headers={"Accept": "application/json"})
@@ -1762,6 +1768,15 @@ def get_song_edit_page(request: Request, songId: int):
         song_resp.raise_for_status()
         song_data = song_resp.json()
         
+        # Normalizar URL de la portada
+        song_data['cover'] = normalize_image_url(song_data.get('cover', ''), servers.TYA)
+        
+        # Asegurar que price sea float
+        song_data['price'] = float(song_data.get('price', '0.0').replace(',', '.'))
+        
+        # Asegurar que genres sea lista de integers
+        song_data['genres'] = [int(g) for g in song_data.get('genres', [])]
+        
         # Verificar que el usuario sea el propietario
         if int(userdata.get('artistId')) != int(song_data.get('artistId')):
             return osv.get_error_view(request, userdata, "No tienes permiso para editar esta canción", "")
@@ -1776,9 +1791,22 @@ def get_song_edit_page(request: Request, songId: int):
         
         # Obtener artistas para colaboradores
         try:
-            artists_resp = requests.get(f"{servers.TYA}/artist/list?ids=1", timeout=5, headers={"Accept": "application/json"})
-            artists_resp.raise_for_status()
-            artists = artists_resp.json()
+            # Primero filter para obtener todos los artistas (IDs)
+            filter_resp = requests.get(f"{servers.TYA}/artist/filter", timeout=5, headers={"Accept": "application/json"})
+            if filter_resp.ok:
+                artist_ids = filter_resp.json()
+                if artist_ids:
+                    # Luego list para obtener detalles completos
+                    ids_str = ','.join(map(str, artist_ids))
+                    artists_resp = requests.get(f"{servers.TYA}/artist/list?ids={ids_str}", timeout=5, headers={"Accept": "application/json"})
+                    if artists_resp.ok:
+                        artists = artists_resp.json()
+                    else:
+                        artists = []
+                else:
+                    artists = []
+            else:
+                artists = []
         except requests.RequestException:
             artists = []
         
@@ -1815,13 +1843,58 @@ async def update_song(request: Request, songId: int):
         if int(userdata.get('artistId')) != int(song_data.get('artistId')):
             return JSONResponse(content={"error": "No tienes permiso para editar esta canción"}, status_code=403)
         
-        # Obtener datos del formulario
         body = await request.json()
+        
+        # Extraer datos
+        title = body.get('title')
+        price = float(body.get('price'))
+        description = body.get('description') or None
+        release_date = body.get('releaseDate') or None
+        genres = body.get('genres', [])
+        collaborators = body.get('collaborators', [])
+        audio_base64 = body.get('audioFile')
+        cover_base64 = body.get('coverFile')
+        cover_extension = body.get('coverExtension')
+        
+        # Preparar datos para TYA
+        update_data = {
+            'title': title,
+            'price': price,
+            'description': description,
+            'releaseDate': release_date,
+            'genres': [int(g) for g in genres],
+            'collaborators': [int(c) for c in collaborators] if collaborators else []
+        }
+        
+        # Si hay nuevo audio, subir a PT
+        if audio_base64:
+            audio_content = base64.b64decode(audio_base64)
+            # Calcular duración
+            audio = MutagenFile(BytesIO(audio_content))
+            if audio and audio.info:
+                duration = int(audio.info.length)
+            else:
+                duration = 0
+            update_data['duration'] = duration
+            
+            # Subir a PT
+            pt_body = {'track': audio_base64}
+            pt_resp = requests.post(f"{servers.PT}/track/upload", json=pt_body, timeout=10, headers={"Cookie": f"oversound_auth={token}"})
+            if not pt_resp.ok:
+                return JSONResponse(content={"message": f"Error subiendo a PT: {pt_resp.text}"}, status_code=pt_resp.status_code)
+            pt_data = pt_resp.json()
+            track_id = pt_data['idtrack']
+            update_data['trackId'] = track_id
+        
+        # Si hay nueva cover, convertir a base64 full
+        if cover_base64 and cover_extension:
+            cover_base64_full = f"data:image/{cover_extension};base64,{cover_base64}"
+            update_data['cover'] = cover_base64_full
         
         # Enviar actualización a TYA
         update_resp = requests.patch(
             f"{servers.TYA}/song/{songId}",
-            json=body,
+            json=update_data,
             timeout=5,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
@@ -2058,19 +2131,68 @@ def get_album_edit_page(request: Request, albumId: int):
         album_resp.raise_for_status()
         album_data = album_resp.json()
         
-        # Verificar que el usuario sea el propietario
-        if userdata.get('artistId') != album_data.get('artistId'):
-            return osv.get_error_view(request, userdata, "No tienes permiso para editar este álbum", "")
+        # Normalizar URL de la portada
+        album_data['cover'] = normalize_image_url(album_data.get('cover', ''), servers.TYA)
         
-        # Obtener canciones disponibles del artista
+        # Asegurar que price sea float
+        album_data['price'] = float(album_data.get('price', '0.0').replace(',', '.'))
+        
+        # Asegurar que genres sea lista de integers
+        album_data['genres'] = [int(g) for g in album_data.get('genres', [])]
+        
+        # Asegurar que collaborators sea lista de integers
+        album_data['collaborators'] = [int(c) for c in album_data.get('collaborators', [])]
+        
+        # Obtener detalles de las canciones del álbum
         try:
-            songs_resp = requests.get(f"{servers.TYA}/artist/{userdata.get('artistId')}/songs", timeout=5, headers={"Accept": "application/json"})
-            songs_resp.raise_for_status()
-            artist_songs = songs_resp.json()
+            if album_data.get('songs'):
+                ids_str = ','.join(map(str, album_data['songs']))
+                songs_resp = requests.get(f"{servers.TYA}/song/list?ids={ids_str}", timeout=5, headers={"Accept": "application/json"})
+                if songs_resp.ok:
+                    album_songs = songs_resp.json()
+                    # Asegurar que duration sea int
+                    for song in album_songs:
+                        song['duration'] = int(song.get('duration', 0))
+                else:
+                    album_songs = []
+            else:
+                album_songs = []
         except requests.RequestException:
-            artist_songs = []
+            album_songs = []
         
-        album_data['artist_songs'] = artist_songs
+        album_data['album_songs'] = album_songs
+        
+        # Obtener géneros disponibles
+        try:
+            genres_resp = requests.get(f"{servers.TYA}/genres", timeout=5, headers={"Accept": "application/json"})
+            genres_resp.raise_for_status()
+            genres = genres_resp.json()
+        except requests.RequestException:
+            genres = []
+        
+        # Obtener artistas para colaboradores
+        try:
+            # Primero filter para obtener todos los artistas (IDs)
+            filter_resp = requests.get(f"{servers.TYA}/artist/filter", timeout=5, headers={"Accept": "application/json"})
+            if filter_resp.ok:
+                artist_ids = filter_resp.json()
+                if artist_ids:
+                    # Luego list para obtener detalles completos
+                    ids_str = ','.join(map(str, artist_ids))
+                    artists_resp = requests.get(f"{servers.TYA}/artist/list?ids={ids_str}", timeout=5, headers={"Accept": "application/json"})
+                    if artists_resp.ok:
+                        artists = artists_resp.json()
+                    else:
+                        artists = []
+                else:
+                    artists = []
+            else:
+                artists = []
+        except requests.RequestException:
+            artists = []
+        
+        album_data['genres_list'] = genres
+        album_data['artists_list'] = artists
         
         return osv.get_album_edit_view(request, userdata, album_data, servers.TYA)
         
@@ -2102,13 +2224,39 @@ async def update_album(request: Request, albumId: int):
         if int(userdata.get('artistId')) != int(album_data.get('artistId')):
             return JSONResponse(content={"error": "No tienes permiso para editar este álbum"}, status_code=403)
         
-        # Obtener datos del formulario
         body = await request.json()
+        
+        # Extraer datos
+        title = body.get('title')
+        price = float(body.get('price'))
+        description = body.get('description') or None
+        release_date = body.get('releaseDate') or None
+        genres = body.get('genres', [])
+        collaborators = body.get('collaborators', [])
+        songs = body.get('songs', [])
+        cover_base64 = body.get('coverFile')
+        cover_extension = body.get('coverExtension')
+        
+        # Preparar datos para TYA
+        update_data = {
+            'title': title,
+            'price': price,
+            'description': description,
+            'releaseDate': release_date,
+            'genres': [int(g) for g in genres],
+            'collaborators': [int(c) for c in collaborators] if collaborators else [],
+            'songs': [int(s) for s in songs]
+        }
+        
+        # Si hay nueva cover, convertir a base64 full
+        if cover_base64 and cover_extension:
+            cover_base64_full = f"data:image/{cover_extension};base64,{cover_base64}"
+            update_data['cover'] = cover_base64_full
         
         # Enviar actualización a TYA
         update_resp = requests.patch(
             f"{servers.TYA}/album/{albumId}",
-            json=body,
+            json=update_data,
             timeout=5,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
@@ -2186,20 +2334,17 @@ def get_merch(request: Request, merchId: int):
         except requests.RequestException:
             merch_data['artist'] = {"artistId": merch_data['artistId'], "artisticName": "Artista desconocido"}
         
-        # Resolver merchandising relacionado del mismo artista usando owner_merch
-        related_merch = []
-        if merch_data.get('artist') and merch_data['artist'].get('owner_merch'):
-            try:
-                # Excluir el merch actual y tomar máximo 6
-                related_ids = [mid for mid in merch_data['artist']['owner_merch'] if mid != merchId][:6]
-                if related_ids:
-                    related_ids_str = ','.join(str(mid) for mid in related_ids)
-                    related_resp = requests.get(f"{servers.TYA}/merch/list?ids={related_ids_str}", timeout=2, headers={"Accept": "application/json"})
-                    related_resp.raise_for_status()
-                    related_merch = related_resp.json()
-            except requests.RequestException:
-                pass  # Si no se pueden cargar, dejar vacío
-        merch_data['related_merch'] = related_merch
+        # Resolver colaboradores del merch (similar a las canciones)
+        collaborators = []
+        if merch_data.get('collaborators'):
+            for collab_id in merch_data['collaborators']:
+                try:
+                    collab_resp = requests.get(f"{servers.TYA}/artist/{collab_id}", timeout=2, headers={"Accept": "application/json"})
+                    collab_resp.raise_for_status()
+                    collaborators.append(collab_resp.json())
+                except requests.RequestException:
+                    collaborators.append({"artistId": collab_id, "artisticName": "Artista desconocido"})
+        merch_data['collaborators_data'] = collaborators
         
         # Normalizar URLs de imágenes y precios
         if merch_data.get('cover'):
@@ -2272,6 +2417,10 @@ def get_merch_edit_page(request: Request, merchId: int):
         # Verificar que el usuario sea el propietario
         if int(userdata.get('artistId')) != int(merch_data.get('artistId')):
             return osv.get_error_view(request, userdata, "No tienes permiso para editar este producto", "")
+        
+        # Normalizar URL de la imagen
+        if merch_data.get('cover'):
+            merch_data['cover'] = normalize_image_url(merch_data['cover'], servers.TYA)
         
         return osv.get_merch_edit_view(request, userdata, merch_data, servers.TYA)
         

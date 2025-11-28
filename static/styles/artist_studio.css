@@ -418,89 +418,80 @@ body {
 .albums-grid,
 .merch-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 24px;
+    gap: 12px;
 }
 
 .album-card-studio,
 .merch-card-studio {
     background: white;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
+    gap: 20px;
 }
 
 .album-card-studio:hover,
 .merch-card-studio:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.album-info,
+.merch-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
 }
 
 .album-cover,
 .merch-cover {
-    position: relative;
-    width: 100%;
-    padding-bottom: 100%;
-    overflow: hidden;
-    background: #f0f0f0;
-}
-
-.album-cover img,
-.merch-cover img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
     object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.album-card-studio:hover .album-cover img,
-.merch-card-studio:hover .merch-cover img {
-    transform: scale(1.05);
+    flex-shrink: 0;
 }
 
 .album-cover-placeholder,
 .merch-cover-placeholder {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #ccc;
+    flex-shrink: 0;
 }
 
-.album-info,
-.merch-info {
-    padding: 20px;
-}
-
-.album-info h3,
-.merch-info h3 {
-    font-size: 18px;
+.album-details h3,
+.merch-details h3 {
+    font-size: 16px;
     font-weight: 600;
     color: #333;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .album-meta,
 .merch-meta {
     font-size: 13px;
     color: #999;
-    margin-bottom: 16px;
 }
 
 .album-actions,
 .merch-actions {
     display: flex;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 /* ===== Icon Buttons ===== */
@@ -606,6 +597,18 @@ body {
         justify-content: flex-start;
     }
 
+    .album-card-studio,
+    .merch-card-studio {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .album-actions,
+    .merch-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
     .section-header {
         flex-direction: column;
         align-items: flex-start;
@@ -627,11 +630,6 @@ body {
     }
 
     .actions-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .albums-grid,
-    .merch-grid {
         grid-template-columns: 1fr;
     }
 
@@ -692,8 +690,8 @@ body {
     }
 
     .song-details h3,
-    .album-info h3,
-    .merch-info h3 {
+    .album-details h3,
+    .merch-details h3 {
         color: #fff;
     }
 

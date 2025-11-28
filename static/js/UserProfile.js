@@ -670,17 +670,21 @@ function displayExistingArtist(artist) {
                     </div>
                     <div class="artist-actions">
                         <a href="/artist/studio" class="btn btn-primary">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke-width="2"></path>
-                            </svg>
-                            Ir al Estudio
+                            <span class="btn-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke-width="2"></path>
+                                </svg>
+                            </span>
+                            <span class="btn-text">Ir al Estudio</span>
                         </a>
                         <a href="/artist/${artist.artistId}" class="btn btn-secondary">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-width="2"></path>
-                                <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
-                            </svg>
-                            Ver Perfil Público
+                            <span class="btn-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-width="2"></path>
+                                    <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                                </svg>
+                            </span>
+                            <span class="btn-text">Ver Perfil Artístico</span>
                         </a>
                     </div>
                 </div>
@@ -696,20 +700,34 @@ function displayNoArtist() {
     const artistContent = document.getElementById('artist-content');
     if (!artistContent) return;
 
+    // Verificar si el usuario tiene artistId pero no se pudo cargar el perfil
+    const hasArtistId = window.userData && window.userData.artistId;
+    
+    const title = hasArtistId ? 'Perfil de Artista' : 'No tienes un perfil de artista';
+    const description = hasArtistId 
+        ? 'Tu perfil de artista está disponible. Haz clic abajo para verlo.'
+        : 'Crea tu perfil de artista para poder subir canciones, álbumes y gestionar tu contenido musical.';
+    const buttonText = hasArtistId ? 'Ver Perfil Artístico' : 'Crear Perfil de Artista';
+    const buttonHref = hasArtistId ? `/artist/${window.userData.artistId}` : '/artist/create';
+    const buttonIcon = hasArtistId 
+        ? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-width="2"></path><circle cx="12" cy="12" r="3" stroke-width="2"></circle>`
+        : `<line x1="12" y1="5" x2="12" y2="19" stroke-width="2"></line><line x1="5" y1="12" x2="19" y2="12" stroke-width="2"></line>`;
+
     artistContent.innerHTML = `
         <div class="no-artist">
             <div class="empty-state">
                 <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zm12-2c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"/>
                 </svg>
-                <h3>No tienes un perfil de artista</h3>
-                <p>Crea tu perfil de artista para poder subir canciones, álbumes y gestionar tu contenido musical.</p>
-                <a href="/artist/create" class="btn btn-primary">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <line x1="12" y1="5" x2="12" y2="19" stroke-width="2"></line>
-                        <line x1="5" y1="12" x2="19" y2="12" stroke-width="2"></line>
-                    </svg>
-                    Crear Perfil de Artista
+                <h3>${title}</h3>
+                <p>${description}</p>
+                <a href="${buttonHref}" class="btn btn-primary">
+                    <span class="btn-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            ${buttonIcon}
+                        </svg>
+                    </span>
+                    <span class="btn-text">${buttonText}</span>
                 </a>
             </div>
         </div>
@@ -723,17 +741,40 @@ function displayArtistError() {
     const artistContent = document.getElementById('artist-content');
     if (!artistContent) return;
 
-    artistContent.innerHTML = `
-        <div class="artist-error">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <p>No se pudo cargar la información del artista</p>
-            <button class="btn btn-secondary" onclick="loadArtistInfo()">Reintentar</button>
-        </div>
-    `;
+    // Si el usuario tiene artistId, mostrar opción para ver el perfil
+    const hasArtistId = window.userData && window.userData.artistId;
+
+    if (hasArtistId) {
+        artistContent.innerHTML = `
+            <div class="no-artist">
+                <div class="empty-state">
+                    <p>Este usuario tiene perfil de artista</p>
+                    <a href="/artist/${window.userData.artistId}" class="btn btn-primary">
+                        <span class="btn-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-width="2"></path>
+                                <circle cx="12" cy="12" r="3" stroke-width="2"></circle>
+                            </svg>
+                        </span>
+                        <span class="btn-text">Ver Perfil Artístico</span>
+                    </a>
+                </div>
+            </div>
+        `;
+    } else {
+        // Fallback por si no hay artistId (aunque no debería suceder)
+        artistContent.innerHTML = `
+            <div class="artist-error">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <p>No se pudo cargar la información del artista</p>
+                <button class="btn btn-secondary" onclick="loadArtistInfo()">Reintentar</button>
+            </div>
+        `;
+    }
 }
 
 // Add styles for artist section
