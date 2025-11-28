@@ -2862,7 +2862,7 @@ def get_profile(request: Request):
         payment_methods = []
         try:
             payment_resp = requests.get(
-                f"{servers.SYU}/user/{userdata.get('userId')}/payment-methods",
+                f"{servers.TPP}/payment",
                 timeout=2,
                 headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
             )
