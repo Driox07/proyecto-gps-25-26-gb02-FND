@@ -528,17 +528,13 @@
                     confirmBtn.textContent = 'Eliminando...';
                     
                     try {
-                        const token = getCookie('oversound_auth');
+                        console.log('[DEBUG] Deleting account for username:', username);
+                        console.log('[DEBUG] Request URL:', `/user/${username}`);
                         
-                        console.log('[DEBUG] Token:', token ? 'exists' : 'missing');
-                        console.log('[DEBUG] SYU_URL:', SYU_URL);
-                        console.log('[DEBUG] Request URL:', `${SYU_URL}/user/${username}`);
-                        
-                        const response = await fetch(`${SYU_URL}/user/${username}`, {
+                        const response = await fetch(`/user/${username}`, {
                             method: 'DELETE',
                             headers: {
-                                'Accept': 'application/json',
-                                'Cookie': `oversound_auth=${token}`
+                                'Accept': 'application/json'
                             },
                             credentials: 'include'
                         });
