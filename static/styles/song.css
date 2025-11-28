@@ -653,3 +653,48 @@ body {
     transform: translateY(0);
     box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
 }
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .details-section {
+        background: #2a2a2a;
+    }
+
+    .info-label {
+        color: #999;
+    }
+
+    .info-value,
+    .info-value a {
+        color: #e0e0e0;
+    }
+
+    .genre-tag {
+        background: rgba(102, 126, 234, 0.2);
+        color: #a8b3ff;
+    }
+
+    .lyrics-section {
+        background: #2a2a2a;
+    }
+
+    .lyrics-text {
+        color: #e0e0e0;
+    }
+
+    .related-songs-container .song-card {
+        background: #2a2a2a;
+    }
+
+    .related-songs-container .song-card:hover {
+        background: #333;
+    }
+
+    .related-songs-container .song-title {
+        color: #e0e0e0;
+    }
+
+    .related-songs-container .song-artist {
+        color: #999;
+    }
+}

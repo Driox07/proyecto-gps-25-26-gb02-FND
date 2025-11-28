@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     initFollowButton();
     initCardInteractions();
+    // No necesitamos checkIfArtistIsFavorite() porque el estado ya viene del servidor
 });
 
 /**
@@ -68,22 +69,23 @@ function initFollowButton() {
         const isFollowing = followBtn.classList.contains('following');
 
         try {
-            const endpoint = isFollowing ? `/favs/artists/${artistId}` : `/favs/artists/${artistId}`;
+            // Use the microservice URL for favorites
+            const endpoint = `${SYU_URL}/favs/artists/${artistId}`;
             const method = isFollowing ? 'DELETE' : 'POST';
+            
             const response = await fetch(endpoint, {
                 method: method,
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    artistId: parseInt(artistId)
-                })
+                }
             });
 
             if (response.ok) {
                 toggleFollowButton(followBtn, !isFollowing);
             } else {
-                console.error('Error al seguir/dejar de seguir artista');
+                const errorText = await response.text();
+                console.error('Error al seguir/dejar de seguir artista:', errorText);
                 showNotification('Error al procesar la solicitud', 'error');
             }
         } catch (error) {
@@ -94,20 +96,19 @@ function initFollowButton() {
 }
 
 /**
- * Toggle follow button state
+ * Update follow button UI without notifications
  * @param {HTMLElement} button - The follow button element
- * @param {boolean} isFollowing - Whether the user is now following
+ * @param {boolean} isFollowing - Whether the user is following
  */
-function toggleFollowButton(button, isFollowing) {
+function updateFollowButtonUI(button, isFollowing) {
     if (isFollowing) {
         button.classList.add('following');
         button.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M19 14c1.49-1.46 3-3.59 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 5 3 8 7 11.5S19 22 19 14z" stroke-width="2"></path>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-width="2"></path>
             </svg>
             Siguiendo
         `;
-        showNotification('¡Ahora sigues este artista!', 'success');
     } else {
         button.classList.remove('following');
         button.innerHTML = `
@@ -116,6 +117,20 @@ function toggleFollowButton(button, isFollowing) {
             </svg>
             Seguir
         `;
+    }
+}
+
+/**
+ * Toggle follow button state with notifications
+ * @param {HTMLElement} button - The follow button element
+ * @param {boolean} isFollowing - Whether the user is now following
+ */
+function toggleFollowButton(button, isFollowing) {
+    updateFollowButtonUI(button, isFollowing);
+    
+    if (isFollowing) {
+        showNotification('¡Ahora sigues este artista!', 'success');
+    } else {
         showNotification('Dejaste de seguir este artista', 'info');
     }
 }
@@ -282,7 +297,7 @@ function formatDuration(seconds) {
 }
 
 /**
- * Handle card click for navigation
+ * Handle play button clicks for songs and albums
  */
 document.addEventListener('click', (e) => {
     const playButton = e.target.closest('.play-button');
@@ -290,22 +305,21 @@ document.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         
-        // Try to get trackId from the song card
-        const songCard = playButton.closest('.song-card');
-        if (songCard) {
-            const trackId = songCard.getAttribute('data-track-id');
-            if (trackId) {
-                const title = songCard.querySelector('.card-title')?.textContent || 'canción';
-                console.log('Playing:', title);
-                playTrack(trackId);
-                return;
-            }
+        // Check if it's a track play button
+        const trackId = playButton.getAttribute('data-track-id');
+        if (trackId) {
+            console.log('Playing track:', trackId);
+            playTrack(trackId);
+            return;
         }
         
-        // Fallback to href navigation for non-playable items
-        const href = playButton.getAttribute('href');
-        if (href) {
-            window.location.href = href;
+        // Check if it's an album play button
+        const albumId = playButton.getAttribute('data-album-id');
+        if (albumId) {
+            console.log('Playing album:', albumId);
+            // For albums, navigate to the album page where they can play all songs
+            window.location.href = `/album/${albumId}`;
+            return;
         }
     }
 });
