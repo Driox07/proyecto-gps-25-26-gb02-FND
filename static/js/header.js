@@ -180,12 +180,33 @@ function initSearch() {
 
     // Función para obtener la configuración de servidores
     function getServerConfig() {
+        // Intentar obtener desde window.TYA_URL si está disponible (definido en las páginas)
+        if (window.TYA_URL) {
+            return window.TYA_URL;
+        }
         // Intentar obtener desde window.SERVER_CONFIG si está disponible
         if (window.SERVER_CONFIG && window.SERVER_CONFIG.TYA) {
             return window.SERVER_CONFIG.TYA;
         }
-        // Fallback a la configuración en la página
-        return 'http://localhost:8081';
+        // Fallback: construir desde el protocolo y host actual
+        return window.location.protocol + '//' + window.location.hostname + ':8081';
+    }
+    
+    // Función helper para normalizar URLs de imágenes
+    function normalizeImageUrl(imagePath) {
+        if (!imagePath) return null;
+        
+        // Si ya es una URL completa, devolverla tal cual
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        
+        // Si es una ruta relativa (ej: /song/24.png), construir URL completa
+        if (imagePath.startsWith('/')) {
+            return getServerConfig() + '/static' + imagePath;
+        }
+        
+        return imagePath;
     }
 
     // Input handler con debounce
@@ -361,22 +382,22 @@ function initSearch() {
             url = `/song/${item.songId}`;
             title = item.title;
             subtitle = item.artistName || 'Artista desconocido';
-            image = getServerConfig() + "/static" + item.cover;
+            image = normalizeImageUrl(item.cover);
         } else if (type === 'album') {
             url = `/album/${item.albumId}`;
             title = item.title;
             subtitle = item.artistName || 'Artista desconocido';
-            image = getServerConfig() + "/static" + item.cover;
+            image = normalizeImageUrl(item.cover);
         } else if (type === 'artist') {
             url = `/artist/${item.artistId}`;
             title = item.artisticName || 'Sin nombre';
             subtitle = 'Artista';
-            image = getServerConfig() + "/static" + item.artisticImage;
+            image = normalizeImageUrl(item.artisticImage);
         } else if (type === 'merch') {
             url = `/merch/${item.merchId}`;
             title = item.title || 'Sin título';
             subtitle = item.artistName || 'Merchandising';
-            image = getServerConfig() + "/static" + item.cover;
+            image = normalizeImageUrl(item.cover);
         }
 
         link.href = url;
