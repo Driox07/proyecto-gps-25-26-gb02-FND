@@ -201,8 +201,8 @@
                                 {% for item in elementos_biblioteca.songs %}
                                     <a href="/song/{{ item.songId }}" class="favorite-card">
                                         <div class="card-image">
-                                            {% if item.image %}
-                                                <img src="{{ item.cover }}" alt="{{ item.title }}" loading="lazy">
+                                            {% if item.cover %}
+                                                <img src="{{ tya_server }}/static{{ item.cover }}" alt="{{ item.title }}" loading="lazy">
                                             {% else %}
                                                 <div class="card-image-placeholder">
                                                     {{ item.title[0].upper() }}

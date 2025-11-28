@@ -1,5 +1,62 @@
 // Header interactivity
 document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar tema desde almacenamiento local y configurar toggle
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+
+    function applyTheme(theme) {
+        const root = document.documentElement;
+        if (theme === 'dark') {
+            root.classList.add('theme-dark');
+            root.setAttribute('data-theme', 'dark');
+        } else {
+            root.classList.remove('theme-dark');
+            root.setAttribute('data-theme', 'light');
+        }
+    }
+
+    function updateToggleIcon() {
+        if (!themeToggleBtn) return;
+        const isDark = document.documentElement.classList.contains('theme-dark');
+        const sun = themeToggleBtn.querySelector('.icon-sun');
+        const moon = themeToggleBtn.querySelector('.icon-moon');
+        if (sun) sun.style.display = isDark ? 'none' : 'inline';
+        if (moon) moon.style.display = isDark ? 'inline' : 'none';
+        themeToggleBtn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    }
+
+    function initTheme() {
+        try {
+            const stored = localStorage.getItem('oversound_theme');
+            if (stored === 'dark' || stored === 'light') {
+                applyTheme(stored);
+            } else {
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                applyTheme(prefersDark ? 'dark' : 'light');
+            }
+        } catch (e) {
+            // si localStorage no está disponible, usar preferencia de sistema
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(prefersDark ? 'dark' : 'light');
+        }
+        updateToggleIcon();
+    }
+
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.contains('theme-dark');
+        const next = isDark ? 'light' : 'dark';
+        applyTheme(next);
+        try { localStorage.setItem('oversound_theme', next); } catch (e) {}
+        updateToggleIcon();
+    }
+
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleTheme();
+        });
+    }
+
+    initTheme();
     const userMenu = document.querySelector('.user-menu');
     const userButton = document.querySelector('.user-button');
     const userDropdown = document.querySelector('.user-dropdown');
