@@ -68,6 +68,13 @@ body {
     list-style: none;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    /* Ocultar scrollbar visual pero permitir scroll horizontal */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+.nav-tabs::-webkit-scrollbar {
+    display: none; /* Chrome, Safari y Opera */
 }
 
 .nav-tab {
