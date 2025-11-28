@@ -103,7 +103,33 @@ def index(request: Request):
     try:
         ta = requests.get(f"{servers.RYE}/statistics/top-10-artists", timeout=3, headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"})
         if ta.ok:
-            top_artists = ta.json()
+            top_artists_raw = ta.json()
+            # Enriquecer con datos completos de TYA si es necesario
+            top_artists = []
+            for artist_data in top_artists_raw:
+                artist_id = artist_data.get('artistId') or artist_data.get('id')
+                if artist_id:
+                    try:
+                        # Intentar obtener datos completos de TYA
+                        artist_resp = requests.get(f"{servers.TYA}/artist/{artist_id}", timeout=2, headers={"Accept": "application/json"})
+                        if artist_resp.ok:
+                            artist_full = artist_resp.json()
+                            # Asegurar que artistId es int
+                            if artist_full.get('artistId'):
+                                artist_full['artistId'] = int(artist_full['artistId'])
+                            top_artists.append(artist_full)
+                        else:
+                            # Si TYA falla, usar datos de RYE
+                            if artist_data.get('artistId'):
+                                artist_data['artistId'] = int(artist_data['artistId'])
+                            top_artists.append(artist_data)
+                    except Exception:
+                        # En caso de error, usar datos de RYE
+                        if artist_data.get('artistId'):
+                            artist_data['artistId'] = int(artist_data['artistId'])
+                        top_artists.append(artist_data)
+                else:
+                    top_artists.append(artist_data)
     except requests.RequestException as e:
         print(f"Error fetching top artists from RYE: {e}")
 
@@ -124,14 +150,21 @@ def index(request: Request):
                 artist_id = artist_data.get('artistId') or artist_data.get('id') or artist_data
                 if artist_id and isinstance(artist_id, (int, str)):
                     try:
-                        artist_resp = requests.get(f"{servers.TYA}/artists/{artist_id}", timeout=2, headers={"Accept": "application/json"})
+                        artist_resp = requests.get(f"{servers.TYA}/artist/{int(artist_id)}", timeout=2, headers={"Accept": "application/json"})
                         if artist_resp.ok:
                             artist_full = artist_resp.json()
+                            # Normalizar artistId a int
+                            if artist_full.get('artistId'):
+                                artist_full['artistId'] = int(artist_full['artistId'])
                             rec_artists.append(artist_full)
                         else:
                             # Si TYA no tiene el artista, usar los datos de RYE
+                            if isinstance(artist_data, dict) and artist_data.get('artistId'):
+                                artist_data['artistId'] = int(artist_data['artistId'])
                             rec_artists.append(artist_data)
                     except Exception as ex:
+                        if isinstance(artist_data, dict) and artist_data.get('artistId'):
+                            artist_data['artistId'] = int(artist_data['artistId'])
                         rec_artists.append(artist_data)
                 else:
                     rec_artists.append(artist_data)
@@ -472,24 +505,6 @@ def shop(request: Request,
                 genre_name = g.get('name')
                 genres_map[genre_id] = genre_name  # int key
                 genres_map[str(genre_id)] = genre_name  # string key
-
-        # DEBUG: Mostrar información sobre los productos
-        print(f"[DEBUG] Shop - Total productos: {len(songs)} canciones, {len(albums)} álbumes, {len(merch)} merch")
-        if songs:
-            song = songs[0]
-            artist_id = song.get('artistId')
-            print(f"[DEBUG] Primera canción - ID: {song.get('songId')}, Título: {song.get('title')}, Precio: {song.get('price')}, ArtistId: {artist_id} (tipo: {type(artist_id).__name__})")
-            print(f"[DEBUG] ¿artistId en artists_map? {artist_id in artists_map}, Valor: {artists_map.get(artist_id, 'NO ENCONTRADO')}")
-        if albums:
-            album = albums[0]
-            artist_id = album.get('artistId')
-            print(f"[DEBUG] Primer álbum - ID: {album.get('albumId')}, Título: {album.get('title')}, Precio: {album.get('price')}, ArtistId: {artist_id} (tipo: {type(artist_id).__name__})")
-        if merch:
-            item = merch[0]
-            artist_id = item.get('artistId')
-            print(f"[DEBUG] Primer merch - ID: {item.get('merchId')}, Título: {item.get('title')}, Precio: {item.get('price')}, ArtistId: {artist_id} (tipo: {type(artist_id).__name__})")
-        print(f"[DEBUG] Artists_map tiene {len(artists_map)} artistas: {list(artists_map.items())[:3]}")
-        print(f"[DEBUG] Tipos de claves en artists_map: {[type(k).__name__ for k in list(artists_map.keys())[:3]]}")
 
     except Exception as e:
         print(f"Error en shop: {e}")
