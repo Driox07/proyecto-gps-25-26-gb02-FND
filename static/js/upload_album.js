@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const coverInfo = document.getElementById('cover-info');
 
     let albumSongs = []; // Array de {songId, title}
+    let allSongs = []; // Array de todas las canciones disponibles
 
     // Función para convertir archivo a base64
     function fileToBase64(file) {
@@ -42,18 +43,8 @@ document.addEventListener('DOMContentLoaded', function(){
             });
             if (resp.ok) {
                 const songs = await resp.json();
-                songSelect.innerHTML = '<option value="" disabled selected>Selecciona una canción...</option>';
-                
-                if (songs.length === 0) {
-                    songSelect.innerHTML = '<option value="" disabled>No tienes canciones creadas aún</option>';
-                } else {
-                    songs.forEach(song => {
-                        const option = document.createElement('option');
-                        option.value = song.songId;
-                        option.textContent = song.title || `Canción ${song.songId}`;
-                        songSelect.appendChild(option);
-                    });
-                }
+                allSongs = songs; // Guardar todas las canciones
+                updateSongSelect();
             } else {
                 songSelect.innerHTML = '<option value="" disabled>Error al cargar canciones</option>';
                 console.error('Error cargando canciones:', resp.status);
@@ -61,6 +52,24 @@ document.addEventListener('DOMContentLoaded', function(){
         } catch (err) {
             console.error('Error cargando canciones:', err);
             songSelect.innerHTML = '<option value="" disabled>Error de conexión</option>';
+        }
+    }
+
+    // Función para actualizar el select de canciones
+    function updateSongSelect() {
+        songSelect.innerHTML = '<option value="" disabled selected>Selecciona una canción...</option>';
+        
+        if (allSongs.length === 0) {
+            songSelect.innerHTML = '<option value="" disabled>No tienes canciones creadas aún</option>';
+        } else {
+            allSongs.forEach(song => {
+                if (!albumSongs.some(s => s.songId === song.songId)) {
+                    const option = document.createElement('option');
+                    option.value = song.songId;
+                    option.textContent = song.title || `Canción ${song.songId}`;
+                    songSelect.appendChild(option);
+                }
+            });
         }
     }
 
@@ -83,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
         albumSongs.push({ songId: selectedSongId, title: option.textContent });
         updateAlbumSongsDisplay();
+        updateSongSelect();
         songSelect.value = '';
     });
 
@@ -109,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function(){
             songItem.querySelector('.song-remove').addEventListener('click', function() {
                 albumSongs.splice(index, 1);
                 updateAlbumSongsDisplay();
+                updateSongSelect();
             });
 
             // Eventos para drag and drop
