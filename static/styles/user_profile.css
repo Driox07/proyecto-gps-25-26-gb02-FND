@@ -1449,3 +1449,22 @@ body {
         color: #bbb;
     }
 }
+
+/* Button icon alignment */
+.btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.btn-text {
+    display: inline-block;
+}

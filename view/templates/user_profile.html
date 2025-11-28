@@ -154,10 +154,6 @@
                 
                 <div class="artist-content" id="artist-content">
                     <!-- Contenido cargado dinámicamente -->
-                    <div class="loading-spinner">
-                        <div class="spinner"></div>
-                        <p>Cargando información...</p>
-                    </div>
                 </div>
             </div>
         </section>
@@ -464,6 +460,9 @@
         const TYA_URL = '{{ tya_server }}';
         const PT_URL = '{{ pt_server }}';
         const TPP_SERVER = '{{ tpp_server }}';
+        
+        // Definir datos del usuario para JavaScript
+        window.userData = {{ user | tojson }};
     </script>
     <script src="{{ url_for('static', path='js/config.js') }}"></script>
     <script src="{{ url_for('static', path='js/UserProfile.js') }}"></script>
