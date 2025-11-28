@@ -2,9 +2,9 @@
 
 // Estado de la paginación para cada sección
 const paginationState = {
-    songs: { currentPage: 1, itemsPerPage: 10 },
-    albums: { currentPage: 1, itemsPerPage: 10 },
-    merch: { currentPage: 1, itemsPerPage: 10 }
+    songs: { currentPage: 1, itemsPerPage: 9 },
+    albums: { currentPage: 1, itemsPerPage: 9 },
+    merch: { currentPage: 1, itemsPerPage: 9 }
 };
 
 // Inicialización cuando el DOM está listo
@@ -299,6 +299,11 @@ function applyFilters() {
     
     params.append('order', order);
     params.append('direction', direction);
+
+    // Resetear paginación a página 1 cuando se aplican filtros
+    ['songs', 'albums', 'merch'].forEach(section => {
+        paginationState[section].currentPage = 1;
+    });
 
     // Guardar posición del scroll antes de recargar
     saveScrollPosition();

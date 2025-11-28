@@ -371,52 +371,58 @@ def shop(request: Request,
          genres: str = Query(default=None),
          artists: str = Query(default=None),
          order: str = Query(default="date"),
-         direction: str = Query(default="desc"),
-         page: int = Query(default=1)):
+         direction: str = Query(default="desc")):
     """
     Renderiza la vista de la tienda con filtrado desde TYA.
+    Obtiene TODOS los productos para que la paginación se haga en el frontend.
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
 
     try:
         # Construir parámetros de filtrado para TYA
-        filter_params = {
+        base_filter_params = {
             "order": order,
-            "direction": direction,
-            "page": page
+            "direction": direction
         }
         
         if genres:
-            filter_params["genres"] = genres
+            base_filter_params["genres"] = genres
         
         if artists:
-            filter_params["artists"] = artists
+            base_filter_params["artists"] = artists
 
-        # Obtener IDs filtrados desde TYA
-        song_ids_resp = requests.get(
-            f"{servers.TYA}/song/filter",
-            params=filter_params,
-            timeout=10,
-            headers={"Accept": "application/json"}
-        )
-        song_ids = song_ids_resp.json() if song_ids_resp.ok else []
+        # Función helper para obtener TODOS los IDs paginados (TYA limita a 9 por página)
+        def get_all_ids(endpoint, params):
+            all_ids = []
+            page = 1
+            while True:
+                params_with_page = {**params, "page": page}
+                resp = requests.get(
+                    f"{servers.TYA}/{endpoint}",
+                    params=params_with_page,
+                    timeout=10,
+                    headers={"Accept": "application/json"}
+                )
+                if resp.ok:
+                    ids = resp.json()
+                    if not ids or len(ids) == 0:
+                        break
+                    all_ids.extend(ids)
+                    # Si recibimos menos de 9 IDs, es la última página
+                    if len(ids) < 9:
+                        break
+                    page += 1
+                else:
+                    break
+            return all_ids
+
+        # Obtener TODOS los IDs filtrados desde TYA (con paginación automática)
+        song_ids = get_all_ids("song/filter", base_filter_params)
+        album_ids = get_all_ids("album/filter", base_filter_params)
+        merch_ids = get_all_ids("merch/filter", base_filter_params)
         
-        album_ids_resp = requests.get(
-            f"{servers.TYA}/album/filter",
-            params=filter_params,
-            timeout=10,
-            headers={"Accept": "application/json"}
-        )
-        album_ids = album_ids_resp.json() if album_ids_resp.ok else []
-        
-        merch_ids_resp = requests.get(
-            f"{servers.TYA}/merch/filter",
-            params=filter_params,
-            timeout=10,
-            headers={"Accept": "application/json"}
-        )
-        merch_ids = merch_ids_resp.json() if merch_ids_resp.ok else []
+        print(f"Fetched IDs - Songs: {len(song_ids)}, Albums: {len(album_ids)}, Merch: {len(merch_ids)}")
 
         # Obtener datos completos de los productos
         songs = []
@@ -603,6 +609,9 @@ def shop(request: Request,
         songs, albums, merch = [], [], []
         all_genres, all_artists = [], []
         artists_map, genres_map = {}, {}
+
+    # print count of all data
+    print(f"Shop data counts - Songs: {len(songs)}, Albums: {len(albums)}, Merch: {len(merch)}")
 
     return osv.get_shop_view(
         request, userdata, 
@@ -3590,8 +3599,9 @@ async def add_to_cart(request: Request):
     
     try:
         body = await request.json()
-        # Agregar ID de usuario al body
-        body['userId'] = userdata.get('userId')
+        
+        # NO agregar userId al body - TPP lo obtiene del token en las cookies
+        # El body debe contener SOLO: songId, albumId, o merchId (+ unidades si es merch)
         
         print(f"[DEBUG] Add to cart request body: {body}")
         
