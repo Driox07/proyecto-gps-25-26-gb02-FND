@@ -48,8 +48,15 @@
 
                 <div class="form-row">
                     <div class="form-group full">
-                        <label for="cover">Imagen del producto (URL) *</label>
-                        <input type="url" id="cover" name="cover" required placeholder="https://ejemplo.com/producto.jpg">
+                        <label for="cover">Imagen del producto *</label>
+                        <div class="file-upload-panel">
+                            <input type="file" id="cover" name="cover" accept="image/*" required style="display: none;">
+                            <label for="cover" class="file-upload-btn">
+                                <i class="icon">🖼️</i>
+                                <span>Seleccionar imagen del producto</span>
+                            </label>
+                            <div class="file-info" id="coverInfo"></div>
+                        </div>
                     </div>
                 </div>
 
