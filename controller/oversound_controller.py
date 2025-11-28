@@ -49,11 +49,17 @@ def normalize_image_url(image_path: str, server_url: str) -> str:
     
     # Si es una ruta relativa o solo el nombre del archivo, convertirla a URL del servidor especificado
     if server_url:
-        # Eliminar /static si está presente, ya que lo añadiremos nosotros para consistencia
-        clean_path = image_path.replace("/static", "")
-        # Si no empieza con /, añadirlo
-        if not clean_path.startswith("/"):
-            clean_path = "/" + clean_path
+        # Si es TYA, le añadimos /static si no está ya presente
+        clean_path = image_path
+        if server_url == servers.TYA and not clean_path.startswith("/static"):
+            if not clean_path.startswith("/"):
+                clean_path = "/" + clean_path
+            clean_path = "/static" + clean_path
+
+        # Si es SYU, no debe tener /static.
+        if server_url == servers.SYU and clean_path.startswith("/static"):
+            clean_path = clean_path[len("/static"):]
+            
         return f"{server_url}{clean_path}"
     
     return image_path
