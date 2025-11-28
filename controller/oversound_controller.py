@@ -1498,13 +1498,12 @@ async def upload_merch(request: Request):
         
         # Agregar el ID del artista
         body['artistId'] = userdata.get('artistId')
-        print(body)
         
         # Enviar a TYA para crear el merchandising
         merch_resp = requests.post(
             f"{servers.TYA}/merch/upload",
             json=body,
-            timeout=15,
+            timeout=20,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
         print(merch_resp.status_code, merch_resp.text)
@@ -3791,7 +3790,18 @@ def get_artist_studio_page(request: Request):
                     headers={"Accept": "application/json"}
                 )
                 song_data.raise_for_status()
-                artist_data['songs'] = song_data.json()
+                songs_list = song_data.json()
+                # Formatear duración de cada canción a mm:ss para la vista del studio
+                for s in songs_list:
+                    try:
+                        dur = int(s.get('duration', 0))
+                        minutes = dur // 60
+                        seconds = dur % 60
+                        s['duration_formatted'] = f"{minutes}:{seconds:02d}"
+                    except Exception:
+                        s['duration_formatted'] = s.get('duration', '0')
+
+                artist_data['songs'] = songs_list
             else:
                 artist_data['songs'] = []
         except requests.RequestException:
