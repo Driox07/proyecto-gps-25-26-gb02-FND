@@ -815,6 +815,29 @@ body {
     .auth-buttons {
         flex-direction: column;
     }
+
+    .payment-methods-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-selection-section {
+        padding: 20px;
+    }
+
+    .payment-card {
+        padding: 20px;
+    }
+}
+
+/* Responsive para tablets y pantallas medianas */
+@media (max-width: 768px) {
+    .payment-methods-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-selection-section {
+        padding: 20px;
+    }
 }
 
 /* Payment Selection Section */
@@ -848,9 +871,10 @@ body {
 /* Payment Methods Grid */
 .payment-methods-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
     margin-top: 20px;
+    width: 100%;
 }
 
 /* Payment Card */
@@ -867,6 +891,8 @@ body {
     flex-direction: column;
     gap: 16px;
     min-height: 160px;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .payment-card.selected {
