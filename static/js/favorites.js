@@ -158,62 +158,7 @@ async function toggleFavoriteArtist(artistId, button) {
     }
 }
 
-/**
- * Alterna el estado de favorito de mercancía
- * @param {number} merchId - ID de la mercancía
- * @param {HTMLElement} button - Botón que dispara la acción
- */
-async function toggleFavoriteMerch(merchId, button) {
-    try {
-        const path = button.querySelector('path');
-        const isFavorited = path && path.getAttribute('fill') === 'currentColor';
-        
-        // Nota: Este endpoint puede variar según la API
-        const method = isFavorited ? 'DELETE' : 'POST';
-        const endpoint = `/favs/merch/${merchId}`;
-        
-        const response = await fetch(endpoint, {
-            method: method,
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                showFavoritesNotification('Por favor inicia sesión para añadir a favoritos', 'error');
-                return;
-            }
-            // Fallback si merch favoritos no están implementados
-            if (response.status === 404 || response.status === 405) {
-                showFavoritesNotification('Los favoritos de mercancía aún no están disponibles', 'info');
-                return;
-            }
-            throw new Error('Error en la solicitud');
-        }
-
-        // Actualizar estado visual
-        if (path) {
-            if (isFavorited) {
-                path.setAttribute('fill', 'none');
-                showFavoritesNotification('Mercancía eliminada de favoritos', 'success');
-            } else {
-                path.setAttribute('fill', 'currentColor');
-                showFavoritesNotification('Mercancía añadida a favoritos', 'success');
-            }
-        }
-
-        window.dispatchEvent(new CustomEvent('favoriteToggled', {
-            detail: { type: 'merch', id: merchId, isFavorited: !isFavorited }
-        }));
-
-    } catch (error) {
-        console.error('Error al cambiar estado de favorito de mercancía:', error);
-        showFavoritesNotification('Error al procesar la solicitud', 'error');
-    }
-}
+// Favoritos de merch: eliminado. Los productos no pueden ser likeados.
 
 /**
  * Obtiene la lista de canciones favoritas del usuario
@@ -293,31 +238,7 @@ async function getFavoriteArtists() {
     }
 }
 
-/**
- * Obtiene la lista de mercancía favorita del usuario
- * @returns {Promise<Array>} Array de mercancía favorita
- */
-async function getFavoriteMerch() {
-    try {
-        const response = await fetch('/favs/merch', {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Error al obtener favoritos');
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('Error al obtener mercancía favorita:', error);
-        return [];
-    }
-}
+// getFavoriteMerch eliminado: no hay endpoint de favoritos para merch.
 
 /**
  * Verifica si una canción es favorita del usuario actual
@@ -359,24 +280,7 @@ async function isAlbumFavorited(albumId) {
     }
 }
 
-/**
- * Verifica si una mercancía es favorita del usuario actual
- * @param {number} merchId - ID de la mercancía
- * @returns {Promise<boolean>} True si es favorita
- */
-async function isMerchFavorited(merchId) {
-    try {
-        const favorites = await getFavoriteMerch();
-        return favorites.some(item => {
-            if (typeof item === 'number') return item === merchId;
-            if (item && (item.id !== undefined)) return item.id === merchId;
-            return false;
-        });
-    } catch (error) {
-        console.error('Error verificando si es favorito:', error);
-        return false;
-    }
-}
+// isMerchFavorited eliminado: no se soportan favoritos para merch.
 
 /**
  * Actualiza el estado visual de un botón de favorito
@@ -532,34 +436,7 @@ async function initializeFavoriteButtons() {
         console.warn('Error inicializando estados de artistas favoritos:', e);
     }
 
-    // Botones de favorito para mercancía
-    const favoriteMerchButtons = document.querySelectorAll('[data-fav-merch]');
-    favoriteMerchButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const merchId = parseInt(button.dataset.favMerch);
-            toggleFavoriteMerch(merchId, button);
-        });
-    });
-
-    // Ajustar estado visual inicial para botones de merch
-    try {
-        const merchIds = Array.from(favoriteMerchButtons).map(b => parseInt(b.dataset.favMerch)).filter(Boolean);
-        if (merchIds.length) {
-            const favs = await getFavoriteMerch();
-            favoriteMerchButtons.forEach(button => {
-                const id = parseInt(button.dataset.favMerch);
-                let isFav = false;
-                if (favs && favs.length) {
-                    isFav = favs.some(item => (typeof item === 'number' ? item === id : (item && item.id !== undefined ? item.id === id : false)));
-                }
-                updateFavoriteButtonState(button, isFav);
-            });
-        }
-    } catch (e) {
-        console.warn('Error inicializando estados de mercancía favoritos:', e);
-    }
+    // Favoritos de merch: omitidos (no soportados)
 }
 
     // Inicializar cuando el DOM esté listo

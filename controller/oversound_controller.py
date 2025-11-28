@@ -2374,8 +2374,10 @@ def get_merch(request: Request, merchId: int):
         else:
             merch_data['price'] = 19.99
         
-        # Determinar si está en favoritos y carrito (por ahora False, implementar después)
+        # Determinar si está en favoritos y carrito (merch no soporta favoritos)
         isLiked = False
+
+        # Por ahora no hay comprobación de carrito (implementación futura)
         inCarrito = False
         
         # Determinar tipo de usuario (0: no autenticado, 1: usuario, 2: artista)
