@@ -1814,20 +1814,44 @@ def get_album(request: Request, albumId: int):
                 pass  # Si no se pueden cargar, dejar vacío
         album_data['related_albums'] = related_albums
         
-        # Normalizar URLs de imágenes
+        # Normalizar URLs de imágenes y precios
         if album_data.get('cover'):
             album_data['cover'] = normalize_image_url(album_data['cover'], servers.TYA)
         for song in album_data.get('songs_data', []):
             if song.get('cover'):
                 song['cover'] = normalize_image_url(song['cover'], servers.TYA)
+            # Normalizar precio de canción
+            if song.get('price'):
+                try:
+                    if isinstance(song['price'], str):
+                        song['price'] = float(song['price'].replace(',', '.'))
+                    else:
+                        song['price'] = float(song['price'])
+                except (ValueError, TypeError):
+                    song['price'] = 0.99
         for related in album_data.get('related_albums', []):
             if related.get('cover'):
                 related['cover'] = normalize_image_url(related['cover'], servers.TYA)
+            # Normalizar precio de álbum relacionado
+            if related.get('price'):
+                try:
+                    if isinstance(related['price'], str):
+                        related['price'] = float(related['price'].replace(',', '.'))
+                    else:
+                        related['price'] = float(related['price'])
+                except (ValueError, TypeError):
+                    related['price'] = 9.99
         
-        # Asegurarse de que el precio sea un número
-        try:
-            album_data['price'] = float(album_data.get('price', 0))
-        except ValueError:
+        # Normalizar precio: convertir string "10,00" a float 10.00
+        if album_data.get('price'):
+            try:
+                if isinstance(album_data['price'], str):
+                    album_data['price'] = float(album_data['price'].replace(',', '.'))
+                else:
+                    album_data['price'] = float(album_data['price'])
+            except (ValueError, TypeError):
+                album_data['price'] = 0.0
+        else:
             album_data['price'] = 0.0
         
         # Calcular duración total del álbum
