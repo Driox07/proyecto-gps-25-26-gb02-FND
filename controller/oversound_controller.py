@@ -1308,6 +1308,7 @@ async def upload_merch(request: Request):
         
         # Agregar el ID del artista
         body['artistId'] = userdata.get('artistId')
+        print(body)
         
         # Enviar a TYA para crear el merchandising
         merch_resp = requests.post(
@@ -1316,6 +1317,7 @@ async def upload_merch(request: Request):
             timeout=15,
             headers={"Accept": "application/json", "Cookie": f"oversound_auth={token}"}
         )
+        print(merch_resp.status_code, merch_resp.text)
         
         if merch_resp.ok:
             merch_data = merch_resp.json()
@@ -3346,14 +3348,28 @@ def get_artist_studio_page(request: Request):
         artist_data = artist_resp.json()
         
         # Obtener canciones del artista
+        # try:
+        #     songs_resp = requests.get(
+        #         f"{servers.TYA}/artist/{artist_id}/songs",
+        #         timeout=5,
+        #         headers={"Accept": "application/json"}
+        #     )
+        #     songs_resp.raise_for_status()
+        #     artist_data['songs'] = songs_resp.json()
+        # except requests.RequestException:
+        #     artist_data['songs'] = []
         try:
-            songs_resp = requests.get(
-                f"{servers.TYA}/artist/{artist_id}/songs",
+            song_resp = requests.get(
+                f"{servers.TYA}/song/filter",
+                params={"artists": artist_id},
                 timeout=5,
                 headers={"Accept": "application/json"}
             )
-            songs_resp.raise_for_status()
-            artist_data['songs'] = songs_resp.json()
+            song_resp.raise_for_status()
+            song_data = requests.get(
+                f"{servers.TYA}/song/list?ids={','.join(map(str, song_resp.json()))}",)
+
+            artist_data['songs'] = song_data.json()
         except requests.RequestException:
             artist_data['songs'] = []
         
