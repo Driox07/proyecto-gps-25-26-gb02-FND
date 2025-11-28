@@ -217,7 +217,7 @@
                             {% endif %}
                             {% if elementos_biblioteca.albums%}
                                 {% for item in elementos_biblioteca.albums %}
-                                    <a href="/song/{{ item.albumId }}" class="favorite-card">
+                                    <a href="/album/{{ item.albumId }}" class="favorite-card">
                                         <div class="card-image">
                                             {% if item.image %}
                                                 <img src="{{ item.cover }}" alt="{{ item.title }}" loading="lazy">
