@@ -1,7 +1,5 @@
 import uvicorn
-from controller.msvc_servers import FND
-from urllib.parse import urlparse
+import os
 
 if __name__ == "__main__":
-    host = urlparse(FND).hostname
-    uvicorn.run("controller.oversound_controller:app", host=host, port=8000, reload=True)
+    uvicorn.run("controller.oversound_controller:app", host=os.getenv("SERVER_IP", "127.0.0.1"), port=os.getenv("SERVER_PORT", "8000"), reload=True)
