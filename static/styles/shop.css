@@ -414,10 +414,10 @@ body {
     font-weight: 500;
 }
 
-/* Products Grid - Fixed 3x3 */
+/* Products Grid - Fixed 5x5 */
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 30px;
     margin-bottom: 20px;
 }
@@ -733,7 +733,7 @@ body {
     }
 
     .products-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 25px;
     }
 }
@@ -769,7 +769,7 @@ body {
     }
 
     .products-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 20px;
     }
 }
@@ -792,7 +792,7 @@ body {
     }
 
     .products-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 15px;
     }
 
@@ -913,7 +913,7 @@ body {
 
 .pagination-info {
     text-align: center;
-    color: #666;
+    color: #ffffff;
     font-size: 14px;
     margin-bottom: 10px;
 }

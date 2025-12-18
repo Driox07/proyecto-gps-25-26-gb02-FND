@@ -47,7 +47,7 @@
             {% if data.top_songs and data.top_songs | length > 0 %}
                 {% for s in data.top_songs %}
                     <a class="top-card" data-rank="{{ loop.index }}" href="/song/{{ s.songId or s.id }}" aria-label="{{ s.name or s.title or 'Ir a la canción' }}">
-                        <img src="{{ (data.tya_server + '/static' + s.image) if s.image else '/static/img/utils/default-song.svg' }}" alt="{{ s.name or s.title or 'Canción' }}" />
+                        <img src="{{ s.image if s.image else '/static/img/utils/default-song.svg' }}" alt="{{ s.name or s.title or 'Canción' }}" />
                         <p class="top-name">{{ s.name or s.title or 'Título desconocido' }}</p>
                         <span class="top-meta">{{ data.genres_map.get(s.genre) or s.genreName or '' }}</span>
 
@@ -89,8 +89,8 @@
         <div id="recommended-songs" class="top-grid">
             {% if data.rec_songs and data.rec_songs | length > 0 %}
                 {% for s in data.rec_songs %}
-                    <a class="top-card" href="/song/{{ s.songId or s.id }}" aria-label="{{ s.name or s.title or 'Ir a la canción' }}">
-                        <img src="{{ (data.tya_server + '/static' + s.image) if s.image else '/static/img/utils/default-song.svg' }}" alt="{{ s.name or s.title or 'Canción' }}" />
+                    <a class="top-card" href="/song/{{ s.songId }}" aria-label="{{ s.name or s.title or 'Ir a la canción' }}">
+                        <img src="{{ s.image if s.image else '/static/img/utils/default-song.svg' }}" alt="{{ s.name or s.title or 'Canción' }}" />
                         <p class="top-name">{{ s.name or s.title or 'Título desconocido' }}</p>
                         <span class="top-meta">{{ data.genres_map.get(s.genre) or s.genreName or '' }}</span>
                         {% if s.price %}

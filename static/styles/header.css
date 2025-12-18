@@ -11,6 +11,60 @@
     padding: 0;
 }
 
+/* Theme styles: light by default, dark when .theme-dark on <html> */
+html.theme-dark .main-header {
+    background: linear-gradient(135deg, #0b1220 0%, #0f1724 100%);
+}
+
+html.theme-dark body {
+    background: #071022;
+    color: #e6eef8;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 8px;
+}
+
+.theme-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+html.theme-dark .theme-toggle {
+    background: rgba(255,255,255,0.03);
+    border-color: rgba(255,255,255,0.04);
+    color: #e6eef8;
+}
+
+/* Adjust search input in dark */
+html.theme-dark .search-input {
+    background: rgba(255,255,255,0.04);
+    color: #e6eef8;
+    border-color: rgba(255,255,255,0.06);
+}
+
+html.theme-dark .search-item, html.theme-dark .search-results {
+    background: #071022;
+    color: #e6eef8;
+}
+
+html.theme-dark .nav-link {
+    background-color: rgba(255,255,255,0.03);
+    color: rgba(230,238,248,0.95);
+}
+
 .header-container {
     max-width: 100%;
     margin: 0;

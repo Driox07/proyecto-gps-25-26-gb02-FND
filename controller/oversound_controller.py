@@ -371,52 +371,58 @@ def shop(request: Request,
          genres: str = Query(default=None),
          artists: str = Query(default=None),
          order: str = Query(default="date"),
-         direction: str = Query(default="desc"),
-         page: int = Query(default=1)):
+         direction: str = Query(default="desc")):
     """
     Renderiza la vista de la tienda con filtrado desde TYA.
+    Obtiene TODOS los productos para que la paginación se haga en el frontend.
     """
     token = request.cookies.get("oversound_auth")
     userdata = obtain_user_data(token)
 
     try:
         # Construir parámetros de filtrado para TYA
-        filter_params = {
+        base_filter_params = {
             "order": order,
-            "direction": direction,
-            "page": page
+            "direction": direction
         }
         
         if genres:
-            filter_params["genres"] = genres
+            base_filter_params["genres"] = genres
         
         if artists:
-            filter_params["artists"] = artists
+            base_filter_params["artists"] = artists
 
-        # Obtener IDs filtrados desde TYA
-        song_ids_resp = requests.get(
-            f"{servers.TYA}/song/filter",
-            params=filter_params,
-            timeout=10,
-            headers={"Accept": "application/json"}
-        )
-        song_ids = song_ids_resp.json() if song_ids_resp.ok else []
+        # Función helper para obtener TODOS los IDs paginados (TYA limita a 9 por página)
+        def get_all_ids(endpoint, params):
+            all_ids = []
+            page = 1
+            while True:
+                params_with_page = {**params, "page": page}
+                resp = requests.get(
+                    f"{servers.TYA}/{endpoint}",
+                    params=params_with_page,
+                    timeout=10,
+                    headers={"Accept": "application/json"}
+                )
+                if resp.ok:
+                    ids = resp.json()
+                    if not ids or len(ids) == 0:
+                        break
+                    all_ids.extend(ids)
+                    # Si recibimos menos de 9 IDs, es la última página
+                    if len(ids) < 9:
+                        break
+                    page += 1
+                else:
+                    break
+            return all_ids
+
+        # Obtener TODOS los IDs filtrados desde TYA (con paginación automática)
+        song_ids = get_all_ids("song/filter", base_filter_params)
+        album_ids = get_all_ids("album/filter", base_filter_params)
+        merch_ids = get_all_ids("merch/filter", base_filter_params)
         
-        album_ids_resp = requests.get(
-            f"{servers.TYA}/album/filter",
-            params=filter_params,
-            timeout=10,
-            headers={"Accept": "application/json"}
-        )
-        album_ids = album_ids_resp.json() if album_ids_resp.ok else []
-        
-        merch_ids_resp = requests.get(
-            f"{servers.TYA}/merch/filter",
-            params=filter_params,
-            timeout=10,
-            headers={"Accept": "application/json"}
-        )
-        merch_ids = merch_ids_resp.json() if merch_ids_resp.ok else []
+        print(f"Fetched IDs - Songs: {len(song_ids)}, Albums: {len(album_ids)}, Merch: {len(merch_ids)}")
 
         # Obtener datos completos de los productos
         songs = []
@@ -522,7 +528,9 @@ def shop(request: Request,
                 # Verificar géneros (la canción debe tener al menos uno de los géneros seleccionados)
                 if selected_genres:
                     song_genres = song.get('genres', [])
-                    if not song_genres or not any(g in selected_genres for g in song_genres):
+                    # Convertir géneros a int para comparar correctamente
+                    song_genres_int = [int(g) if isinstance(g, str) else g for g in song_genres]
+                    if not song_genres_int or not any(g in selected_genres for g in song_genres_int):
                         continue
                 filtered_songs.append(song)
             songs = filtered_songs
@@ -536,7 +544,9 @@ def shop(request: Request,
                 # Verificar géneros (el álbum debe tener al menos uno de los géneros seleccionados)
                 if selected_genres:
                     album_genres = album.get('genres', [])
-                    if not album_genres or not any(g in selected_genres for g in album_genres):
+                    # Convertir géneros a int para comparar correctamente
+                    album_genres_int = [int(g) if isinstance(g, str) else g for g in album_genres]
+                    if not album_genres_int or not any(g in selected_genres for g in album_genres_int):
                         continue
                 filtered_albums.append(album)
             albums = filtered_albums
@@ -599,6 +609,9 @@ def shop(request: Request,
         songs, albums, merch = [], [], []
         all_genres, all_artists = [], []
         artists_map, genres_map = {}, {}
+
+    # print count of all data
+    print(f"Shop data counts - Songs: {len(songs)}, Albums: {len(albums)}, Merch: {len(merch)}")
 
     return osv.get_shop_view(
         request, userdata, 
@@ -1341,6 +1354,9 @@ def upload_song_page(request: Request):
     except requests.RequestException:
         pass
     
+    # Filtrar el artista actual de la lista de colaboradores
+    artists = [a for a in artists if a['artistId'] != userdata.get('artistId')]
+    
     # Obtener álbumes del artista desde TYA
     albums = []
     try:
@@ -1510,7 +1526,27 @@ def upload_album_page(request: Request):
     except requests.RequestException:
         pass
     
-    return osv.get_upload_album_view(request, userdata, songs)
+    # Obtener artistas desde TYA
+    artists = []
+    try:
+        # Primero filter para obtener todos los artistas (objetos básicos)
+        filter_resp = requests.get(f"{servers.TYA}/artist/filter", timeout=5, headers={"Accept": "application/json"})
+        if filter_resp.ok:
+            artist_objects = filter_resp.json()
+            artist_ids = artist_objects
+            if artist_ids:
+                # Luego list para obtener detalles completos
+                ids_str = ','.join(map(str, artist_ids))
+                list_resp = requests.get(f"{servers.TYA}/artist/list?ids={ids_str}", timeout=5, headers={"Accept": "application/json"})
+                if list_resp.ok:
+                    artists = list_resp.json()
+    except requests.RequestException:
+        pass
+    
+    # Filtrar el artista actual de la lista de colaboradores
+    artists = [a for a in artists if a['artistId'] != userdata.get('artistId')]
+    
+    return osv.get_upload_album_view(request, userdata, songs, artists)
 
 
 @app.post("/album/upload")
@@ -1924,6 +1960,9 @@ def get_song_edit_page(request: Request, songId: int):
         except requests.RequestException:
             artists = []
         
+        # Filtrar el artista actual de la lista de colaboradores
+        artists = [a for a in artists if a['artistId'] != userdata.get('artistId')]
+        
         song_data['genres_list'] = genres
         song_data['artists_list'] = artists
         
@@ -2305,6 +2344,9 @@ def get_album_edit_page(request: Request, albumId: int):
         except requests.RequestException:
             artists = []
         
+        # Filtrar el artista actual de la lista de colaboradores
+        artists = [a for a in artists if a['artistId'] != userdata.get('artistId')]
+        
         album_data['genres_list'] = genres
         album_data['artists_list'] = artists
         
@@ -2500,7 +2542,7 @@ def get_merch(request: Request, merchId: int):
             tipoUsuario = 1  # TODO: Implementar lógica para distinguir artista
         
         
-        return osv.get_merch_view(request, merch_data, tipoUsuario, isLiked, inCarrito, userdata, servers.SYU)
+        return osv.get_merch_view(request, merch_data, tipoUsuario, isLiked, inCarrito, userdata, servers.SYU, servers.TYA)
         
     except requests.RequestException as e:
         # En caso de error, mostrar página de error
@@ -3557,8 +3599,9 @@ async def add_to_cart(request: Request):
     
     try:
         body = await request.json()
-        # Agregar ID de usuario al body
-        body['userId'] = userdata.get('userId')
+        
+        # NO agregar userId al body - TPP lo obtiene del token en las cookies
+        # El body debe contener SOLO: songId, albumId, o merchId (+ unidades si es merch)
         
         print(f"[DEBUG] Add to cart request body: {body}")
         

@@ -155,7 +155,7 @@
                     <h2 class="section-title">Géneros</h2>
                     <div class="genres-container">
                         {% for genre in album.genres_data %}
-                        <div class="genre-tag" onclick="window.location.href='/search?genre={{ genre.id }}'">
+                        <div class="genre-tag">
                             {{ genre.name }}
                         </div>
                         {% endfor %}

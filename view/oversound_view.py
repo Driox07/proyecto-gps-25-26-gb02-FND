@@ -119,8 +119,10 @@ class View():
         return templates.TemplateResponse("main/faqs.html", {"request": request, "faqs": faqs })
     
     # Renderizar la template upload_album.html (versión más reciente/completa de 'get_upload_album_view')
-    def get_upload_album_view(self, request: Request, userdata: dict, songs: list[dict]):
-        data = {"userdata": userdata}
+    def get_upload_album_view(self, request: Request, userdata: dict, songs: list[dict], artists: list = None):
+        if artists is None:
+            artists = []
+        data = {"userdata": userdata, "artists": artists}
         return templates.TemplateResponse("upload_album.html", {"request": request , "data": data, "songs": songs}) 
     
     # Renderizar la template album.html
@@ -253,8 +255,8 @@ class View():
         })
     
     # Renderizar la template merch.html
-    def get_merch_view(self, request: Request, merch_info : dict, tipoUsuario : int, isLiked: bool, inCarrito: bool, userdata: dict = None, syu_server: str = None):
-        data = {"userdata": userdata, "syu_server": syu_server, "merch": merch_info}
+    def get_merch_view(self, request: Request, merch_info : dict, tipoUsuario : int, isLiked: bool, inCarrito: bool, userdata: dict = None, syu_server: str = None, tya_server: str = None):
+        data = {"userdata": userdata, "syu_server": syu_server, "tya_server": tya_server, "merch": merch_info}
         return templates.TemplateResponse("merch.html", {"request": request, "data": data, "tipoUsuario": tipoUsuario, "isLiked": isLiked, "inCarrito": inCarrito})
     
     # Renderizar la template cart.html
